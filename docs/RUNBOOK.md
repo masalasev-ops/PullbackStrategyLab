@@ -122,8 +122,8 @@ The nightly job is one CLI entrypoint per stage, invoked by Task Scheduler on Wi
 | 21:05 | `resolve-triggers`, the session walked one minute at a time over the minutes the fetch stored, deciding whether each plan resting in it was touched and in which minute, and from 7.8 `size-entries` after it, which walks the same minutes to each entry and resolves its stop and its size, or why the stop refused it (see: Order prices and the share count resolve at the entry minute). It spends no vendor call. One clock for the session rather than one per name, because the earliest trigger is what fills when the caps bind and that is a comparison across names. **A session with plans resting in it and no stored minute is reported partial rather than clean**: that is a night the lab was blind on, and a plan whose live session turns out to be a market holiday lands here as unresolvable with the reason rather than as a plan that did not fire | 0 |
 | 21:10 | `orders`, the caps applied to each trigger in the order it happened. It spends no vendor call. Every refusal is a row with the cap that bound and what that cap saw, because a night on which three setups triggered into one free slot is evidence about the caps and is indistinguishable from a quiet night unless the refusals are stored | 0 |
 | 21:15 | `fills`, over the orders the gate placed. It spends no vendor call. Each resting order is priced at what it actually got: the trigger plus the whole spread the session captured, the wrong way, or the open of the minute it would have filled in where that minute opened past the trigger, which costs nothing on top because the gap is the crossing. A name the session quoted no usable two-sided book for is **not filled**, and the row says which blindness it was rather than the order disappearing: a fill charged nought is a free entry that clears every threshold written as a maximum. **It runs no exit from 4.8**, because the exit is whichever rule is reached first and that comparison cannot be made by a stage that sees one side of it | 0 |
-| 21:20 | `manage`, over every position open at any point in the session, including the ones the slot above opened five minutes earlier. It spends no vendor call. It runs the two rule sets and the give-up point together: the long trail on a daily close below the 9-day average, filling at the next open; the short trim of 15% of the planned size once at 3R, and the short exit on an hourly bar closing back above the 50-day average. **Neither rule takes over from the fixed stop**, so the exit is whichever is reached first and a tie inside one minute resolves as a give-up. A name the session quoted no book for is held rather than closed at a price nobody measured. The row counts each exit under the rule that produced it, and `closed_in_their_own_session` is what the caps could not see at 21:10 | 0 |
-| 21:25 | `trades`, over the positions the slot above closed. It spends no vendor call. Each closed position becomes a trade stating its result in R **after** the borrow a short is charged, at the rate that position stamped on itself when it opened rather than at whatever the constant says tonight. `position.realised_r` is the same figure before that charge, so the two are equal on every long and differ by the borrow line on every short. A trimmed short's money is the trim's plus the close's, and its exit covered what the trim left | 0 |
+| 21:20 | `manage`, over every position open at any point in the session, including the ones the slot above opened five minutes earlier. It spends no vendor call. It runs the two rule sets and the give-up point together, generation 1's from 7.10: on both sides a trim of 15% of the planned size at 3R and again at 5R; the long trail on a daily close below the 9-day average, filling at the next open; and the short closed at the next open once it has been held three sessions, the one it opened in counted. A short armed on the retired hourly close above the 50-day average before 7.10 still fills and is counted under that name (see: Generation 1 trims 15% at 3R and again at 5R on both sides, and a short is held three sessions rather than trailed). **Neither rule takes over from the fixed stop**, so the exit is whichever is reached first and a tie inside one minute resolves as a give-up. A name the session quoted no book for is held rather than closed at a price nobody measured. The row counts each exit under the rule that produced it, and `closed_in_their_own_session` is what the caps could not see at 21:10 | 0 |
+| 21:25 | `trades`, over the positions the slot above closed. It spends no vendor call. Each closed position becomes a trade stating its result in R **after** the borrow a short is charged, at the rate that position stamped on itself when it opened rather than at whatever the constant says tonight. `position.realised_r` is the same figure before that charge, so the two are equal on every long and differ by the borrow line on every short. A trimmed position's money is its trims' plus the close's, on either side from 7.10, and its exit covered what the trims left | 0 |
 | 21:26 | `audit`, over the trades the slot above wrote, because an audit points at one. It spends no vendor call. It holds the plan against what happened in three pairs, which are three different questions: the price each instruction named against the price it got, at both ends and in basis points; the plan's stop against where the trade actually ended, which is the same number only on a give-up exit; and the size the plan carried against the size the gate placed, with the cap that bound. **It changes no result**, and the ordering is what makes that so: the result was written before this ran | 0 |
 | 21:30 | `forward-returns`, every flagged setup at 1, 3, 5 and 10 sessions | 0 |
 | 21:35 | `losses`, after the forward returns because half of what it answers is one of them. It spends no vendor call. **Two passes, because the two answers arrive at different times.** The mechanism of every loss that closed tonight, read from the exit fill's basis: a gap is an exit that filled at an open already past the price it named, and everything else is ordinary. Then the aftermath of every earlier loss whose ten-session horizon has since closed, at +1R on the direction-signed return from the trigger: at or above it the stop-out was noise, below it the setup failed. **A row still waiting on a horizon carries no aftermath and is not `unclassified`**, which is what the horizon having closed with no figure looks like, and the two are counted apart on the night's row | 0 |
@@ -155,7 +155,7 @@ reconciled against this document.
 | `backfill-signals` | A one-time act per signal: it fills the rows recorded before a signal was frozen, at each setup's own session, and a second run fills nothing. It is what the operator runs once after 7.4 for the sourced candidates, and after any later signal joins the frozen set |
 | `recheck` | A repair bounded by the lateness rule, taking `--apply` and `--restore`, which is an act on the running store with a person deciding it (see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound) |
 | `reconstructed-read` | It reads a calibration store copy, which is research on a copy rather than the night |
-| `backfill-minutes` | From 7.7. A one-time purchase of one-minute history for the flagged calibration rows, outside the nightly ceiling, into `calibration_minute_bar` and never into `intraday_bar`. **Run it with `--dry-run` first**, which lays the windows out and prints the calls they cost and the rows they leave short of warm-up without spending anything; then run it on the store 7.9 will copy. A run stopped part way resumes, because a window already recorded is not bought again (see: A one-time backfill is outside the nightly ceiling, whether it buys daily history or minutes) |
+| `backfill-minutes` | From 7.7. A one-time purchase of one-minute history for the flagged calibration rows, outside the nightly ceiling, into `calibration_minute_bar` and never into `intraday_bar`. **Run it with `--dry-run` first**, which lays the windows out and prints the calls they cost and the rows they leave short of warm-up without spending anything; then run it on the store 7.9 will copy. A run stopped part way resumes, because a window already recorded is not bought again (see: A one-time backfill is outside the nightly ceiling, whether it buys daily history or minutes). **Outside the lab's count is not outside the vendor's allowance**: the evening's stages spend from the same vendor day, and a run that leaves the vendor nothing before 17:15 is the 2026-08-31 night above arriving by another route, so read the dry run's figure against that allowance less the evening's spend in the UTC day the run falls in |
 | `forecast-generation-one` | From 7.11. Generation 1's gate set over the recorded nights between two dates, each night's flagged count per side and the names it would buy minutes for, their call cost against the ceiling less what the day's other stages spent, and the names the fetch could not afford in its own ticker order. **Run it on a store copy** over the nights since 7.4 landed, before the switch, and read the report under the data root's `reports` folder (see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole) |
 | `measure-entry-rule` | From 7.9. Generation 1's entry rule run over the calibration minutes `backfill-minutes` bought, per side: how many flagged rows produce an entry and why the rest do not, the stops against the ceiling, and the win-rate ceiling's bound over the stops that entered. **Run it on a store copy**, never the live store, after the backfill, and read the report it writes under the data root's `reports` folder, which names the level set it was computed over and says the anchored level was not evaluated. A second run beside the first once the anchor is ruled (see: Order prices and the share count resolve at the entry minute) |
 
@@ -294,6 +294,13 @@ step 7 of the move creates. Re-pointing all thirty-seven is part of creating it,
 each task's action rather than a re-registration: the arguments and the working directory are the
 only places a task names a tree.
 
+**Creating it on this machine carries the store and the secrets into it**, which is 7.1's operator
+half and which nothing above said until the 7.12 sign-off. `tools/nightly.ps1` derives the data root
+from its own location, so a fresh clone holds no `data/live` and no `appsettings.Secrets.json`, the
+first being gitignored and the second never committed. Carry the store across on steps 1 to 5 of
+"Moving the store to another machine" and the secrets file on step 6, in a window no slot fires in,
+then repoint the tasks. A clone whose first night finds neither loses that night.
+
 **The cost of that gap was paid on 2026-09-07 and it is the fourth instance of the same fault.**
 Thirty-two tasks were registered that night and thirty-one of them were scheduled to run on a
 Monday, `ceiling` being the one weekly slot; every one of those thirty-one refused on the tree
@@ -401,19 +408,41 @@ score `setup` under generation 1's gate set and write generation 0's verdicts to
 irreversible by design, which is why every step before it is a reading (see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole).
 
 1. **Migrate the live store to 069**, on the terms of the section above: merge, the 17:00 update, then
-   `tools/migrate.ps1` with `PullbackStrategyLab__DataRoot` set to `<repository>/data/live`.
-2. **Forecast on a store copy.** `forecast-generation-one <from> <to>` over the nights since 7.4 landed,
-   with the data root set to the copy. Read the report: the flagged count per night, its call cost
-   against the headroom the day's other stages left, and any names the fetch could not afford. A night
-   over the headroom is a night whose later names go without minutes in ticker order, and that is
-   decided before the switch rather than found on its first night.
-3. **Read the act before taking it.** `close-generation V1 --generation-one --dry-run` against the live
+   `tools/migrate.ps1` with `PullbackStrategyLab__DataRoot` set to `<repository>/data/live`. **Until the
+   17:00 update task exists it does not run**, and "The production checkout" records that it is absent
+   and that every task points at the working tree. So the update is by hand in that tree: `git pull
+   --ff-only` on `main`, then the migration, both in one sitting between two slots, since a slot that
+   fires between them opens a store its build does not match. The weekday slots at 10:15 and 15:45 are
+   slots too. Read the path the command prints and the two versions it reports before believing it.
+2. **Forecast on a store copy.** `forecast-generation-one <from> <to>` with the data root set to the
+   copy. **The range is every night the store holds a universe snapshot for, not only the nights since
+   7.4 landed**: the forecast runs generation 1's detector over the stored bars and figures and reads
+   nothing 7.4 froze, and until the production checkout carries 7.4 there are no such nights. Read the
+   report on two corrections, found at the 7.12 sign-off. **A night's names are bought on the next
+   session's evening**, because the 20:30 fetch buys the minutes of the session just closed for the
+   names flagged the evening before it, so read each night's call cost against the headroom printed on
+   the row after it, and end the range one session past the last night you want read; the report
+   pairs a night with its own evening's quota day. **And a night over the headroom does not leave its
+   later names without minutes.** The fetch is the first stage to spend in its quota day, which opens
+   at midnight UTC, 20:00 Eastern in summer and 19:00 in winter, so it buys every name up to the whole
+   ceiling, and what the ceiling then cuts is
+   the next evening's first stages, `universe-build` among them, which is the one stage no rerun
+   replaces. The names the report lists as going without are what a fetch spending last would lose,
+   and no fetch here spends last. So a night over the headroom is a night the switch would cost the next
+   evening's snapshot, and that is settled before the switch rather than found on its first night.
+3. **Settle what binds from the switch night, or take it knowingly.** The obligations table's row
+   raised at 7.11 and widened at 7.12 names what reads `setup` across the switch: band 1 from the switch
+   night; `ceiling`, `twin-pairs` and `admit-signals` from the Saturday after it; and the cap, whose rank
+   key is the evening give-up distance generation 1 no longer uses as its stop, from the first night
+   either side's candidates exceed its allocation. Read `ceiling` over the migrated store before the
+   switch too, which is 7.2's operator half: after it, the bound is taken over two gate sets' rows.
+4. **Read the act before taking it.** `close-generation V1 --generation-one --dry-run` against the live
    store prints the generation that closes, what becomes unresolved and retired, and the baseline that
    opens, and writes nothing. `--generation-one` supplies the definition naming both families and the
    baseline's target, so nothing is typed but the name.
-4. **Take it on an evening before the detect slot**, the same command without `--dry-run`. That night is
+5. **Take it on an evening before the detect slot**, the same command without `--dry-run`. That night is
    the switch night.
-5. **Read the morning after**: `setup` rows carry `generation` 1, `setup_generation_zero` holds generation
+6. **Read the morning after**: `setup` rows carry `generation` 1, `setup_generation_zero` holds generation
    0's names beside them, and the check register lists generation 1's clauses for that night. From then
    no selection or execution version is admitted and the weekly pack refuses with the reason, until the
    conditions that reopen each are met (see: Generation 1 opens with no version admissible in either family, and what reopens each is named).
