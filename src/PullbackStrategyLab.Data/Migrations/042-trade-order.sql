@@ -21,7 +21,8 @@
 -- is what the plan carried and `shares` is what was granted, which is nought on a blocked row. Both
 -- are stored because a reduction that overwrote the plan's figure would leave the plan and the order
 -- agreeing about a number the caps had changed, and `plan_audit` at 4.9 compares exactly those two.
--- see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+-- see: Order prices and the share count resolve at the entry minute
+-- (from 7.8 `planned_shares` is the size the entry minute resolved, on a plan carrying the rule)
 --
 -- <b>No give-up price is copied here, and that is the decision rather than an omission.</b> A
 -- reduction keeps the plan's give-up price, so there is one give-up price for a trade and it lives

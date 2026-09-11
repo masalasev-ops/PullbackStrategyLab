@@ -11,11 +11,14 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// <summary>
 /// The one piece of code that may open a position, and the only writer of orders.
 ///
-/// <b>It applies every limit and it does not size.</b> PlanBuilder sized at 18:30 and the plan's
-/// share count is authoritative; this component reduces that count to fit a cap, blocks the order
-/// outright, or lets it through unchanged. Nothing here divides a risk budget by a give-up distance.
+/// <b>It applies every limit and it does not size.</b> From 7.8 the size of a plan carrying the entry
+/// rule is resolved at the entry minute by EntrySizer, against the stop that minute gave, and a plan
+/// written before 7.8 carries the size it was written with. This component reduces that count to fit a
+/// cap, blocks the order outright, or lets it through unchanged, and **risk per trade is one of the caps
+/// it enforces** rather than a figure it asserts: an order may not lose more than its budget at its
+/// stop, whatever produced the count.
 /// see: RiskGate is the sole writer of orders, for both directions and every version
-/// see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+/// see: Order prices and the share count resolve at the entry minute
 ///
 /// <b>Triggers are taken in the order they happened, which is what the contention rule is.</b> Each
 /// placed order changes the book the next one faces, so a mediocre setup triggering at 9:31 consumes
@@ -37,11 +40,12 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// orders a second writer, which costs more than the approximation does.
 /// see: RiskGate is the sole writer of orders, for both directions and every version
 ///
-/// <b>Two of the six limits are not applied here and both are named.</b> Risk per trade is what the
-/// plan was sized from, so it is asserted rather than enforced: a plan risking more than the budget
-/// it names is a defect in the plan. The give-up distance cap is `exit-tight` at detection, so a plan
-/// that reached a trigger cleared it hours before, and re-applying it would be a second
-/// implementation of a gate that could disagree with the first.
+/// <b>All six limits apply at the entry, and one of them is not this component's.</b> The four caps and
+/// risk per trade are applied here. The give-up distance is the entry ceiling, the tighter of half the
+/// daily range and 5%, applied to the stop the entry resolved by the stage that resolved it; an entry it
+/// refused reaches here as a refusal and no order is written for it, because a refusal of the entry is
+/// not a cap on the order.
+/// see: The entry ceiling is the tighter of half the daily range and 5%
 /// </summary>
 public sealed class RiskGate
 {
@@ -50,8 +54,9 @@ public sealed class RiskGate
     /// <summary>No trigger of this session reached a plan, so there was nothing to gate.</summary>
     public const string NoTriggers = "no plan resting in this session was touched";
 
-    /// <summary>A plan whose risk at stake is over the budget it was sized from, which is a defect.</summary>
-    public const string PlanOverBudget = "a plan risks more than the budget it names";
+    /// <summary>A touched rule plan with no entry resolution, so the sizer did not run for it.</summary>
+    public const string NotSized =
+        "a plan carrying the entry rule was touched and has no entry resolution, so the sizer did not run for it";
 
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
@@ -143,6 +148,18 @@ public sealed class RiskGate
             .ForLiveSession(connection, sessionDate, sessionDate, _options.SessionZone)
             .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
 
+        // A plan carrying the rule has an executed shape only once its entry is sized, so a touched one
+        // missing from the priced plans is either refused at the entry or was never sized, and the two
+        // are told apart by whether the sizer wrote a row for it.
+        Dictionary<string, CommittedTradePlan> committed = TradePlanReader
+            .CommittedForLiveSession(connection, sessionDate, sessionDate, _options.SessionZone)
+            .ToDictionary(p => p.SetupId, StringComparer.Ordinal);
+
+        HashSet<string> refusedAtEntry = [.. EntryResolutionReader
+            .ForLiveSession(connection, sessionDate, sessionDate, _options.SessionZone)
+            .Where(r => r.RefusedBecause is not null)
+            .Select(r => r.SetupId)];
+
         var tally = new Tally();
         OpenBook book = BookComingInto(connection, sessionDate, _options.SessionZone);
         string? stoppedBecause = null;
@@ -154,7 +171,23 @@ public sealed class RiskGate
             // A resolution with no plan cannot happen through the store: `trigger_resolution` is
             // keyed on the plan and carries a foreign key to it. Refused rather than skipped, because
             // a trigger silently dropped is a fill this lab would never know it had missed.
-            if (!plans.TryGetValue(trigger.SetupId, out StoredTradePlan? plan))
+            if (!plans.TryGetValue(trigger.SetupId, out StoredTradePlan? plan)
+                && committed.TryGetValue(trigger.SetupId, out CommittedTradePlan? rule)
+                && rule.CarriesTheRule)
+            {
+                if (refusedAtEntry.Contains(trigger.SetupId))
+                {
+                    tally.CountRefusedAtEntry();
+                }
+                else
+                {
+                    stoppedBecause = NotSized;
+                }
+
+                continue;
+            }
+
+            if (plan is null)
             {
                 throw new InvalidOperationException(
                     $"The trigger for {trigger.SetupId} has no plan resting in {sessionDate:yyyy-MM-dd}. A "
@@ -162,19 +195,10 @@ public sealed class RiskGate
                     + "rows contradict its own key rather than a session with nothing to gate.");
             }
 
-            // Risk per trade is the plan's own budget rather than a cap this component applies, so it
-            // is asserted. A plan over its budget is a defect at 18:30 and gating it would be
-            // treating a broken plan as an ordinary large one.
-            if (plan.RiskAtStake > plan.RiskBudget)
-            {
-                throw new InvalidOperationException(
-                    $"{PlanOverBudget}: {plan.SetupId} risks {plan.RiskAtStake} against a budget of "
-                    + $"{plan.RiskBudget}. The size is the plan's and this component does not recompute it, so "
-                    + "an order sized from it would carry the defect forward into a position.");
-            }
-
+            // Risk per trade is enforced against the stop the entry resolved, as a cap that reduces,
+            // rather than asserted of a figure written the evening before.
             RiskVerdict verdict = RiskLimits.Apply(
-                plan.Direction, plan.Shares, plan.TriggerPrice, plan.GiveUpDistance, book);
+                plan.Direction, plan.Shares, plan.TriggerPrice, plan.GiveUpDistance, book, plan.RiskBudget);
 
             tally.Count(verdict);
 
@@ -190,8 +214,9 @@ public sealed class RiskGate
 
         // Clean whatever the caps did. A blocked order is what the caps are for and a night of them
         // is evidence rather than a failure; calling it partial would report almost every busy
-        // morning as degraded and make the signal mean nothing.
-        RunOutcome outcome = RunOutcome.Clean;
+        // morning as degraded and make the signal mean nothing. A touched plan nobody sized is the
+        // exception, because it is a stage that did not run rather than a cap that bound.
+        RunOutcome outcome = stoppedBecause is null ? RunOutcome.Clean : RunOutcome.Partial;
         RunSummary summary = run.Complete(outcome);
 
         RecordRun(connection, sessionDate, tally, outcome, stoppedBecause, observedAt);
@@ -279,11 +304,13 @@ public sealed class RiskGate
                 session_date, triggers, placed, reduced, blocked,
                 blocked_open_positions, blocked_open_shorts,
                 reduced_position_size, reduced_total_risk, blocked_below_one_share,
+                refused_at_entry, reduced_risk_per_trade,
                 outcome, stopped_because, observed_at)
             VALUES (
                 @session_date, @triggers, @placed, @reduced, @blocked,
                 @blocked_open_positions, @blocked_open_shorts,
                 @reduced_position_size, @reduced_total_risk, @blocked_below_one_share,
+                @refused_at_entry, @reduced_risk_per_trade,
                 @outcome, @stopped_because, @observed_at)
             ON CONFLICT (session_date, observed_at) DO NOTHING;
             """;
@@ -298,6 +325,8 @@ public sealed class RiskGate
         command.Parameters.AddWithValue("@reduced_position_size", tally.ReducedPositionSize);
         command.Parameters.AddWithValue("@reduced_total_risk", tally.ReducedTotalRisk);
         command.Parameters.AddWithValue("@blocked_below_one_share", tally.BlockedBelowOneShare);
+        command.Parameters.AddWithValue("@refused_at_entry", tally.RefusedAtEntry);
+        command.Parameters.AddWithValue("@reduced_risk_per_trade", tally.ReducedRiskPerTrade);
         command.Parameters.AddWithValue("@outcome", outcome.ToStorageText());
         command.Parameters.AddWithValue("@stopped_because", (object?)stoppedBecause ?? DBNull.Value);
         command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(observedAt));
@@ -328,6 +357,14 @@ public sealed class RiskGate
 
         public int BlockedBelowOneShare { get; private set; }
 
+        /// <summary>Entries the stop rule refused before a cap was asked, from 7.8.</summary>
+        public int RefusedAtEntry { get; private set; }
+
+        /// <summary>Orders the risk budget reduced, now that it is enforced, from 7.8.</summary>
+        public int ReducedRiskPerTrade { get; private set; }
+
+        public void CountRefusedAtEntry() => RefusedAtEntry++;
+
         public void Count(RiskVerdict verdict)
         {
             ArgumentNullException.ThrowIfNull(verdict);
@@ -346,6 +383,10 @@ public sealed class RiskGate
                 if (verdict.BoundBy == RiskLimits.PositionSize)
                 {
                     ReducedPositionSize++;
+                }
+                else if (verdict.BoundBy == RiskLimits.RiskPerTrade)
+                {
+                    ReducedRiskPerTrade++;
                 }
                 else
                 {
@@ -397,6 +438,10 @@ public sealed record OrderRunResult(
     public int ReducedPositionSize => Counts.ReducedPositionSize;
 
     public int ReducedTotalRisk => Counts.ReducedTotalRisk;
+
+    public int ReducedRiskPerTrade => Counts.ReducedRiskPerTrade;
+
+    public int RefusedAtEntry => Counts.RefusedAtEntry;
 
     public int BlockedBelowOneShare => Counts.BlockedBelowOneShare;
 }

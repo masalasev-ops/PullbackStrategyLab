@@ -88,7 +88,7 @@ public sealed class LabSetups
         // of N for session N+1, and the gallery and the watchlist are both reading the evening of N.
         // Reading by live session would return the plans written last night, which is the set every
         // row on this page is not about.
-        IReadOnlyDictionary<string, StoredTradePlan> planned = TradePlanReader
+        IReadOnlyDictionary<string, CommittedTradePlan> planned = TradePlanReader
             .WrittenOn(connection, asOf, asOf, sessionZone)
             .ToDictionary(plan => plan.SetupId, StringComparer.Ordinal);
 
@@ -180,9 +180,9 @@ public sealed class LabSetups
         StoredSetup setup,
         DateOnly asOf,
         DateTimeOffset observedBefore,
-        IReadOnlyDictionary<string, StoredTradePlan> planned)
+        IReadOnlyDictionary<string, CommittedTradePlan> planned)
     {
-        StoredTradePlan? plan = planned.TryGetValue(setup.SetupId, out StoredTradePlan? written) ? written : null;
+        CommittedTradePlan? plan = planned.TryGetValue(setup.SetupId, out CommittedTradePlan? written) ? written : null;
 
         CheckResult[] checks = JsonSerializer.Deserialize<CheckResult[]>(setup.CheckResults, Json) ?? [];
 

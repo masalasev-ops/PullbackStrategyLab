@@ -61,12 +61,14 @@ public sealed class RiskGateTests : IDisposable
     /// <summary>
     /// The caps are the six ARCHITECTURE states, and what each one can do is a property of the cap.
     ///
-    /// Two count caps that can only block, two proportional caps that reduce, one quantity the plan
-    /// was sized from and one gate that runs at detection. 4.6's own row said three count caps, which
-    /// is one more than either table holds, and this is the reconciliation as an assertion.
+    /// Two count caps that can only block and three that reduce, the risk budget among them from 7.8,
+    /// and the give-up distance, which is the entry ceiling applied to the stop by the stage that
+    /// resolves it. 4.6's own row said three count caps, which is one more than either table holds,
+    /// and this is the reconciliation as an assertion.
+    /// see: Order prices and the share count resolve at the entry minute
     /// </summary>
     [Fact]
-    public void The_six_limits_are_two_counts_two_proportions_a_budget_and_a_detection_gate()
+    public void The_six_limits_are_two_counts_three_reductions_and_the_entry_ceiling()
     {
         Assert.Equal(4, RiskCaps.MaxOpenPositions);
         Assert.Equal(2, RiskCaps.MaxOpenShortPositions);
@@ -79,10 +81,10 @@ public sealed class RiskGateTests : IDisposable
         // the two proportional caps are consistent with each other rather than merely both stated.
         Assert.Equal(PositionSizing.RiskBudget * RiskCaps.MaxOpenPositions, RiskCaps.MaxTotalRisk);
 
-        // The two the gate applies, the two it does not, and the two that reduce, named as sets so a
-        // cap added later has to be classified rather than appearing in one of them by accident.
+        // The five the gate applies, in the order it applies them, named as a set so a cap added later
+        // has to be classified rather than appearing in it by accident.
         Assert.Equal(
-            [RiskLimits.OpenPositions, RiskLimits.OpenShorts, RiskLimits.PositionSize, RiskLimits.TotalRisk],
+            [RiskLimits.OpenPositions, RiskLimits.OpenShorts, RiskLimits.RiskPerTrade, RiskLimits.PositionSize, RiskLimits.TotalRisk],
             RiskLimits.All);
     }
 
@@ -236,16 +238,17 @@ public sealed class RiskGateTests : IDisposable
     }
 
     /// <summary>
-    /// Nothing in the gate turns a risk budget into a share count, asserted over the shipped source.
+    /// The gate never grows a size, and the one caller of the sizing function is the sizer.
     ///
-    /// <b>This is the behavioural half of the sizing decision that 4.16 could not reach</b>, and it
-    /// is the checkpoint that could have broken it. 4.16 held it with a scan naming the one caller of
-    /// <see cref="PositionSizing.SharesFor"/>; a scan cannot see a component that reimplements the
-    /// division instead of calling the function, so the assertion here is that the gate produces the
-    /// plan's own size wherever no cap binds, over a sweep of distances rather than over one.
+    /// <b>From 7.8 the gate enforces the risk budget</b>, which is a division, so what is asserted is
+    /// that it only ever reduces: an order whose count fits the budget at its distance carries that
+    /// count unchanged over a sweep of distances, and the count a budget would buy is never handed
+    /// back in its place. A scan names the one caller of <see cref="PositionSizing.SharesFor"/>, which
+    /// is the stage that resolves the entry.
+    /// see: Order prices and the share count resolve at the entry minute
     /// </summary>
     [Fact]
-    public void The_gate_never_recomputes_a_size_from_a_risk_budget()
+    public void The_gate_never_grows_a_size_and_only_the_sizer_computes_one()
     {
         IReadOnlyList<string> callers =
         [
@@ -255,14 +258,15 @@ public sealed class RiskGateTests : IDisposable
                 .Order(StringComparer.Ordinal),
         ];
 
-        Assert.Equal(["PlanBuilder.cs"], callers);
+        Assert.Equal(["EntrySizer.cs"], callers);
 
-        // And behaviourally: whatever the distance, an unbound order carries the plan's count. A gate
-        // that recomputed would return the budget over the distance, which differs from the planned
-        // count on every one of these except by coincidence.
+        // And behaviourally: whatever the distance, an order whose count fits the budget carries that
+        // count. A gate that recomputed would return the budget over the distance, which differs from
+        // the count on every one of these except by coincidence.
         foreach (decimal distance in new[] { 0.25m, 1m, 2.5m, 7m, 13.33m })
         {
-            RiskVerdict verdict = RiskLimits.Apply(SetupDirection.Long, plannedShares: 11, 10m, distance, OpenBook.Empty);
+            RiskVerdict verdict = RiskLimits.Apply(
+                SetupDirection.Long, plannedShares: 11, 10m, distance, OpenBook.Empty, PositionSizing.RiskBudget);
 
             Assert.Equal(11, verdict.Shares);
             Assert.Equal(11 * distance, verdict.RiskAtStake);
@@ -414,14 +418,17 @@ public sealed class RiskGateTests : IDisposable
     }
 
     /// <summary>
-    /// A plan risking more than the budget it names stops the stage rather than being trimmed.
+    /// An order that would lose more than its risk budget at its stop is reduced to the budget, from
+    /// 7.8, where until then the gate stopped on it.
     ///
-    /// Risk per trade is what the plan was sized from and not a cap this component applies, so a plan
-    /// over its own budget is a defect at 18:30. Gating it would treat a broken plan as an ordinary
-    /// large one and carry the defect forward into a position.
+    /// Risk per trade is enforced against the stop the entry resolved rather than asserted of a figure
+    /// written the evening before, so the gate reduces the count to what the budget buys at the
+    /// distance and names the cap. A $5 distance and a $750 budget buy 150 shares, and a count of 200
+    /// would have put $1,000 at stake.
+    /// see: Order prices and the share count resolve at the entry minute
     /// </summary>
     [Fact]
-    public void A_plan_over_its_own_risk_budget_stops_the_stage()
+    public void An_order_over_its_risk_budget_is_reduced_to_the_budget_and_names_the_cap()
     {
         Triggered("AAA", new TimeOnly(9, 30));
 
@@ -429,17 +436,20 @@ public sealed class RiskGateTests : IDisposable
         {
             using SqliteCommand inflate = write.CreateCommand();
             inflate.CommandText =
-                "UPDATE trade_plan SET risk_at_stake = @risk WHERE ticker = 'AAA';";
-            inflate.Parameters.AddWithValue(
-                "@risk", StoreText.PriceToStorageText(PositionSizing.RiskBudget + 1m));
+                "UPDATE trade_plan SET shares = 200, risk_at_stake = @risk WHERE ticker = 'AAA';";
+            inflate.Parameters.AddWithValue("@risk", StoreText.PriceToStorageText(1000m));
             inflate.ExecuteNonQuery();
         }
 
-        InvalidOperationException thrown =
-            Assert.Throws<InvalidOperationException>(() => Stage().Apply(Session));
+        OrderRunResult result = Stage().Apply(Session);
 
-        Assert.Contains(RiskGate.PlanOverBudget, thrown.Message, StringComparison.Ordinal);
-        Assert.Empty(Orders());
+        Assert.Equal(1, result.Placed);
+        Assert.Equal(1, result.ReducedRiskPerTrade);
+
+        StoredTradeOrder order = Assert.Single(Orders());
+        Assert.Equal(200, order.PlannedShares);
+        Assert.Equal(150, order.Shares);
+        Assert.Equal(RiskLimits.RiskPerTrade, order.BoundBy);
     }
 
     /// <summary>A session that has closed does not change, so a rerun writes nothing.</summary>

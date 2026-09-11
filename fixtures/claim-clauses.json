@@ -761,18 +761,18 @@
       "subject": "PlanBuilder",
       "clauses": [
         {
-          "clause": "Nightly 18:30 One committed plan per capped candidate per live version, sized here.",
+          "clause": "Nightly 18:30 One committed plan per capped candidate per live version, carrying the entry rule and the ceiling its stop may not exceed.",
           "disposition": "unreached",
           "why": "the scheduled time is a property of the operator's scheduler, and one plan per candidate per live version is asserted by the fan-out row in Failure behaviour rather than by a catalogue verdict"
         },
         {
-          "clause": "The size is the same under every version while only selection versions exist",
+          "clause": "The rule is the same under every version while only selection versions exist",
           "disposition": "reaches"
         },
         {
           "clause": "because a selection change alters which stocks are picked and leaves entry and exit alone",
           "disposition": "rationale",
-          "why": "why a selection change leaves the size alone"
+          "why": "why a selection change leaves the rule alone"
         }
       ]
     },
@@ -839,9 +839,9 @@
       "subject": "RiskGate",
       "clauses": [
         {
-          "clause": "21:10 as a slot, on trigger as an act Enforces every cap and may reduce or block a plan's size, never recompute it.",
+          "clause": "21:10 as a slot, on trigger as an act Enforces every cap including the risk budget and may reduce or block the size the entry resolved but never grow it.",
           "disposition": "unreached",
-          "why": "the caps are asserted by the limits claims and never recomputing is not asserted by this verdict"
+          "why": "the caps are asserted by the limits claims and never growing a size is asserted by RiskGateTests rather than by this verdict"
         },
         {
           "clause": "The only thing that may open a position.",
@@ -1465,7 +1465,7 @@
       "subject": "P7",
       "clauses": [
         {
-          "clause": "NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser, MinuteBackfiller The morning screen saying why a slot that never ran did not.",
+          "clause": "NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser, MinuteBackfiller, EntrySizer The morning screen saying why a slot that never ran did not.",
           "disposition": "reaches"
         },
         {

@@ -579,15 +579,23 @@ public sealed class PinnedConstantsCheck
                 && LossCause.OneRInReturn(giveUpDistance: 5m, triggerPrice: 100m) == 0.05m
                 && LossClassifier.HorizonDays == 10,
             "LossCause.AftermathOf at one R, OneRInReturn over the trigger, and LossClassifier.HorizonDays"));
-        // The order prices, which this table stated from 4.15 and nothing read until 4.18: PlanBuilder
-        // copied the screening pair into the plan and the row rested under a priced exemption. Pinned
-        // against the derivation, both sides, with the offset the row states.
+        // The order prices, which this table stated from 4.15 and nothing read until 4.18, and which
+        // resolve at the entry minute from 7.8. Pinned against the entry rule's own figures: the three
+        // candle widths and the two band edges, the chase limit, the stop switch, and the ceiling on
+        // each side of the range where 5% starts to bind.
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Trigger and stop derivation",
-            table.Cell("Trigger and stop derivation").Contains("regular-hours extremes, read off its daily bar, with the give-up point 0.1 ADR beyond its extreme, both sides", StringComparison.Ordinal),
-            OrderPrices.GiveUpOffsetInRanges == 0.1m
-                && OrderPrices.For(SetupDirection.Long, 104m, 101m, 5m) is { Trigger: 104m, GiveUp: 100.5m }
-                && OrderPrices.For(SetupDirection.Short, 52m, 49m, 2.5m) is { Trigger: 49m, GiveUp: 52.25m },
-            "OrderPrices.GiveUpOffsetInRanges and OrderPrices.For on both sides"));
+            table.Cell("Trigger and stop derivation").Contains("one, five or fifteen minute candle, the widths changing at fifteen and sixty minutes", StringComparison.Ordinal)
+                && table.Cell("Trigger and stop derivation").Contains("more than 3% off the session's extreme", StringComparison.Ordinal)
+                && table.Cell("Trigger and stop derivation").Contains("more than 2%", StringComparison.Ordinal),
+            EntryRule.CandleMinutesAt(14) == 1
+                && EntryRule.CandleMinutesAt(15) == 5
+                && EntryRule.CandleMinutesAt(59) == 5
+                && EntryRule.CandleMinutesAt(60) == 15
+                && EntryRule.ChaseLimit == 0.03m
+                && EntryRule.StopSwitchAbove == 0.02m
+                && EntryRule.CeilingFor(0.06m) == 0.03m
+                && EntryRule.CeilingFor(0.14m) == 0.05m,
+            "EntryRule's candle bands, ChaseLimit, StopSwitchAbove and CeilingFor on both sides of 10%"));
         pins.Add(Pin.Text("ARCHITECTURE.html, authored parameters, Lateness bound",
             table.Cell("Lateness bound").Contains("24 hours", StringComparison.Ordinal),
             MeasurementParameters.LatenessBoundHours == 24, "MeasurementParameters.LatenessBoundHours"));

@@ -10,7 +10,8 @@
 -- would make `plan_audit`'s planned-against-executed comparison a comparison of two of this lab's
 -- own numbers rather than of an intention against an outcome, and the watchlist published at 18:40
 -- would have nothing to show ten hours before the sizing happened.
--- see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+-- see: Order prices and the share count resolve at the entry minute
+-- (the plan-size entry this file was written under was superseded at 7.8, when the plan came to carry the rule)
 --
 -- <b>`live_session` is a column rather than an inference.</b> A plan written on the evening of N is
 -- live in session N+1, and every reader that has to know which session a plan belongs to would

@@ -3064,3 +3064,33 @@ Why:  The row builds a component and names it, on the rule that `Schedule.Checkp
 Was:  "`admit-signals` was the fourth and has the Saturday slot above from 7.4. The three that stay operator verbs:" and "`slot-roster` excludes the three by name and holds this table to them,"
 Now:  "`admit-signals` was the fourth and has the Saturday slot above from 7.4. The three that stay operator verbs, and a fourth from 7.7:" and "`slot-roster` excludes the four by name and holds this table to them,"
 Why:  `backfill-minutes` is an operator verb from 7.7, a one-time purchase no slot may take, and the table gains its row.
+
+### 2026-09-11 — ARCHITECTURE.html — cites Order prices and the share count resolve at the entry minute
+Was:  PlanBuilder "One committed plan per capped candidate per live version, sized here. The size is the same under every version ..."; TriggerResolver "Decides whether a committed trigger traded, minute by minute"; RiskGate "Enforces every cap and may reduce or block a plan's size, never recompute it."; "The 59 components are listed by layer,"; the P7 Builds cell ending "MinuteBackfiller"
+Now:  PlanBuilder "... carrying the entry rule and the ceiling its stop may not exceed. The rule is the same under every version ..."; TriggerResolver "Decides minute by minute whether each plan triggered: the flush into the hourly zone and the break after it on a plan carrying the rule"; a new EntrySizer row; RiskGate "Enforces every cap including the risk budget and may reduce or block the size the entry resolved but never grow it."; "The 60 components"; the P7 cell ending "MinuteBackfiller, EntrySizer"
+Why:  The plan carries the rule from 7.8 and the size resolves at the entry minute, in the stage between the resolver and the gate.
+
+### 2026-09-11 — ARCHITECTURE.html — cites The entry ceiling is the tighter of half the daily range and 5%
+Was:  The limits, "Risk per trade ... Position size follows from this and the distance to the give-up point." and "Give-up distance | At most half the daily range | ... Applied at detection by <code>exit-tight</code> rather than at trigger."; the RiskGate box, "Four of the six limits are applied here and the other two are named ... (see: Two of the six limits are not applied at trigger, and which two is stated rather than left to the code)"; the authored parameters, "Give-up distance cap ... so it belongs to the execution family only" and "Trigger and stop derivation | From the final pullback session's regular-hours extremes, read off its daily bar, with the give-up point 0.1 ADR beyond its extreme, both sides"
+Now:  Risk per trade enforced by the gate against the distance the entry minute resolves; "Give-up distance | At most half the daily range, and never more than 5% | ... applied at the entry minute ..."; the RiskGate box, "Five of the six limits are applied here and the sixth is named"; the give-up distance cap row naming it generation 0's `exit-tight` at detection; and the derivation row stating the entry minute's rule, with the evening's derivation kept beneath it as generation 0's history
+Why:  Both limits the gate kept away from the trigger apply at the entry from 7.8, and the order prices resolve at the entry minute.
+
+### 2026-09-11 — SCHEMA.md — cites Order prices and the share count resolve at the entry minute
+Was:  `trade_plan`'s `trigger_price`, `give_up_price`, `give_up_distance` as "TEXT", `shares` as "INTEGER, `> 0` | The size, which is PlanBuilder's and not RiskGate's", `risk_at_stake` as "TEXT"; the order section's "No give-up price is copied here ... lives in `trade_plan`" and "Two of the six limits are not applied by RiskGate and both are named rather than absent. Risk per trade is what the plan was sized from, so it is asserted ..."; `plan_audit`'s third pair "RiskGate may reduce a size and may never recompute one ... (see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it)"
+Now:  The five figures nullable and present exactly on a plan written with the evening's prices, `entry_rule` and `stop_ceiling` added; a new section for `entry_resolution` and its store-level row; `order_run` gaining `reduced_risk_per_trade` and `refused_at_entry`; the one give-up price being the plan's or the entry resolution's; "Five of the six limits are applied by RiskGate from 7.8, and the sixth is named where it is"; the third pair as the size the entry resolved against the size the gate placed
+Why:  Migration 067, and the two superseded entries' citations repointed.
+
+### 2026-09-11 — BUILD_PLAN.md — cites Order prices and the share count resolve at the entry minute
+Was:  7.8's row "... resolve at the entry minute through a table keyed on the plan, because a plan row is immutable after its session"; 4.16's and 4.6's rows each ending "(see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it)"
+Now:  "... through a table keyed on the plan, written by EntrySizer, because ..."; the two landed rows citing the entry-minute decision "which superseded the entry this row was written under at 7.8"
+Why:  The row names the component it builds, and a citation to a superseded entry outside a record fails `no-superseded-citation`.
+
+### 2026-09-11 — RUNBOOK.md — cites Order prices and the share count resolve at the entry minute
+Was:  18:30, "`plans`, one committed instruction per capped candidate: trigger, give-up point and a share count. PlanBuilder sizes and the size is the plan's; RiskGate may reduce or block it at trigger and never recomputes it."; 21:05, "`resolve-triggers`, ... deciding whether each plan resting in it was touched and in which minute. It spends no vendor call."
+Now:  18:30, the entry rule and the ceiling with no price and no size; 21:05, `resolve-triggers` and then `size-entries`, which resolves each entry's stop and size
+Why:  The sizer is the resolve slot's second verb, so the night gains no task.
+
+### 2026-09-11 — BUILD_PLAN.md — cites Plans are resting orders and fills go in time order when the caps bind
+Was:  "None of the twenty rows above fall due at 4.17"
+Now:  "None of the twenty-one rows above fall due at 4.17", with a row raised at 7.8 and due at 7.11: four stages key a night's plans by setup rather than by plan and would throw once two versions plan one setup
+Why:  The survey 7.8 ran found it, nothing live has two versions yet, and 7.11 is where versions of generation 1 first become possible.

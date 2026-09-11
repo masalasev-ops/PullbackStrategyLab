@@ -2165,10 +2165,10 @@ public sealed partial class ArchitectureConformanceCheck
     /// One row of "The limits", read against the constant that holds it.
     ///
     /// <b>Each row says both what the number is and what the component does with it</b>, because a
-    /// cap stated and not applied is the shape this table would otherwise be free to take: four of
-    /// the six are enforced at trigger, and the other two are enforced elsewhere and say where
-    /// (see: Two of the six limits are not applied at trigger, and which two is stated rather than
-    /// left to the code).
+    /// cap stated and not applied is the shape this table would otherwise be free to take. From 7.8
+    /// five of the six are enforced by the gate at the entry, and the give-up distance is the entry
+    /// ceiling, enforced by the stage that resolves the stop, which the row says
+    /// (see: The give-up gate is retired at selection and reborn as the entry-time ceiling).
     ///
     /// The value is read out of the document's own cell rather than compared against a number
     /// repeated here, so this check and `pinned-constants` are asking different questions of the same
@@ -2182,11 +2182,17 @@ public sealed partial class ArchitectureConformanceCheck
 
         bool applied = limit switch
         {
+            // From 7.8 risk per trade is a cap the gate enforces, and the give-up distance is the
+            // entry ceiling the sizer applies to the stop; generation 0's `exit-tight` still screens
+            // at half a range at detection until the switch night, which the row says too.
             "Risk per trade" => stated.Contains("0.75%", StringComparison.Ordinal)
                 && PositionSizing.RiskPerTrade == 0.0075m
-                && gate.Contains("plannedShares", StringComparison.Ordinal),
+                && gate.Contains("RiskPerTrade", StringComparison.Ordinal)
+                && gate.Contains("riskBudget", StringComparison.Ordinal),
             "Give-up distance" => stated.Contains("half the daily range", StringComparison.Ordinal)
-                && RiskCaps.GiveUpDistanceRanges == 0.5m
+                && stated.Contains("5%", StringComparison.Ordinal)
+                && EntryRule.CeilingFor(0.06m) == 0.03m
+                && EntryRule.CeilingFor(0.14m) == 0.05m
                 && LongPullbackRules.GiveUpRanges == RiskCaps.GiveUpDistanceRanges
                 && !gate.Contains("GiveUpDistanceRanges", StringComparison.Ordinal),
             "Position size" => stated.Contains("35%", StringComparison.Ordinal)
@@ -2206,8 +2212,8 @@ public sealed partial class ArchitectureConformanceCheck
 
         string where = limit switch
         {
-            "Risk per trade" => "PlanBuilder sizes from it at 18:30 and RiskGate asserts rather than enforces it",
-            "Give-up distance" => "exit-tight applies it at detection and RiskGate deliberately does not",
+            "Risk per trade" => "EntrySizer sizes from it at the entry minute and RiskGate enforces it as a cap",
+            "Give-up distance" => "EntrySizer applies the tighter of half the range and 5% to the stop the entry resolved, and RiskGate deliberately does not",
             _ => "RiskGate applies it at trigger",
         };
 

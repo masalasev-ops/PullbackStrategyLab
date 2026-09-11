@@ -75,8 +75,10 @@ public sealed record WatchlistView(
 /// than rendered empty because a blank column reads as a figure the lab computed and got nothing for.
 /// That is no longer where a size comes from: PlanBuilder writes one at 18:30 and this page publishes
 /// at 18:40, so the column has a source ten minutes before the page runs, and a page that went on
-/// omitting it would understate what the lab committed to.
-/// see: The plan carries its own size, and RiskGate reduces or blocks it but never recomputes it
+/// omitting it would understate what the lab committed to. **From 7.8 a plan carrying the rule has no
+/// count until its entry minute**, so the column is empty on such a row and the price columns show the
+/// screen's pair: what the evening committed to is the rule, and the page does not invent a size for it.
+/// see: Order prices and the share count resolve at the entry minute
 ///
 /// <b>What it is not is the size that will be placed.</b> RiskGate may reduce it at the trigger or
 /// block the order outright, hours after anybody reads this screen, so the column is the intention

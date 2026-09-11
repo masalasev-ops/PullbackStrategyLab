@@ -24,6 +24,7 @@ public sealed class MigrationRowSurvivalTests
     private const int BeforeTheGeometryRebuild = 30;
     private const int BeforeTheRunLogRebuild = 61;
     private const int BeforeTheRetiredBaseline = 64;
+    private const int BeforeThePlanCarriesARule = 66;
 
     [Fact]
     public void Migration_005_rebuilds_both_tables_and_loses_no_row()
@@ -282,6 +283,63 @@ public sealed class MigrationRowSurvivalTests
             VALUES ('V0b', 0, 'baseline', 'a second', 'the reference', 1802,
                     'effective_paired_setup_observations', 'open', NULL, '2026-09-11T23:00:00.000Z');
             """));
+    }
+
+    /// <summary>
+    /// Migration 067 rebuilds <c>trade_plan</c> so a plan can carry the rule, against a plan an order
+    /// and a resolution point at, and every existing plan is copied as one written with the evening's
+    /// prices, figures and all.
+    /// </summary>
+    [Fact]
+    public void Migration_067_rebuilds_the_plan_that_orders_point_at_and_keeps_every_evening_plan_as_one()
+    {
+        using var root = new TemporaryDirectory();
+        var factory = new StoreConnectionFactory(new PullbackStrategyLabPaths(root.Path));
+        var runner = new MigrationRunner(factory);
+
+        using SqliteConnection connection = factory.OpenWrite();
+        runner.Apply(connection, throughVersion: BeforeThePlanCarriesARule);
+        TestVersions.SeedBaseline(connection);
+
+        Execute(connection, """
+            INSERT INTO security (ticker, name, exchange, type, first_seen) VALUES ('AAA', 'AAA', 'NASDAQ', 'Common Stock', '2026-08-01');
+            INSERT INTO setup (setup_id, as_of, ticker, direction, check_results, passed_all, capped_out)
+            VALUES ('s1', '2026-08-24', 'AAA', 'long', '[]', 1, 0);
+            INSERT INTO trade_plan (
+                plan_id, setup_id, variant_id, as_of, live_session, ticker, direction,
+                trigger_price, give_up_price, give_up_distance, shares,
+                equity, risk_fraction, risk_budget, risk_at_stake, observed_at)
+            VALUES ('s1@V0', 's1', 'V0', '2026-08-24', '2026-08-25', 'AAA', 'long',
+                '50.0000', '45.0000', '5.0000', 150,
+                '100000.0000', '0.007500', '750.0000', '750.0000', '2026-08-24T22:30:00.000Z');
+            INSERT INTO trigger_resolution (
+                plan_id, setup_id, variant_id, live_session, ticker, direction, outcome,
+                touched_at, minutes_walked, unresolved_because, observed_at)
+            VALUES ('s1@V0', 's1', 'V0', '2026-08-25', 'AAA', 'long', 'touched',
+                '2026-08-25T13:35:00.000Z', 390, NULL, '2026-08-26T01:05:00.000Z');
+            INSERT INTO trade_order (
+                order_id, plan_id, setup_id, variant_id, live_session, ticker, direction, triggered_at, status,
+                planned_shares, shares, risk_at_stake, bound_by, blocked_because, observed_at)
+            VALUES ('s1@V0', 's1@V0', 's1', 'V0', '2026-08-25', 'AAA', 'long', '2026-08-25T13:35:00.000Z', 'placed',
+                150, 150, '750.0000', NULL, NULL, '2026-08-26T01:10:00.000Z');
+            """);
+
+        MigrationResult after = runner.Apply(connection);
+        Assert.Contains("067-the-plan-carries-a-rule.sql", after.Applied);
+
+        Assert.Equal(1, Count(connection, "trade_plan"));
+        Assert.Equal(1, Count(connection, "trigger_resolution"));
+        Assert.Equal(1, Count(connection, "trade_order"));
+        Assert.Empty(MigrationRunner.ForeignKeyViolations(connection));
+
+        Assert.Equal("evening-prices", Scalar(connection, "SELECT entry_rule FROM trade_plan WHERE plan_id = 's1@V0';"));
+        Assert.Equal("50.0000", Scalar(connection, "SELECT trigger_price FROM trade_plan WHERE plan_id = 's1@V0';"));
+        Assert.Equal(150L, Scalar(connection, "SELECT shares FROM trade_plan WHERE plan_id = 's1@V0';"));
+        Assert.Equal(DBNull.Value, Scalar(connection, "SELECT stop_ceiling FROM trade_plan WHERE plan_id = 's1@V0';"));
+
+        // And the store refuses a plan that half carries the rule: a ceiling with the evening's prices.
+        Assert.Throws<SqliteException>(() => Execute(connection,
+            "UPDATE trade_plan SET stop_ceiling = '0.025' WHERE plan_id = 's1@V0';"));
     }
 
     private static void Execute(SqliteConnection connection, string sql)

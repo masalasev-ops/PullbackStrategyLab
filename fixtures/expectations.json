@@ -9883,18 +9883,18 @@
     {
       "id": "store.schemaVersion",
       "tier": "DERIVED",
-      "value": "66",
+      "value": "67",
       "checkpoint": "5.4",
       "producedBy": "derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 039-anchored-vwap.sql, and a store the runner has taken all the way through reports that number as its user_version. Re-derived at 4.4, which adds anchored_vwap and vwap_run. Re-derived at 4.7, which adds 043-fill-and-position.sql and 044-vwap-run-session-average.sql.",
-      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run. 53 from 5.3, and 54 from 6.10, which rebuilds intraday_fetch for the width the night ran at and for what its asking left the store holding, the two columns the outcome now turns on. Re-derived at 6.10 the same way it always is, by reading the migration directory: the highest-numbered file is 054-intraday-fetch-window.sql and a store the runner has taken all the way through reports 54 as its user_version. Moved from 54 to 55 at 6.2 by migration 055 landing: it creates signal_definition, which is the signal library as data. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 055-signal-definition.sql and a store the runner has taken all the way through reports 55 as its user_version.Moved from 55 to 56 at 6.3 by migration 056 landing: it creates twin_pair and twin_run. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 056-twin-pair.sql and a store the runner has taken all the way through reports 56 as its user_version. Moved from 56 to 57 at 6.4 by migration 057 landing: it creates pack_version and pack_run. Re-derived the same way it always is, by reading the migration directory. Was 57 until 6.5. Migration 058 creates `proposal`, so the store this build is written against is one ahead of the figure recorded at 5.4. Was 58 until 6.6. Migration 059 creates `replay_result` and rebuilds `proposal` for the second kind the registry accepts. Was 59 until 6.7. Migration 060 creates `acceptance_reading` and `acceptance_run` and rebuilds `variant_score` for the two denominators each mean was taken over and the two win counts the diagnostic needs. Was 60 until 6.8. Migration 061 rebuilds `scoreboard` for the state a panel reads badly in and adds `variant.proposal_id`, which is the join band 3's hit rate is defined by. Was 61 until 7.1. Migration 062 rebuilds `run_log` so a slot that did not run can be recorded with its slot, the session it is about and which of four reasons it was. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 062-run-log-did-not-run.sql. Was 62 until 7.2. Migration 063 creates `check_definition`, the gate lists as data with the sessions each check was in force for. Re-derived by reading the migration directory: the highest-numbered file is 063-check-definition.sql. Was 63 until 7.3. Migration 064 creates `below_floor`, the names a forward night examined and did not record, kept with their verdicts. Re-derived by reading the migration directory: the highest-numbered file is 064-below-floor.sql. Was 64 until 7.6. Migration 065 rebuilds `variant` to admit `retired`, the status the act closing a generation writes on its baseline. Re-derived by reading the migration directory: the highest-numbered file is 065-variant-retired.sql. Was 65 until 7.7. Migration 066 creates the calibration minute tables. Re-derived by reading the migration directory: the highest-numbered file is 066-calibration-minutes.sql."
+      "note": "Derived by hand from the migration filenames and then run. The highest-numbered file under src/PullbackStrategyLab.Data/Migrations is 036-calibration-measurement.sql, which adds calibration_control_setup and calibration_forward_return for the reconstructed read. Moved from 35 on 2026-08-31 by that migration landing: the figure is a fact about how many migrations exist, so it moves whenever one is added and the reason it moved is the migration itself. That is the whole of its value as an expectation, and re-deriving it is reading a directory listing rather than re-running the engine. Moved from 39 to 40 at 4.16: migration 040 creates trade_plan and plan_run at 4.16. Moved from 40 to 41 at 4.5: migration 041 creates trigger_resolution and trigger_run and adds the index the session-wide replay reads on. Moved from 41 to 42 at 4.6: migration 042 creates trade_order and order_run. Moved from 42 to 44 at 4.7 by those two migrations landing: 043 creates position, fill and fill_run, and 044 drops the two vwap_run columns that counted an annotation which stopped being written. Moved from 44 to 45 at 4.8 by migration 045 landing: it rebuilds fill for a third leg, adds the trim and arming columns to position, drops the two fill_run columns that counted exits the broker no longer prices, and creates manage_run. Moved from 45 to 46 at 4.9 by migration 046 landing: it creates trade, plan_audit and the two run rows that go with them. Moved from 46 to 47 at 4.10 by migration 047 landing: it creates loss_class and loss_run. Moved from 47 to 48 at 5.0(c) by migration 048 landing: it rebuilds loss_class for the second aftermath figure, exit_return_signed, with the constraint that it is present only beside the first. Moved from 48 to 49 at 5.8 by migration 049 landing: it rebuilds scoreboard with computed_at in the key, so a rebuilt date is a new generation of panels beside the old. Moved from 49 to 50 at 5.8 by migration 050 landing: it rebuilds forward_return with nullable excursions and the reason beside them, so an unmeasurable path is no longer stored as nought. 51 from 5.1, which creates the version register and rebuilds seven tables so everything below the plan keys on the plan rather than on the setup. 52 from 5.2, which rebuilds variant for the moved threshold a selection version is and creates variant_score and score_run. 53 from 5.3, and 54 from 6.10, which rebuilds intraday_fetch for the width the night ran at and for what its asking left the store holding, the two columns the outcome now turns on. Re-derived at 6.10 the same way it always is, by reading the migration directory: the highest-numbered file is 054-intraday-fetch-window.sql and a store the runner has taken all the way through reports 54 as its user_version. Moved from 54 to 55 at 6.2 by migration 055 landing: it creates signal_definition, which is the signal library as data. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 055-signal-definition.sql and a store the runner has taken all the way through reports 55 as its user_version.Moved from 55 to 56 at 6.3 by migration 056 landing: it creates twin_pair and twin_run. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 056-twin-pair.sql and a store the runner has taken all the way through reports 56 as its user_version. Moved from 56 to 57 at 6.4 by migration 057 landing: it creates pack_version and pack_run. Re-derived the same way it always is, by reading the migration directory. Was 57 until 6.5. Migration 058 creates `proposal`, so the store this build is written against is one ahead of the figure recorded at 5.4. Was 58 until 6.6. Migration 059 creates `replay_result` and rebuilds `proposal` for the second kind the registry accepts. Was 59 until 6.7. Migration 060 creates `acceptance_reading` and `acceptance_run` and rebuilds `variant_score` for the two denominators each mean was taken over and the two win counts the diagnostic needs. Was 60 until 6.8. Migration 061 rebuilds `scoreboard` for the state a panel reads badly in and adds `variant.proposal_id`, which is the join band 3's hit rate is defined by. Was 61 until 7.1. Migration 062 rebuilds `run_log` so a slot that did not run can be recorded with its slot, the session it is about and which of four reasons it was. Re-derived the same way it always is, by reading the migration directory: the highest-numbered file is 062-run-log-did-not-run.sql. Was 62 until 7.2. Migration 063 creates `check_definition`, the gate lists as data with the sessions each check was in force for. Re-derived by reading the migration directory: the highest-numbered file is 063-check-definition.sql. Was 63 until 7.3. Migration 064 creates `below_floor`, the names a forward night examined and did not record, kept with their verdicts. Re-derived by reading the migration directory: the highest-numbered file is 064-below-floor.sql. Was 64 until 7.6. Migration 065 rebuilds `variant` to admit `retired`, the status the act closing a generation writes on its baseline. Re-derived by reading the migration directory: the highest-numbered file is 065-variant-retired.sql. Was 65 until 7.7. Migration 066 creates the calibration minute tables. Re-derived by reading the migration directory: the highest-numbered file is 066-calibration-minutes.sql. Was 66 until 7.8. Migration 067 rebuilds trade_plan to carry the rule and creates entry_resolution. Re-derived by reading the migration directory: the highest-numbered file is 067-the-plan-carries-a-rule.sql."
     },
     {
       "id": "store.tablesKeyedOnThePlan",
       "tier": "DERIVED",
-      "value": "7",
+      "value": "8",
       "checkpoint": "5.1",
       "producedBy": "derived by hand from SCHEMA.md's Trading section before the replay was run, then run against the built store's own catalogue. The fan-out gives trade_plan its own plan_id and points everything below it at that, and SCHEMA declares six such tables: trigger_resolution, trade_order, position, fill, trade and plan_audit. With trade_plan itself that is 7.",
-      "note": "How many tables key on the plan rather than on the setup, which is the whole of what the fan-out at 5.1 changed. It is what makes two versions selecting one stock two books: every one of those six carried a uniqueness constraint on setup_id before 051 and would have refused the second version's row. The figure moves when a table joins or leaves the chain below the plan, and it is read from the store's catalogue rather than from the migration text, so a later rebuild dropping the column moves it whatever the file that created it says"
+      "note": "How many tables key on the plan rather than on the setup, which is the whole of what the fan-out at 5.1 changed. It is what makes two versions selecting one stock two books: every one of those six carried a uniqueness constraint on setup_id before 051 and would have refused the second version's row. The figure moves when a table joins or leaves the chain below the plan, and it is read from the store's catalogue rather than from the migration text, so a later rebuild dropping the column moves it whatever the file that created it says Was 7 until 7.8: entry_resolution is keyed on the plan, on trigger_resolution's precedent. Re-derived by hand from SCHEMA's Trading section, where it is declared with grain \"plan\"."
     },
     {
       "id": "tiers.falling",
@@ -10457,18 +10457,18 @@
     {
       "id": "catalogue.components",
       "tier": "DERIVED",
-      "value": "59",
+      "value": "60",
       "checkpoint": "4.14",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
-      "note": "rows in the component catalogue Was 54 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 55 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 56 until 7.5, which adds GenerationOneDetector beside the two detectors it replaces on the switch night. Was 57 until 7.6, which adds GenerationCloser, the act that closes a generation. Was 58 until 7.7, which adds MinuteBackfiller."
+      "note": "rows in the component catalogue Was 54 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 55 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 56 until 7.5, which adds GenerationOneDetector beside the two detectors it replaces on the switch night. Was 57 until 7.6, which adds GenerationCloser, the act that closes a generation. Was 58 until 7.7, which adds MinuteBackfiller. Was 59 until 7.8, which adds EntrySizer."
     },
     {
       "id": "catalogue.componentTypes",
       "tier": "DERIVED",
-      "value": "52",
+      "value": "53",
       "checkpoint": "4.14",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
-      "note": "of those, the ones that are a type rather than a screen Was 47 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 48 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 49 until 7.5, on the same component. Was 50 until 7.6, on the same component. Was 51 until 7.7, on the same component."
+      "note": "of those, the ones that are a type rather than a screen Was 47 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 48 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 49 until 7.5, on the same component. Was 50 until 7.6, on the same component. Was 51 until 7.7, on the same component. Was 52 until 7.8, on the same component."
     },
     {
       "id": "catalogue.screens",
@@ -10649,10 +10649,10 @@
     {
       "id": "authored.citingADecision",
       "tier": "DERIVED",
-      "value": "16",
+      "value": "17",
       "checkpoint": "4.15",
       "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. tools/derive-authored-parameters.py restates it in a different language, reading the table with the standard library's HTML parser rather than with a regex and splitting rows from the markup rather than through the C# helper, so it shares no code with the figures under test. It is a figure about the document rather than about the fixture's data, on the precedent catalogue.unplacedInAnyBuildsRow sets at 4.14 and store.schemaVersion before it.",
-      "note": "of the filled rows, the ones whose basis cites a decision by name. A row filled without a citation states a value with nowhere to read the reasoning, which is the shape 4.15 exists to avoid, so it is counted rather than assumed. The eleven are the ten answered at 4.15 and the hourly grid answered at 4.4; the thirty-four rows below them predate the practice and are not expected to move Moved from 11 to 12 at 4.8, the new row citing the decision that answers it. Moved 12 to 13 at 5.0(b) on 2026-09-03: the Execution variant sample row gained a citation when it was restated as 200 paired trades converted at the measured trade-level design effect, which is the sitting's decision and is cited at the point of change. Re-derived through tools/derive-authored-parameters.py, which read 13. Moved 13 to 14 at the phase 6 plan on 2026-09-05: the Twin-pair threshold row gained a citation when its review point was rewritten from a phase to a condition, which is a decision taken at the point of change rather than a value moving. Was 14 until 6.5, which authors one more decision citation into the replayed corpus. Moved 15 to 16 at 7.0 on 2026-09-11: the Risk per trade row gained a citation when `SOURCES.md` found its basis to be the trader's own written sentence, which is a citation added at the point of change rather than a value moving. Re-derived through tools/derive-authored-parameters.py, which read 16 before the expectation was edited."
+      "note": "of the filled rows, the ones whose basis cites a decision by name. A row filled without a citation states a value with nowhere to read the reasoning, which is the shape 4.15 exists to avoid, so it is counted rather than assumed. The eleven are the ten answered at 4.15 and the hourly grid answered at 4.4; the thirty-four rows below them predate the practice and are not expected to move Moved from 11 to 12 at 4.8, the new row citing the decision that answers it. Moved 12 to 13 at 5.0(b) on 2026-09-03: the Execution variant sample row gained a citation when it was restated as 200 paired trades converted at the measured trade-level design effect, which is the sitting's decision and is cited at the point of change. Re-derived through tools/derive-authored-parameters.py, which read 13. Moved 13 to 14 at the phase 6 plan on 2026-09-05: the Twin-pair threshold row gained a citation when its review point was rewritten from a phase to a condition, which is a decision taken at the point of change rather than a value moving. Was 14 until 6.5, which authors one more decision citation into the replayed corpus. Moved 15 to 16 at 7.0 on 2026-09-11: the Risk per trade row gained a citation when `SOURCES.md` found its basis to be the trader's own written sentence, which is a citation added at the point of change rather than a value moving. Re-derived through tools/derive-authored-parameters.py, which read 16 before the expectation was edited. Was 16 until 7.8, when the give-up distance cap row came to cite the entry ceiling decision. tools/derive-authored-parameters.py read 17 before the expectation was edited."
     },
     {
       "id": "plans.candidates",
@@ -11665,10 +11665,10 @@
     {
       "id": "night.observableStages",
       "tier": "DERIVED",
-      "value": "41",
+      "value": "42",
       "checkpoint": "5.5",
       "producedBy": "counted by hand off the verbs in RUNBOOK's two schedule tables, then run. Distinct verbs, because a report looks in run_log for a stage rather than for a pass: spreads, universe-build, actions, daily-bars, backfill, index-bars, indicators, scans, tiers, sectors, clusters, regime, detect-long, detect-short, vectorize, journal, controls, cap, resolve-variants, plans, publish-watchlist, intraday-bars, vwap, resolve-triggers, orders, fills, manage, trades, audit, forward-returns, losses, score-variants, scoreboard, ceiling. snapshot-db is excluded because it takes no run logger and leaves no run entry.",
-      "note": "Moved from 34 to 35 at 6.3 by the same slot: the finder takes a RunLogger, so unlike snapshot-db it writes a run entry and a report can say whether it ran. Moved from 35 to 36 at 6.4 by the same slot: the packer takes a RunLogger, so it writes a run entry and a report can say whether it ran. Was 36 until 6.5, which adds `ask-researcher`. It writes a run entry like every other observable stage. Was 37 until 6.6, which adds `screen-proposals`. Was 38 until 6.7, which adds `settle-variants`. It takes a RunLogger like every other observable stage, so a report can say whether it ran. Was 39 until 7.1, which adds `reconcile-night` as the second verb of the `index` slot. It takes a RunLogger like every other observable stage, so a report can say whether it ran, and the slot count does not move because the stage joins a slot rather than making one. Was 40 until 7.4. admit-signals takes a RunLogger like every other observable stage and now has a slot."
+      "note": "Moved from 34 to 35 at 6.3 by the same slot: the finder takes a RunLogger, so unlike snapshot-db it writes a run entry and a report can say whether it ran. Moved from 35 to 36 at 6.4 by the same slot: the packer takes a RunLogger, so it writes a run entry and a report can say whether it ran. Was 36 until 6.5, which adds `ask-researcher`. It writes a run entry like every other observable stage. Was 37 until 6.6, which adds `screen-proposals`. Was 38 until 6.7, which adds `settle-variants`. It takes a RunLogger like every other observable stage, so a report can say whether it ran. Was 39 until 7.1, which adds `reconcile-night` as the second verb of the `index` slot. It takes a RunLogger like every other observable stage, so a report can say whether it ran, and the slot count does not move because the stage joins a slot rather than making one. Was 40 until 7.4. admit-signals takes a RunLogger like every other observable stage and now has a slot. Was 41 until 7.8, which adds size-entries as the resolve slot's second verb. Recounted by hand off RUNBOOK's 21:05 row, which now names both verbs."
     },
     {
       "id": "night.unobservable",
@@ -13710,6 +13710,214 @@
       "checkpoint": "7.7",
       "producedBy": "derived by hand before it was run, from the decision that a one-time backfill is outside the nightly ceiling",
       "note": "The calibration minute backfill over the fixture, from 7.7. The run row says the day's total does not see these calls."
+    },
+    {
+      "id": "entry.touched",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The long and the short, each broken after its flush."
+    },
+    {
+      "id": "entry.notTouched",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. NRC flushed and never reclaimed."
+    },
+    {
+      "id": "entry.ordersPlaced",
+      "tier": "DERIVED",
+      "value": "2",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. Both entries fit every cap once position size has reduced them."
+    },
+    {
+      "id": "entry.orderOfPlacement",
+      "tier": "DERIVED",
+      "value": "LNG,SHT",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. In the order the triggers happened, 09:34 and 09:35, which is the contention rule."
+    },
+    {
+      "id": "entry.noReclaim.outcome",
+      "tier": "DERIVED",
+      "value": "not_touched",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. Every minute after the flush makes a lower high, so no previous candle's high is reached."
+    },
+    {
+      "id": "entry.noReclaim.orders",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. A name whose reclaim never occurs writes no order."
+    },
+    {
+      "id": "entry.long.minute",
+      "tier": "DERIVED",
+      "value": "09:34",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The first minute after the 09:32 flush to reach the previous candle's high."
+    },
+    {
+      "id": "entry.long.candleMinutes",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. Inside the first fifteen minutes, so one-minute candles."
+    },
+    {
+      "id": "entry.long.armedAt",
+      "tier": "DERIVED",
+      "value": "09:32",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The low of 99.80 reaches the zone at 100."
+    },
+    {
+      "id": "entry.long.price",
+      "tier": "DERIVED",
+      "value": "100.2000",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The high of 09:33, the previous candle."
+    },
+    {
+      "id": "entry.long.stopBasis",
+      "tier": "DERIVED",
+      "value": "session-extreme",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. 0.50 from the entry is 0.50%, inside the 2% switch."
+    },
+    {
+      "id": "entry.long.stop",
+      "tier": "DERIVED",
+      "value": "99.7000",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The session's low through 09:34."
+    },
+    {
+      "id": "entry.long.sessionExtremeAtEntry",
+      "tier": "DERIVED",
+      "value": "99.7000",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The low through the entry minute. 09:40 later prints 98.00, and the stop does not use it: the look-ahead test on the long side."
+    },
+    {
+      "id": "entry.long.shares",
+      "tier": "DERIVED",
+      "value": "1500",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The $750 budget over 0.50."
+    },
+    {
+      "id": "entry.long.orderShares",
+      "tier": "DERIVED",
+      "value": "349",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The 35% position cap buys 349 at 100.20."
+    },
+    {
+      "id": "entry.long.boundBy",
+      "tier": "DERIVED",
+      "value": "position-size",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The cap that reduced it."
+    },
+    {
+      "id": "entry.short.minute",
+      "tier": "DERIVED",
+      "value": "09:35",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The first minute after the 09:32 flush to reach the previous candle's low."
+    },
+    {
+      "id": "entry.short.candleMinutes",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. Inside the first fifteen minutes."
+    },
+    {
+      "id": "entry.short.armedAt",
+      "tier": "DERIVED",
+      "value": "09:32",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The high of 50.20 reaches the zone at 50."
+    },
+    {
+      "id": "entry.short.price",
+      "tier": "DERIVED",
+      "value": "50.0000",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The low of 09:34, the previous candle."
+    },
+    {
+      "id": "entry.short.stopBasis",
+      "tier": "DERIVED",
+      "value": "session-extreme",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. 0.30 from the entry is 0.60%, inside the 2% switch."
+    },
+    {
+      "id": "entry.short.stop",
+      "tier": "DERIVED",
+      "value": "50.3000",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The session's high through 09:35."
+    },
+    {
+      "id": "entry.short.sessionExtremeAtEntry",
+      "tier": "DERIVED",
+      "value": "50.3000",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The high through the entry minute. 09:40 later prints 52.00, and the stop does not use it: the look-ahead test on the short side."
+    },
+    {
+      "id": "entry.short.shares",
+      "tier": "DERIVED",
+      "value": "2500",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The $750 budget over 0.30."
+    },
+    {
+      "id": "entry.short.orderShares",
+      "tier": "DERIVED",
+      "value": "700",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The 35% position cap buys 700 at 50.00."
+    },
+    {
+      "id": "entry.short.boundBy",
+      "tier": "DERIVED",
+      "value": "position-size",
+      "checkpoint": "7.8",
+      "producedBy": "derived by hand before it was run, from EntryRuleCases' authored minutes and the rule as SOURCES.md and the decisions state it: every prior hourly close is the zone price, so both hourly averages sit on it exactly, and each figure follows from the minutes listed in that class's summary",
+      "note": "The entry rule carried from a plan to an order, from 7.8, over authored sessions in a store of their own. AUTHORED input. The cap that reduced it."
     }
   ],
   "frozenOnly": [
