@@ -20198,3 +20198,61 @@ Next:       **What is left of the two sign-offs' lists is one row and one ruling
             population each reader in the widened row needs, which waits on the operator's reading of
             whether the scoreboard reads across the switch; and the exclusion above, which waits on a
             version existing.
+
+## 7.14 — 2026-09-12 — the operator's document brought to what the code now does, and the four acts of the night recorded
+
+Not a checkpoint entry. It belongs to 7.14, which landed as `66b64b0`, and records a document pass
+made after that merge and the operator's acts of the same night.
+
+Corrects:   **RUNBOOK described two behaviours 7.14 had just changed**, which is the shape 7.12 found
+            in the same document three checkpoints after 7.10 changed the exits. First-time setup said
+            the 6.9 ruling had not been taken; the migration section said the repair had not landed and
+            prescribed the hand-set variable "until" it did; and the ruling's own paragraph closed on
+            "Not taken at 6.9" with nothing after it. All three now say the scripts refuse, what the
+            refusal prints, and that the test runs each script from outside the repository with the
+            variable unset. **The instruction to set the variable and read the path back stands**,
+            because a refusal cannot catch a variable set to the wrong root.
+
+            **And the forecast's row and the switch procedure's step 2 told the operator to make by
+            hand the two corrections the stage now makes.** Step 2 said to read each night's cost
+            against the headroom printed on the row after it, and said the report pairs a night with
+            its own evening's quota day; both were true of the report the 7.12 sign-off read and false
+            of the one 7.14 writes. The reading of what an overrun costs stays, because that is a fact
+            about the fetch rather than about the report.
+
+Operator:   **Four acts on the running lab, in the order the sign-off set, all on the evening of
+            2026-09-11 between the 22:00 snapshot and Saturday's first slot.**
+
+            **(1) The production checkout moved and the store was migrated.** `git pull --ff-only` took
+            it `fdc975c` to `f765181`, then `tools/migrate.ps1` with `PullbackStrategyLab__DataRoot` set
+            to that tree's `data/live` snapshotted 855,801,856 bytes and applied 062 to 069,
+            **version 61 to 69**, printing the `data\live` path. Read back after it: `user_version` 69,
+            `quick_check` ok, `setup` 367 rows unchanged, `setup.generation` present, and the three new
+            tables empty. A second pull took the tree to `c5b83b1` once 7.14 merged, and the migration
+            re-run reported nothing outstanding. **Tonight's evening chain had not run**: the 17:15 to
+            18:40 tasks are registered Monday to Thursday, so Friday's universe, bars, detect and the
+            20:30 fetch never fired, and the daily 21:00 to 22:00 tasks ran on the old build against the
+            store at 61, which is the state they were written for.
+
+            **(2) `reconcile-night` over its own lookback wrote 36 rows.** The night of 2026-09-07 is
+            recorded as it happened: 32 slots due, none ran, 31 refused by the tree guard and one
+            market-closed, the market having held no session by the index history, which is Labor Day.
+            2026-09-04 carries three more refusals and 2026-09-08 one. **Five slots of 2026-09-05 have
+            no reason anything can establish** and one to three slots of each weekday night are ones
+            the store cannot see, being the two in-session spread slots the reconciliation is documented
+            as unable to serve.
+
+            **(3) `backfill-signals` wrote 5,494 values** over 367 setups and the fifteen frozen
+            candidates, with **11 absent for want of history** and none already frozen. That is 7.4's
+            operator half.
+
+            **(4) The two gates were re-run against the tree the acts were taken from**, being
+            `tools/ci.ps1` green at 34 steps and 1,320 tests and `tools/verify-phase.ps1` GREEN at 163
+            claims with 0 unexamined, the report naming `66b64b0` with the tree clean.
+
+            **What is left of the operator's list**, unchanged by tonight: `ceiling` read over the
+            migrated store, the Saturday `signals` task registered, the clone built, `backfill-minutes`
+            dry-run and run, `measure-entry-rule` and `forecast-generation-one` on copies, the ruling on
+            the widened row, and `close-generation V1 --generation-one`. **Saturday 2026-09-12 at 08:00
+            to 08:40 is the first live run of `ceiling`, `twins`, `pack`, `seat` and `registry`**, none
+            of which has ever run, and they run the build this entry's checkpoint landed in.
