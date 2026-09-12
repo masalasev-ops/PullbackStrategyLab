@@ -20014,3 +20014,97 @@ Operator:   **What each checkpoint left for the operator, and whether its entry 
 
 Next:       **Nothing scheduled.** Phase 7 is the last phase `BUILD_PLAN.md` holds, and what follows it
             is the operator's list above and, if a build session is commissioned, the code named above.
+
+## 7.13 — 2026-09-11 — phase-7-13-pooled-figures — the three figures that added the two sides together, taken apart before the first weekly run reads them
+
+Built:      **The pack's population section states each side and no total.** `SetupReader.PopulationTo`
+            returns each side's count, each side's count that passed every gate, and the number of
+            sessions each side was detected on; nothing it returns is a figure over both, and the one
+            question it answers across the two is whether there is a population at all. The section
+            renders six per-side lines, the record's span, the sessions a setup was flagged on either
+            side, and the regime. **Each rate is over its own side's sessions**, because a side that
+            started later divided by every session either side was seen on reads lower than it is.
+            **It carried the defect and the sentence denying it in the same method**: the doc comment
+            said the two sides are two lines and are never added into one, above lines reading
+            `setups`, `setups per session` and `passed every gate`, from 6.4.
+
+            **Band 3's twin outcome spread is one panel a side.** `TwinPairReader` returns a reading
+            per direction carrying that side's pairs and that side's window, and the panel flattened
+            the two with `SelectMany`, averaged every pair across both books and summed both windows
+            under a population reading "on both sides". Each side now has its own row, its own window
+            and its own sentence, and a side with no reading at all is written rather than skipped, on
+            the ground every panel of this band is written on every build.
+
+            **Each pack version's proposal hit rate is one panel a side**, on the same rule and for
+            the same reason: `proposal` carries the side a change is proposed for, and one rate over
+            both books is two populations under one name. **A proposal naming no side is in neither
+            panel.** An abstention and a signal request carry no direction by the table's own
+            constraint and can never become a version, so they were padding the denominator of a rate
+            they could not reach.
+
+            **The page gathers band 3 back and renders each panel once.** A panel carrying a side
+            arrives in that side's list on the wire, so the band reads across the account-wide list
+            and both side lists by name, and the side blocks leave band 3's own out. Each per-side
+            panel carries its side in its title, because two panels of one measure inside one band are
+            otherwise the same words twice. Without that, this repair would have moved both panels off
+            the page with every stored count correct, which is the sixth failure shape.
+
+            **The pooled shape comes out of `surface-claims`' own page fixture.** It carried one
+            twin panel with no direction, a window of 44 and the words "on both sides", which is the
+            harness holding a shape the rule forbids; the 44 is split across the two sides it was
+            always the sum of. A new claim, `band-three-panels-are-one-per-side`, asserts the per-side
+            panel against the rendered scoreboard.
+
+Measured:   `tools/ci.ps1` green on Windows, **34 steps, 1,314 tests**, its first line naming
+            `shell PowerShell 5.1.26100.9444 (Desktop), host DESKTOP-JFQU9GM`.
+
+            **Twelve new `DERIVED` expectations and eight moved.** New: the pack's four per-side
+            population lines and the count of its lines stating a figure over both sides, which is
+            nought; band 3's panels carrying a side, which is four; each twin panel's population and
+            window; and each hit-rate panel's population. Moved: `band3.panels` 7 to 9 and
+            `band3.withheld` 4 to 6, being the two panels that doubled on the night a pack version
+            exists; `scoreboard.panels` and its three run counts 26 to 27 and `scoreboard.withheld`
+            17 to 18, being the twin panel alone on a date with no version; and
+            `scoreboard.accountWideRows` 12 to 11, being the row that stopped being account-wide.
+
+            **Nothing over the golden fixture could have shown any of this**, which is why it took a
+            store whose sides differ. Both twin windows are nought over the fixture, and a pooled sum
+            of two noughts is nought; the pack's two sides are 2 and 1 over one session, and a pooled
+            rate and a per-side rate are the same arithmetic when the denominator is one. The three
+            new tests seed a store where the two sides differ in every figure they touch.
+
+            `tools/verify-phase.ps1` GREEN: 163 claims, 163 passed, **0 out of scope before and 0
+            after**, 0 unexamined.
+
+Found:      **The two sides can be on different branches of one panel on one night, and the pooled row
+            had nowhere to put that.** Over the authored store of `PooledFigureTests` the long side
+            finds its pair and shows a mean over one pair, while the short side finds none and is
+            withheld against the two setups its window held. Pooled, that night was one row averaging
+            the long side's pair and reporting a window of the two books added together, and a reader
+            watching the window climb towards the 250 the metric wants was reading both shortfalls
+            summed.
+
+Decided:    **A per-side band 3 panel renders under band 3 rather than in the side block.** The side
+            blocks are band 1 and band 2, whose every panel is a side's; band 3 is the loop's own
+            list and its panels belong together, so the side goes in the title. The alternative,
+            leaving each panel in its side's block, would put the loop's figures in three places and
+            split the band nobody would then read as a band.
+
+Carried:    **None raised, none discharged.** The row raised at 7.11 and widened at 7.12 names
+            `SetupReader.PopulationTo` among the readers that sum across generations; that is
+            untouched here and stays the operator's, because splitting a figure by side says nothing
+            about which generation scored the rows it counts.
+
+            **No operator's half at this checkpoint** beyond the move every merge needs: the lab's own
+            schedule runs the pack and the scoreboard, and the checkout the night runs from has to
+            carry this commit before Saturday's weekly slots read either.
+
+            **This session committed code and may not sign it off.**
+
+Next:       **The rest of what the two sign-offs left is code and is not built here.** The forecast's
+            quota day keyed on the session after the night and its report naming the next evening's
+            stages; the filter or stated population each reader in the widened row needs once the
+            operator rules; and four of 6.9's five, being the two shell scripts that must refuse an
+            unset data root, the status band's session, eight clause reasons that name what is missing
+            today, and the surface claim the provisional list says holds band 3's signal-library
+            panel. 6.9's fifth is this checkpoint's first two paragraphs.

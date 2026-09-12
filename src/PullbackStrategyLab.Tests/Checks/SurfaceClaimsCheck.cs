@@ -943,6 +943,14 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
     /// band. A fixture carrying only one of them would satisfy the sentence about failed setups
     /// while leaving the page unable to tell a reader that the panel above it counted a different
     /// set, which is the population claim's own failure mode arriving one band lower down.
+    ///
+    /// <b>The twin outcome spread is two entries here from 7.13, and it was one until then.</b> The
+    /// pooled panel carried a window of 44 over "both sides" with no side of its own, so the harness
+    /// held the shape the stage has now stopped producing, and a fixture is the last place a shape a
+    /// rule forbids should survive. The 44 is split across the two sides it was always the sum of,
+    /// 27 long and 17 short, which is what a page has to be able to render: two panels of the same
+    /// measure inside one band, each naming its own side
+    /// (see: Long and short are never pooled into one figure).
     /// </summary>
     private const string Panels = """
         {
@@ -972,12 +980,7 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
             { "name": "band3.signalsHeld", "direction": null, "figure": "41",
               "low": null, "high": null, "rows": 41, "effective": null,
               "population": "the signal library as the store holds it", "minimum": null,
-              "withheldBecause": null },
-
-            { "name": "band3.twinOutcomeSpread", "direction": null, "figure": "withheld",
-              "low": null, "high": null, "rows": 44, "effective": null,
-              "population": "the setups the trailing window held, on both sides", "minimum": null,
-              "withheldBecause": "no twin pair has been found, so there is no outcome spread to take a mean over. The count beside it is how many setups the trailing window actually held" }
+              "withheldBecause": null }
           ],
           "long": [
             { "name": "band1.vsTight", "direction": "long", "figure": "0.0110",
@@ -1000,7 +1003,11 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
             { "name": "band2.lossCause.gap", "direction": "long", "figure": "0.0900",
               "low": null, "high": null, "rows": 61, "effective": null,
               "population": "every classified loss", "minimum": null,
-              "withheldBecause": null }
+              "withheldBecause": null },
+            { "name": "band3.twinOutcomeSpread", "direction": "long", "figure": "withheld",
+              "low": null, "high": null, "rows": 27, "effective": null,
+              "population": "the setups the trailing window held on the long side", "minimum": null,
+              "withheldBecause": "no twin pair has been found, so there is no outcome spread to take a mean over. The count beside it is how many setups the trailing window actually held" }
           ],
           "short": [
             { "name": "band1.vsLoose", "direction": "short", "figure": "withheld",
@@ -1016,7 +1023,11 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
             { "name": "band2.decile1", "direction": "short", "figure": "0.0290",
               "low": null, "high": null, "rows": 1120, "effective": null,
               "population": "capped candidates only", "minimum": null,
-              "withheldBecause": null }
+              "withheldBecause": null },
+            { "name": "band3.twinOutcomeSpread", "direction": "short", "figure": "withheld",
+              "low": null, "high": null, "rows": 17, "effective": null,
+              "population": "the setups the trailing window held on the short side", "minimum": null,
+              "withheldBecause": "no twin pair has been found, so there is no outcome spread to take a mean over. The count beside it is how many setups the trailing window actually held" }
           ]
         }
         """;

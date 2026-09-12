@@ -86,6 +86,16 @@ public sealed class ScoreboardBuilder
         + "every figure below it";
 
     /// <summary>
+    /// The two sides, in the order every band renders them.
+    ///
+    /// Here so a panel written per side is written for both whether or not the store holds a row for
+    /// each: a side with nothing to say says so, rather than being absent from the band and leaving
+    /// the other side's panel to be read as the account's
+    /// (see: Long and short are never pooled into one figure).
+    /// </summary>
+    private static readonly string[] Sides = ["long", "short"];
+
+    /// <summary>
     /// What the roll-up panel says once versions exist, which is that there is no roll-up.
     ///
     /// The claim is that proposals made against a richer pack hit their targets more often, so one
@@ -225,7 +235,7 @@ public sealed class ScoreboardBuilder
 
         panels.AddRange(Health(connection, asOf, _options.SessionZone));
 
-        foreach (string direction in new[] { "long", "short" })
+        foreach (string direction in Sides)
         {
             panels.AddRange(AgainstControls(connection, direction, asOf, computedAt));
             panels.AddRange(RankDeciles(connection, direction, asOf, computedAt));
@@ -492,9 +502,18 @@ public sealed class ScoreboardBuilder
             versions.Count, null, "evidence pack versions, each with a panel of its own",
             WithheldBecause: versions.Count == 0 ? NoPackVersion : RatePerVersion));
 
+        // Two panels a version, because `proposal` carries the side the change is proposed for and
+        // the success criterion is a rate over proposals. One rate over both sides would be two
+        // populations under one name, which is what the rule forbids and what this panel did until
+        // 7.13 (see: Long and short are never pooled into one figure). A proposal naming no side,
+        // being an abstention or a signal request, is in neither count: it can never become a
+        // version, so it was padding the denominator of a rate it could not reach.
         foreach (StoredPackVersion version in versions)
         {
-            panels.Add(HitRate(connection, version, asOf, sessionZone));
+            foreach (string direction in Sides)
+            {
+                panels.Add(HitRate(connection, version, direction, asOf, sessionZone));
+            }
         }
 
         panels.AddRange(LibraryPanels(connection, asOf, sessionZone));
@@ -517,7 +536,8 @@ public sealed class ScoreboardBuilder
     /// ideas.
     /// </summary>
     private static Panel HitRate(
-        SqliteConnection connection, StoredPackVersion version, DateOnly asOf, string sessionZone)
+        SqliteConnection connection, StoredPackVersion version, string direction,
+        DateOnly asOf, string sessionZone)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -529,10 +549,12 @@ public sealed class ScoreboardBuilder
                 ON v.proposal_id = p.proposal_id AND v.created_at <= @observed_before
              WHERE p.observed_at <= @observed_before
                AND p.pack_version = @version
+               AND p.direction = @direction
             """;
 
         command.Parameters.AddWithValue("@observed_before", StoreText.EndOfSession(asOf, sessionZone));
         command.Parameters.AddWithValue("@version", version.Version);
+        command.Parameters.AddWithValue("@direction", direction);
 
         using SqliteDataReader reader = command.ExecuteReader();
         reader.Read();
@@ -544,14 +566,14 @@ public sealed class ScoreboardBuilder
         string ordinal = version.Version.ToString(CultureInfo.InvariantCulture);
         string name = "band3.proposalHitRate.v" + ordinal;
         string population =
-            "proposals filed against pack version " + ordinal
-            + ", of which the ones that became a version and were settled";
+            "proposals filed against pack version " + ordinal + " naming the " + direction
+            + " side, of which the ones that became a version and were settled";
 
         return settled == 0
-            ? new Panel(name, null, "withheld", null, null, filed, null, population,
+            ? new Panel(name, direction, "withheld", null, null, filed, null, population,
                 WithheldBecause: NothingAdmitted)
             : new Panel(
-                name, null, PairedInterval.Figure(accepted / (decimal)settled), null, null,
+                name, direction, PairedInterval.Figure(accepted / (decimal)settled), null, null,
                 settled, null, population);
     }
 
@@ -578,8 +600,6 @@ public sealed class ScoreboardBuilder
             s => string.Equals(s.Status, SignalStatus.RejectedCorrelation, StringComparison.Ordinal));
 
         IReadOnlyList<TwinSideReading> twins = TwinPairReader.Read(connection, asOf, sessionZone);
-        IReadOnlyList<StoredTwinPair> pairs = [.. twins.SelectMany(s => s.Pairs)];
-        int windowSetups = twins.Sum(s => s.WindowSetups);
 
         return
         [
@@ -596,18 +616,46 @@ public sealed class ScoreboardBuilder
             new Panel("band3.signalsSeparatingOutcomes", null, "withheld", null, null, held, null,
                 Library, WithheldBecause: NothingSeparates),
 
-            // The window count rather than the pair count, because nought pairs over a window of four
-            // and nought over a window of two hundred and fifty are different statements and only the
-            // second says anything about the thresholds.
-            pairs.Count == 0
-                ? new Panel("band3.twinOutcomeSpread", null, "withheld", null, null, windowSetups, null,
-                    "the setups the trailing window held, on both sides",
-                    WithheldBecause: NoTwinPairs)
-                : new Panel(
-                    "band3.twinOutcomeSpread", null,
-                    PairedInterval.Figure((decimal)pairs.Average(pair => pair.GapPoints)),
-                    null, null, pairs.Count, null, "twin pairs found on both sides"),
+            .. Sides.Select(direction => TwinSpread(twins, direction)),
         ];
+    }
+
+    /// <summary>
+    /// One side's mean twin outcome spread, or what it is withheld for.
+    ///
+    /// <b>One panel a side, and the reader it takes already worked that way.</b> `TwinPairReader`
+    /// returns a reading per direction carrying its own pairs and its own window, and until 7.13 this
+    /// flattened the two with `SelectMany`, took one mean and summed the window counts under a
+    /// population reading "on both sides". Two populations under one name, in the shape the data path
+    /// documents itself as refusing (see: Long and short are never pooled into one figure). No wrong
+    /// figure had been shown, both windows being nought over the fixture, which is why it survived
+    /// three checkpoints and a sign-off.
+    ///
+    /// <b>A side with no reading at all is written rather than skipped</b>, on the grounds every
+    /// panel here is written on every build: a panel that stops being written keeps its last
+    /// generation on the date, so a side whose finder has not run would show the night before's
+    /// answer as though it were this night's.
+    ///
+    /// The window count rather than the pair count, because nought pairs over a window of four and
+    /// nought over a window of two hundred and fifty are different statements and only the second
+    /// says anything about the thresholds.
+    /// </summary>
+    private static Panel TwinSpread(IReadOnlyList<TwinSideReading> twins, string direction)
+    {
+        TwinSideReading? side = twins.FirstOrDefault(
+            s => string.Equals(s.Direction, direction, StringComparison.Ordinal));
+
+        IReadOnlyList<StoredTwinPair> pairs = side?.Pairs ?? [];
+        string population = "the setups the trailing window held on the " + direction + " side";
+
+        return pairs.Count == 0
+            ? new Panel("band3.twinOutcomeSpread", direction, "withheld", null, null,
+                side?.WindowSetups ?? 0, null, population, WithheldBecause: NoTwinPairs)
+            : new Panel(
+                "band3.twinOutcomeSpread", direction,
+                PairedInterval.Figure((decimal)pairs.Average(pair => pair.GapPoints)),
+                null, null, pairs.Count, null,
+                "twin pairs found on the " + direction + " side");
     }
 
     /// <summary>

@@ -413,6 +413,13 @@ public sealed class ContextPacker
     /// The two sides are two lines and are never added into one. A pack stating "367 setups" over a
     /// population that is two thirds long would let a proposal reason about a shape it cannot see.
     /// see: Long and short are never pooled into one figure
+    ///
+    /// <b>It said that from 6.4 and added the two sides anyway, in three of its own lines.</b>
+    /// `setups`, `setups per session` and `passed every gate` were each a figure over both sides,
+    /// under this comment, and the pack is the one surface written to be reasoned from rather than
+    /// read. Found at the 7.12 sign-off and repaired at 7.13, before the first live cut. The rates
+    /// are each over their own side's sessions, because a side that started later would otherwise be
+    /// divided by nights it was never detected on.
     /// </summary>
     private RenderedSection Population(SqliteConnection connection, DateOnly asOf)
     {
@@ -422,7 +429,7 @@ public sealed class ContextPacker
         // sentence a reader would have believed.
         SetupPopulation population = SetupReader.PopulationTo(connection, asOf);
 
-        if (population.Total == 0)
+        if (population.IsEmpty)
         {
             return RenderedSection.Empty("Population", "no setup has been flagged, so there is no population");
         }
@@ -431,18 +438,29 @@ public sealed class ContextPacker
 
         var lines = new List<string>
         {
-            $"setups: {Int(population.Total)}",
-            $"long: {Int(population.Longs)}",
-            $"short: {Int(population.Shorts)}",
-            $"sessions: {Int(population.Sessions)}",
+            $"long setups: {Int(population.Longs)} over {Int(population.LongSessions)} session(s)",
+            $"short setups: {Int(population.Shorts)} over {Int(population.ShortSessions)} session(s)",
+            $"long setups per session: {PerSession(population.Longs, population.LongSessions)}",
+            $"short setups per session: {PerSession(population.Shorts, population.ShortSessions)}",
+            $"long passed every gate: {Int(population.PassedEveryGateLong)}",
+            $"short passed every gate: {Int(population.PassedEveryGateShort)}",
+            $"sessions with a setup on either side: {Int(population.Sessions)}",
             $"span: {population.FirstSession:yyyy-MM-dd} to {population.LastSession:yyyy-MM-dd}",
-            $"setups per session: {Ratio((double)population.Total / population.Sessions)}",
-            $"passed every gate: {Int(population.PassedEveryGate)}",
             $"regime: {regime?.Label ?? "unlabelled"}",
         };
 
         return RenderedSection.Of("Population", lines);
     }
+
+    /// <summary>
+    /// One side's setups a session, or "none" where that side has no session to divide by.
+    ///
+    /// <b>A side with no row has no rate rather than a rate of nought.</b> Nought over nought is not
+    /// a smaller number, and the section states each rate over its own side's sessions, so a side the
+    /// store has never recorded has nothing to be per.
+    /// </summary>
+    private static string PerSession(int setups, int sessions) =>
+        sessions == 0 ? "none" : Ratio((double)setups / sessions);
 
     /// <summary>The four causes and unclassified, with counts. Empty until a trade closes at a loss.</summary>
     private RenderedSection LossTaxonomy(SqliteConnection connection, DateOnly asOf)

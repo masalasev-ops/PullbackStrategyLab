@@ -91,7 +91,7 @@ else
     }
 
     @foreach ((string side, IReadOnlyList<PanelView> panels) in
-        new[] { ("Long", Model.Scoreboard.Long), ("Short", Model.Scoreboard.Short) })
+        new[] { ("Long", Model.Scoreboard.LongSide), ("Short", Model.Scoreboard.ShortSide) })
     {
         <section class="scoreboard-band side">
             <h2>@side</h2>

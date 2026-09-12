@@ -105,6 +105,15 @@
       "producedBy": "the page"
     },
     {
+      "name": "band-three-panels-are-one-per-side",
+      "sentence": "the page renders each once under the band it belongs to",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "/scoreboard",
+      "mustCarry": "Mean twin outcome spread, long",
+      "producedBy": "the page",
+      "why": "Band 3 is one list on a page whose other bands are two blocks, so a panel of that band measuring one book has to say which book in its own title. From 7.13 the twin outcome spread and each pack version's hit rate carry a side, which puts them in the side lists on the wire; the band gathers them back by name and the side blocks leave them out, so each renders once. Without this claim the repair could have moved both panels off the page entirely and every count in the store would still have been right, which is the sixth failure shape: a correct answer a surface drops."
+    },
+    {
       "name": "proposal-hit-rate-by-pack-version",
       "sentence": "This is the project's stated success criterion made visible, from 6.8",
       "statedIn": "docs/ARCHITECTURE.html",

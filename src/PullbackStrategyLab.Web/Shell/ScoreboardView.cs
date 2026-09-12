@@ -29,9 +29,30 @@ public sealed record ScoreboardView(
     public IReadOnlyList<PanelView> Band0 =>
         [.. Health.Where(p => p.Name.StartsWith("band0.", StringComparison.Ordinal))];
 
-    /// <summary>Band 3's panels: is the loop learning.</summary>
+    /// <summary>
+    /// Band 3's panels: is the loop learning.
+    ///
+    /// <b>Gathered from all three lists rather than from the account-wide one.</b> From 7.13 the twin
+    /// outcome spread and each pack version's hit rate are written per side, because a mean over both
+    /// books is two populations under one name, and a per-side panel arrives on the wire in its own
+    /// side's list. Reading the account-wide list alone would have dropped exactly the panels that
+    /// repair made per side, which is a figure computed and discarded by a surface
+    /// (see: Long and short are never pooled into one figure).
+    ///
+    /// The side blocks exclude them in turn, so each panel renders once, under the band it belongs
+    /// to, with its side in its own title.
+    /// </summary>
     public IReadOnlyList<PanelView> Band3 =>
-        [.. Health.Where(p => p.Name.StartsWith("band3.", StringComparison.Ordinal))];
+        [.. Health.Concat(Long).Concat(Short).Where(IsBand3)];
+
+    /// <summary>The long block's panels, band 3's own rendered under band 3 instead.</summary>
+    public IReadOnlyList<PanelView> LongSide => [.. Long.Where(p => !IsBand3(p))];
+
+    /// <summary>The short block's panels, on the same terms.</summary>
+    public IReadOnlyList<PanelView> ShortSide => [.. Short.Where(p => !IsBand3(p))];
+
+    private static bool IsBand3(PanelView panel) =>
+        panel.Name.StartsWith("band3.", StringComparison.Ordinal);
 
     /// <summary>
     /// Account-wide panels belonging to no band this page draws.
@@ -71,8 +92,20 @@ public sealed record PanelView(
     bool? ReadsBadly = null,
     string? ReadsBadlyBecause = null)
 {
-    /// <summary>What the panel is, in words, rather than the identifier the store keys it on.</summary>
-    public string Title => Name switch
+    /// <summary>
+    /// What the panel is, in words, rather than the identifier the store keys it on, with its side
+    /// where the band it belongs to is not itself split into sides.
+    ///
+    /// Band 1 and band 2 render inside a block headed Long or Short, so their titles say the measure
+    /// alone. Band 3 is one list and from 7.13 two of its panels are per side, so the side goes in
+    /// the title: a pair of panels reading "Mean twin outcome spread" twice would be worse than the
+    /// pooled figure it replaced.
+    /// </summary>
+    public string Title => Direction is string side && Name.StartsWith("band3.", StringComparison.Ordinal)
+        ? $"{Measure}, {side}"
+        : Measure;
+
+    private string Measure => Name switch
     {
         "band0.nightsRecorded" => "Nights recorded",
 

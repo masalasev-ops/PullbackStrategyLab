@@ -2606,6 +2606,17 @@ public sealed class PhaseReplay : IDisposable
             new("pack.long.setups", first.LongSetups.ToString(CultureInfo.InvariantCulture)),
             new("pack.short.setups", first.ShortSetups.ToString(CultureInfo.InvariantCulture)),
 
+            // 7.13. The population section as the pack renders it, line for line. Three of its lines
+            // were a figure over both sides from 6.4 until then, under a doc comment saying the two
+            // are never added, and the pack is the one surface written to be reasoned from rather
+            // than read. Read as the lines themselves rather than as a count of them, because a
+            // count would have been satisfied by the pooled section too.
+            new("pack.population.long", PopulationLine(first, "long setups:")),
+            new("pack.population.short", PopulationLine(first, "short setups:")),
+            new("pack.population.longPerSession", PopulationLine(first, "long setups per session:")),
+            new("pack.population.shortPerSession", PopulationLine(first, "short setups per session:")),
+            new("pack.population.figuresOverBothSides", FiguresOverBothSides(first)),
+
             // The claim itself, as a comparison rather than as a value: what matters is that the
             // two runs agreed, not what they agreed on.
             new("pack.byteStableAcrossRuns",
@@ -3389,7 +3400,82 @@ public sealed class PhaseReplay : IDisposable
             new("band0.degradedNights.readsBadly", Text(
                 "SELECT CASE WHEN reads_badly IS NULL THEN 'absent' ELSE 'recorded' END FROM scoreboard "
                 + "WHERE as_of = @as_of AND panel = 'band0.degradedNights'" + Latest)),
+
+            // 7.13. The two panels of this band that are measures of a side rather than of the
+            // account, read as the store holds them: one row each, each naming its own side in the
+            // population it was taken over. Counted as well as read, because the defect was that one
+            // row stood where two belong and a population string alone would not have shown it
+            // (see: Long and short are never pooled into one figure).
+            new("band3.sidedPanels", Scalar(
+                "SELECT COUNT(*) FROM scoreboard WHERE as_of = @as_of AND panel LIKE 'band3.%' "
+                + "AND direction IS NOT NULL" + Latest)
+                .ToString(CultureInfo.InvariantCulture)),
+
+            new("band3.twinSpread.long.population", Text(
+                "SELECT population FROM scoreboard WHERE as_of = @as_of "
+                + "AND panel = 'band3.twinOutcomeSpread' AND direction = 'long'" + Latest)),
+
+            new("band3.twinSpread.short.population", Text(
+                "SELECT population FROM scoreboard WHERE as_of = @as_of "
+                + "AND panel = 'band3.twinOutcomeSpread' AND direction = 'short'" + Latest)),
+
+            // Each side's window count, which is the figure the pooled panel summed. Nought on both
+            // sides over this fixture, and the two nulls are what the panel is withheld for.
+            new("band3.twinSpread.long.window", Scalar(
+                "SELECT n_rows FROM scoreboard WHERE as_of = @as_of "
+                + "AND panel = 'band3.twinOutcomeSpread' AND direction = 'long'" + Latest)
+                .ToString(CultureInfo.InvariantCulture)),
+
+            new("band3.twinSpread.short.window", Scalar(
+                "SELECT n_rows FROM scoreboard WHERE as_of = @as_of "
+                + "AND panel = 'band3.twinOutcomeSpread' AND direction = 'short'" + Latest)
+                .ToString(CultureInfo.InvariantCulture)),
+
+            new("band3.hitRate.v1.long.population", Text(
+                "SELECT population FROM scoreboard WHERE as_of = @as_of "
+                + "AND panel = 'band3.proposalHitRate.v1' AND direction = 'long'" + Latest)),
+
+            new("band3.hitRate.v1.short.population", Text(
+                "SELECT population FROM scoreboard WHERE as_of = @as_of "
+                + "AND panel = 'band3.proposalHitRate.v1' AND direction = 'short'" + Latest)),
         ];
+    }
+
+    /// <summary>One line of the pack's population section, by the label it opens with.</summary>
+    private static string PopulationLine(PackResult pack, string label)
+    {
+        RenderedSection? section = pack.Pack.Sections.FirstOrDefault(
+            s => string.Equals(s.Name, "Population", StringComparison.Ordinal));
+
+        return section?.Lines.FirstOrDefault(
+            l => l.StartsWith(label, StringComparison.Ordinal)) ?? "absent";
+    }
+
+    /// <summary>
+    /// How many lines of the population section state a figure taken over both sides.
+    ///
+    /// <b>The property rather than the shape, and it is nought.</b> Every line naming setups opens
+    /// with the side it counts, and the lines that do not are the span, the session count and the
+    /// regime label, none of which is a figure about setups at all. Three lines failed this from 6.4
+    /// until 7.13 (see: Long and short are never pooled into one figure).
+    /// </summary>
+    private static string FiguresOverBothSides(PackResult pack)
+    {
+        RenderedSection? section = pack.Pack.Sections.FirstOrDefault(
+            s => string.Equals(s.Name, "Population", StringComparison.Ordinal));
+
+        if (section is null)
+        {
+            return "absent";
+        }
+
+        int pooled = section.Lines.Count(
+            l => l.Contains("setup", StringComparison.OrdinalIgnoreCase)
+              && !l.StartsWith("long ", StringComparison.Ordinal)
+              && !l.StartsWith("short ", StringComparison.Ordinal)
+              && !l.StartsWith("sessions with a setup on either side:", StringComparison.Ordinal));
+
+        return pooled.ToString(CultureInfo.InvariantCulture);
     }
 
     /// <summary>The one version the fixture registers beyond the baseline, for 6.7 to read.</summary>
