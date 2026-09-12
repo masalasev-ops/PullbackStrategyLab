@@ -20256,3 +20256,101 @@ Operator:   **Four acts on the running lab, in the order the sign-off set, all o
             the widened row, and `close-generation V1 --generation-one`. **Saturday 2026-09-12 at 08:00
             to 08:40 is the first live run of `ceiling`, `twins`, `pack`, `seat` and `registry`**, none
             of which has ever run, and they run the build this entry's checkpoint landed in.
+
+## Not a checkpoint entry — 2026-09-12 — phase-7-11-the-switch — belongs to 7.11: generation 1 registered on the live store, what its gate set passes over the five recorded nights, and what the minute purchase costs
+
+Not a checkpoint entry. It belongs to 7.11, which has landed. Three acts on the running lab in the
+small hours of 2026-09-12, between the record above and Saturday's first weekly slot, and one
+measurement taken on a copy to decide the third.
+
+Operator:   **(1) `forecast-generation-one 2026-08-25 2026-09-04` on a copy of the live store**, which
+            is RUNBOOK's step 2 and the half of 7.11's done condition that is the operator's. Read from
+            the report it wrote, per side and never added together: generation 1 records **79, 130, 183,
+            204 and 212 long names** and **37, 63, 77, 119 and 122 short names** on the nights of
+            2026-08-27, 08-28, 08-31, 09-03 and 09-04, where generation 0 recorded 44, 73, 83, 92 and 75
+            across both sides on the same nights. The fetch buys minutes for every recorded name, so the
+            costliest night is 2026-09-04 at **1,670 calls against a headroom of 5,000**, and **no night
+            in the range is over its headroom**. Two nights carry a headroom below the ceiling, 2,447 and
+            2,596, being the days another stage had already spent in. The last row says its buying
+            evening was assumed, no session being recorded after it, which is the pairing 7.14 built.
+
+            **(2) `backfill-minutes --dry-run` prices the minute purchase and buys nothing.** Run against
+            a copy rather than `data/live` because the dry run opens the store for write and logs its own
+            run row. Over every row of `calibration_setup`, being **33,050 long and 17,409 short** across
+            2024-04-01 to 2026-09-04: **2,477 windows of 120 days over 913 names, 12,385 calls to buy
+            them all, and 2,066 rows short of the 11 session warm-up**, each of which the real run writes
+            with its shortfall rather than leaving short in silence. At five calls a window against a
+            ceiling of 5,000 that an ordinary evening already spends 2,803 to 4,003 of, that is about
+            three clear days of allowance, and the days with no evening chain are Friday evening through
+            Sunday.
+
+            **(3) Generation 1 is registered. The switch was taken at 2026-09-12T04:53:08.870Z.**
+            `close-generation V1 --generation-one --dry-run` against `data/live` first, on RUNBOOK's step
+            4: generation 0 closes, **0 open versions become unresolved**, baseline V0 becomes retired, 0
+            settled versions keep their answer, generation 1 opens with baseline V1, nothing written.
+            Then the same command without the flag, reporting `clean, written in one transaction`. The
+            register read back holds two rows and no others: V0, generation 0, baseline, `retired`,
+            resolved at that instant; V1, generation 1, baseline, `open`, created at the same one.
+            **Closing generation 0 discarded nothing**, because its register held its baseline alone from
+            the day it opened, which is what the decision that opened generation 1 predicted in those
+            words.
+
+            **The switch night is Monday 2026-09-14 and not today.** The evening chain is registered
+            Monday to Thursday, so the first `detect` under generation 1 is at 18:20 that day, the first
+            plans it writes are for Tuesday's session, and the earliest fills the 21:15 slot can record
+            are Tuesday evening.
+
+            **Taken before 08:20 on purpose.** Saturday 2026-09-12 at 08:00 to 08:40 is the first ever
+            run of the five weekly slots, and under generation 0 the 08:20 `pack` would have asked the
+            researcher for a threshold move over a rule retiring the same morning and written a proposal
+            against a closing generation; under generation 1 it refuses to cut, which is what the
+            decision says it does. The other four are undisturbed either way: no generation 1 setup row
+            exists until Monday, so this morning's `ceiling` and `twins` read generation 0's rows alone,
+            which is the pre-switch bound step 3 asks for.
+
+Measured:   **What generation 1's gate set passes, per side, over the five nights the live store holds
+            recorded setups for.** Taken on the 2026-09-12 copy at store version 69, never on the live
+            store, by evaluating `GenerationOneDetector` over each night's own universe. The population
+            is generation 1's own recorded set, being the names clearing its recording floor, and not
+            generation 0's `setup` rows.
+
+            **The long side passes 8, 10, 30, 22 and 46 names** on 2026-08-27, 08-28, 08-31, 09-03 and
+            09-04, out of 79, 130, 183, 204 and 212 recorded, being **116 of 808** over the five nights.
+            **The short side passes none on any of the five**, out of 37, 63, 77, 119 and 122 recorded,
+            being **0 of 418**. The two are stated apart and are never added.
+
+            **What refuses the long side, over those 808 recorded long rows**: `dip-shape` 627 (77.6%),
+            `held-floor` 615 (76.1%), `moves-enough` 503 (62.3%), `contraction` 363 (44.9%), `cluster`
+            265 (32.8%), `weekly-trend` 23 (2.8%). Three of the six are recorded and never required,
+            being `held-floor`, `moves-enough` and `cluster`, so what gates the long side here is
+            `dip-shape`, `contraction` and `weekly-trend`.
+
+            **What refuses the short side, over those 418 recorded short rows**: `reached-ceiling` 397
+            (95.0%), `no-reclaim` 358 (85.6%), `bounce-shape` 287 (68.7%), `moves-enough` 250 (59.8%),
+            `cluster` 159 (38.0%), `averages-squeezing` 122 (29.2%), `weekly-trend` 13 (3.1%). Three of
+            the seven are recorded and never required, being `no-reclaim`, `moves-enough` and `cluster`.
+
+            **`reached-ceiling` is the largest single refusal in either list and these figures do not
+            attribute the nought to it.** Each count is taken over all 418 rows independently, so they
+            overlap and no clause is shown here to be the whole reason. What they do establish is that
+            397 of 418 recorded short names never reach the ceiling's confluence, and that the short
+            side's nought is a property of the gate set rather than of the five nights: the same
+            detector passes 116 long names over the same universe on the same evenings.
+
+Found:      **Nothing this record repairs.** The reading above is a measurement over a copy and changes
+            no code, no fixture and no document.
+
+Carried:    **None raised and none discharged.** The row raised at 7.11 and widened at 7.12 stops being
+            prospective from Monday's detect, when the readers it names begin reading `setup` across the
+            switch. What filter or stated population each of them needs is still the operator's ruling
+            and is unchanged by tonight.
+
+Next:       **The first paper trades, and the one quantity nobody has measured.** Monday 2026-09-14's
+            detect writes generation 1's setups and plans for Tuesday; Tuesday's 20:30 fetch buys that
+            session's minutes, `resolve` at 21:05 reads them against each plan, `orders` at 21:10 applies
+            the caps and `fills` at 21:15 records what triggered, bounded by four open positions of which
+            two may be short, at 0.75% risk each and 3% in total. **How many plans actually trigger has
+            never been measured on real minutes**, the entry rule wanting a flush into the hourly 9 and
+            21 averages and a reclaim of the previous candle's extreme. `backfill-minutes` and then
+            `measure-entry-rule` on a copy are what would answer it, and act (2) above is what that
+            purchase costs.
