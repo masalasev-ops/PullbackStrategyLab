@@ -154,6 +154,23 @@ public sealed class ResearcherSeat
 
         if (pack.RefusedBecause is string refused)
         {
+            // **The week is recorded even though nothing was asked.** This returned here without
+            // touching the store until 7.15, so a week the seat ran and could not be asked left no
+            // `run_log` row at all and was indistinguishable from a week the slot never fired. The
+            // reason went to the night's log, which is the one place nothing reads, and RUNBOOK
+            // says this is the case the morning band exists to show. Found on 2026-09-12, the first
+            // morning the slot ever ran: the store held two `build-pack` rows and none of this
+            // stage's.
+            //
+            // The scope opens here rather than at the top of the method because the packer's own
+            // cut opens a write connection of its own, and two open at once on one store is a lock
+            // this stage would take against itself.
+            using (SqliteConnection refusedConnection = _connections.OpenWrite())
+            {
+                using RunScope refusedRun = _runLogger.Begin(refusedConnection, Name, "proposal");
+                refusedRun.Complete(RunOutcome.Partial);
+            }
+
             return SeatResult.NoPack(transport, asOf, refused);
         }
 

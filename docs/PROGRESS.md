@@ -20470,3 +20470,80 @@ Found:      **(a) A refusal the design requires is reported to the scheduler as 
 
 Carried:    **None raised and none discharged.** Both findings above are named in this entry and in no
             obligations row.
+
+## 7.15 — 2026-09-12 — phase-7-15-what-the-first-weekly-run-found — a refusal the design requires is not a failure, and the seat records the week it asked nothing in
+
+Built:      **(a) The pack tells a refusal the design requires from a section that broke.** Both
+            arrive at one catch, and until here both came out of it as `failed` with exit 1. The pack
+            refuses while generation 1 has no selection rule written down, which is the 7.11 decision
+            working and a condition with no date on it, so the first live pack put a red beside a
+            correct outcome and would have done every Saturday. `DesignedRefusal` is the type that
+            separates them, thrown where the "Rule in force" section gives up and preserved by the
+            per-section wrapper, which re-threw everything as one kind and lost the distinction at the
+            one line built to name the section. A designed refusal records `partial` and the stage
+            exits 0; a section that broke still records `failed` and exits 1. **It is a type rather
+            than a message match**, on the grounds `decision-resolves` already argues: a reason
+            compared as text stops resolving the day somebody rewords it.
+
+            **Migration 070 rebuilds `pack_run` so the store can hold the distinction.** The
+            biconditional 057 wrote keys the refusal on `outcome = 'failed'`, so a refused run could
+            be recorded only by calling it a failure. It keys on `refused_because` now, which is the
+            column that actually says whether a pack was written, leaving `outcome` free to say which
+            kind of non-pack it was. **No row on disk changes value**: every refusal written before
+            this was a section that broke, and `failed` is the right reading of each.
+
+            **And the two stages agree now.** `ResearcherSeat` already recorded `partial` for this
+            same event, having no pack to be asked against, so one morning was described two ways.
+
+            **(b) `ask-researcher` records its week even though it asked nothing.** It cuts the pack
+            itself and refuses to ask when the cut refuses, which is the branch that exists so a model
+            is never shown a pack missing a section, and it returned before the write connection was
+            opened. So a week the seat ran and could not be asked left no `run_log` row at all and was
+            indistinguishable from a week the slot never fired. RUNBOOK says such a week names the
+            transport that refused and is shown on the status band that morning; the stage computed
+            exactly that and put it in the night's log, which is the one place nothing reads. **The
+            scope opens at the refusal rather than at the top of the method**, because the packer's own
+            cut opens a write connection and two at once on one store is a lock the stage would take
+            against itself.
+
+Measured:   `tools/ci.ps1` green on Windows, **34 steps, 1,323 tests**.
+
+            **Four new `DERIVED` expectations**, taken over the golden fixture after the generation
+            close the replay already performs, since the refusal exists only while generation 1 is in
+            force: the pack refuses, records `partial` in its own return and in `pack_run`, and names
+            the generation in its reason rather than only saying a section could not be built.
+            `store.schemaVersion` moves 69 to 70 by migration 070 landing.
+
+            **Both halves of (a) are exercised, because only the pair carries the property.** A test
+            of the designed half alone passes against a stage that calls every refusal partial, which
+            is the same defect from the other side. So the suite holds a store with generation 1 in
+            force, where the pack refuses and exits 0, and a store whose loss-taxonomy table is gone,
+            where the same stage records `failed` and exits 1. **(b)** is held by a seat run against a
+            refused cut leaving exactly one `run_log` row, with a transport that throws if anything
+            reaches it.
+
+Found:      **The exclusion 7.14 named is not a missing bound, and the correction matters.** That
+            entry recorded that `VariantScorer.UnscoredNights` takes every session `setup` holds a row
+            for with no bound on the degraded mark, and read as though adding one would close it.
+            `setup.degraded_because` is stamped by the detector at 18:20 from the stages that ended
+            other than cleanly inside that session's own day, and the fetch that would buy the minutes
+            runs at 20:30 for the list flagged the evening before. So the mark on a night's rows is
+            about that night's earlier stages and never about the fetch that resolves them, and the
+            failure table's clause, that a day with no intraday prices excludes every setup flagged
+            that night from scoring, is a fact the store cannot currently express. **The repair is a
+            column or a row nobody has designed, not a `WHERE` clause**, and guessing at one here
+            would have written a bound that reads right and answers a different question. Named rather
+            than carried, on 6.9's grounds, and it still binds nothing: no version has been admitted.
+
+Carried:    **None raised and none discharged.** The two defects this checkpoint repairs were named in
+            the record of 2026-09-12 rather than carried, and the row raised at 7.11 and widened at
+            7.12 is untouched.
+
+            **No operator's half.** Both repairs are felt by the lab on the Saturday after they land.
+
+            **This session committed code and may not sign it off.**
+
+Next:       **The two remaining are an act and a ruling.** The Saturday `signals` slot has no scheduled
+            task, so the stage that seeds the signal library runs only when somebody runs it by hand,
+            which is what happened this morning; and the nightly clone the runbook specifies does not
+            exist, so every scheduled task still points at the working tree.

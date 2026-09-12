@@ -3199,3 +3199,18 @@ Why:  7.14 took the 6.9 ruling. A document telling the operator that a repair ha
 Was:  the `forecast-generation-one` row ending "and the names the fetch could not afford in its own ticker order. **Run it on a store copy** over the nights since 7.4 landed, before the switch"; and step 2 of the switch procedure, which told the operator to read each night's cost against the headroom on the row after it, said the report pairs a night with its own evening's quota day, and explained that the names it lists as going without are what a fetch spending last would lose.
 Now:  the row says the report pairs a night with the evening its list is bought on, names the quota day it read, says where it has assumed an evening, and states what a night is over its headroom by rather than listing names; step 2 says those two corrections are in the report rather than the operator's to make, and keeps the reading of what an overrun costs.
 Why:  7.14 repaired both in the stage. An instruction to compensate for a defect that no longer exists is a second defect, and this one would have had the operator reading the row after the night against a report that already pairs them.
+
+### 2026-09-12 — SCHEMA.md — cites Generation 1 opens with no version admissible in either family, and what reopens each is named
+Was:  *A refused run is held as a biconditional in both directions.* A run with outcome `failed` carries a reason, no version, no digest and no rendered section; a run with any other outcome carries none of those and does carry all of these. Stated in the store rather than left to the stage, so a half-written refusal is refused rather than recorded.
+Now:  *A refused run is held as a biconditional in both directions, keyed on the reason from 7.15.* A run carrying a reason carries no version, no digest and no rendered section, and ends `partial` or `failed`; a run carrying no reason carries all of those and cannot be a failure. Stated in the store rather than left to the stage, so a half-written refusal is refused rather than recorded. **It was keyed on `outcome = 'failed'` until 7.15**, which made the two kinds of non-pack one value: a refusal the design requires and a section that broke were recorded identically, and the first live pack, on 2026-09-12, put a red beside a correct outcome. What a run produced is what `refused_because` says; how it ended is what `outcome` says, and those are different questions.
+Why:  The cited decision is what makes the pack refuse for as long as generation 1 has no selection rule written down, which has no date on it. The constraint could hold such a run only by calling it a failure.
+
+### 2026-09-12 — BUILD_PLAN.md — cites Generation 1 opens with no version admissible in either family, and what reopens each is named
+Was:  **The phase is fifteen rows and it exists because the gate set was never the strategy's.**
+Now:  **The phase is sixteen rows and it exists because the gate set was never the strategy's.**
+Why:  7.15 is added, holding what the first live run of the weekly chain found.
+
+### 2026-09-12 — BUILD_PLAN.md — cites Generation 1 opens with no version admissible in either family, and what reopens each is named
+Was:  7.0, then 7.1 to 7.11 in their numbered order, then 7.12, then 7.13 and 7.14. **Nothing registers before 7.11.**
+Now:  7.0, then 7.1 to 7.11 in their numbered order, then 7.12, then 7.13, 7.14 and 7.15. **Nothing registers before 7.11.**
+Why:  The build order names every row, so a row added names itself here too.
