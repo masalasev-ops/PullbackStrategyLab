@@ -20390,3 +20390,83 @@ Corrects:   **Two entries said five weekly slots had never run, and one of the f
 
 Found:      **Nothing.** Both corrections are readings of `run_log` and of the machine's task list,
             and neither changes code, fixture or specification.
+
+## Not a checkpoint entry — 2026-09-12 — phase-7-11-the-missed-morning — belongs to 7.11: the first weekly chain lost to a power cut, run by hand, and the two things that running it exposed
+
+Not a checkpoint entry. It belongs to 7.11, which has landed. It records the operator's hand run of
+Saturday 2026-09-12's weekly chain and two defects the run exposed, neither of which any check in
+this corpus could have seen.
+
+Operator:   **The five scheduled weekly tasks did not fire, and the scheduler did not catch them up.**
+            A power cut took the machine across 08:00 to 08:40 local. Read from the machine at 10:23:
+            `StartWhenAvailable` is true on all five, `ceiling` last ran on 2026-09-05 at 08:00, the
+            other four report the "task has not yet run" result against a 1999 timestamp, and **every
+            one of the five already had its next run set to 2026-09-19**. So the missed occurrence was
+            dropped rather than queued, and a Saturday lost this way stays lost unless somebody runs it.
+
+            **Run by hand between 11:54 and 11:58 local**, 15:54 to 15:58 UTC, each slot through
+            `tools/nightly.ps1 -Slot <slot>` in the schedule's own order, from the production checkout
+            on `main` at `50072d3` with the tree guard passing. **The 08:15 row was run too**, being
+            `signals`, which has no scheduled task and had therefore never run at all: `build-pack`
+            reads which signals the library holds and `signal_definition` held nothing.
+
+Measured:   **`ceiling`, clean, 0 rows.** As of 2026-09-12 at ten sessions, no closed subject yet and
+            therefore no bound, which the stage states in those words rather than reporting a bound of
+            nought. Its fourth run and **the first taken over the store at version 69**.
+
+            **`twin-pairs`, clean, 0 rows.** Its first run ever. The window wants 250 setups, the
+            threshold is a distance under 0.5 with outcomes over 15 points apart, and **the long window
+            held 0 of 250 and the short window 0 of 250**, each side naming that it held fewer than two
+            setups with a closed outcome so no pair could be formed. The two are stated apart and never
+            added.
+
+            **`admit-signals`, clean, 54 rows.** Its first run ever, and the one that mattered most this
+            morning: **`signal_definition` went from 0 rows to 54**, being 54 declared and 54 written
+            with none unchanged. **19 candidates, 0 admitted, 0 rejected at the correlation limit, 19
+            undecided**, over a long population of 0 setups with a closed outcome and a short population
+            of 0, never added. Undecided is the only answer available over a population of nought, and
+            the stage says so rather than admitting on no evidence.
+
+            **`build-pack`, failed, 0 rows, exit 1.** The first pack the lab has ever attempted, and it
+            refused: the "Rule in force" section could not be built because no selection version is
+            admitted in generation 1, the only selection rule written down being generation 0's. That is
+            the decision taken at 7.11 working exactly as written, on its first live occasion.
+
+            **`ask-researcher`, partial, 0 rows, slot clean.** Transport `subscription`, model
+            `claude-opus-5`, served unreported. It cut the pack itself, got the same refusal, and asked
+            nothing, which is the branch that exists so a model is never shown a pack missing a section.
+            **It left the machine not at all and spent no allowance.**
+
+            **`screen-proposals`, clean, 0 rows.** Its first run ever. 0 filed proposals read, 0 survived
+            the screen, 0 killed by it, 0 inconclusive and still filed, 0 registered as a version since
+            the last run, 0 signal requests, 0 abstentions, 0 weeks with no answer.
+
+Found:      **(a) A refusal the design requires is reported to the scheduler as a stage failure.**
+            `build-pack` exits 1 on the generation 1 refusal, so the `pack` task goes red every Saturday
+            for as long as generation 1 has no selection rule written down, which is a condition with no
+            date on it. The refusal is correct and the exit code is what the scheduler reads, and a
+            weekly red that is right by design is how a weekly red that is wrong gets ignored. **Named
+            rather than carried**, on 6.9's grounds: the repair is a build session's and the row would
+            fall due at a checkpoint already landed.
+
+            **(b) `ask-researcher` writes no `run_log` row at all when the pack refuses, so the store
+            cannot tell that week from a week the slot never ran.** `ResearcherSeat.Ask` returns
+            `SeatResult.NoPack` before the write connection is opened, and `RunLogger.Begin` is below
+            that return, so the stage prints its reason and records nothing. Read back after this
+            morning: **`ask-researcher` holds 0 rows in `run_log` and has since the lab began**, while
+            `build-pack` holds 2 for one morning, one from the pack slot and one from the seat's own cut
+            of the same document. RUNBOOK says a week the seat could not be asked names the transport
+            that refused and is shown on the status band that morning, because a queued job nobody is
+            told about is learned of a quarter later from a gap in the proposal record. **The stage
+            computed exactly that and put it in the night's log, which is the one place nothing reads**,
+            and the surface the sentence is about cannot carry it. That is the sixth shape this corpus
+            names, a correct answer dropped before the surface, arriving this time through an absent row
+            rather than a dropped note. **Named rather than carried**, on the same grounds as (a).
+
+            **Neither could have been caught by anything that runs.** Both are properties of the running
+            lab on a morning, and every check here takes its subject from the source, the documents, the
+            golden fixture or a store it builds itself. The first live run of a slot is the instrument,
+            which is the argument the seventh shape already makes.
+
+Carried:    **None raised and none discharged.** Both findings above are named in this entry and in no
+            obligations row.
