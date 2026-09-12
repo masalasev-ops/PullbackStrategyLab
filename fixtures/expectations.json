@@ -8787,18 +8787,18 @@
     {
       "id": "scoreboard.accountWideRows",
       "tier": "DERIVED",
-      "value": "12",
+      "value": "11",
       "checkpoint": "3.9",
       "producedBy": "counted off the band 0 panel list, and read after the rebuild rather than after the first build, so it is the duplication guard rather than a restatement of the panel count",
-      "note": "two builds left ten of these until 3.9(e) and a third would have left fifteen. Migration 030 adds the partial unique index the primary key could not be Was 5 until 6.5, which adds the `band0.researcherSeat` panel. A seat that cannot ask is a fact about the running lab and nothing in the verification harness reaches the running lab, so it is shown on the status band the morning it happens (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops). Moved at 6.8 by band 3 landing: the scoreboard writes six further account-wide panels, being one withheld hit rate where no pack version exists and five library panels, of which two are themselves withheld. The band is written on every build rather than only on days that have something to show, because a band that appeared only when there was data would be absent exactly when a reader was most likely to conclude the page had shown everything it has."
+      "note": "two builds left ten of these until 3.9(e) and a third would have left fifteen. Migration 030 adds the partial unique index the primary key could not be Was 5 until 6.5, which adds the `band0.researcherSeat` panel. A seat that cannot ask is a fact about the running lab and nothing in the verification harness reaches the running lab, so it is shown on the status band the morning it happens (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops). Moved at 6.8 by band 3 landing: the scoreboard writes six further account-wide panels, being one withheld hit rate where no pack version exists and five library panels, of which two are themselves withheld. The band is written on every build rather than only on days that have something to show, because a band that appeared only when there was data would be absent exactly when a reader was most likely to conclude the page had shown everything it has. Was 12 until 7.13, when the twin outcome spread stopped being one panel over both books and became one a side. The pooled panel had been written since 6.3 under a doc comment saying the two sides are never added, and nothing could read a wrong figure off it because both windows are nought over this fixture, which is why it stood through a sign-off."
     },
     {
       "id": "scoreboard.attempted",
       "tier": "DERIVED",
-      "value": "26",
+      "value": "27",
       "checkpoint": "3.9",
       "producedBy": "counted off the panel structure rather than read back: five band 0 panels, which are account-wide, plus two directions times two band 1 sets and one band 2 gap",
-      "note": "the first build of a date attempts every panel it produced Moved from 11 to 19 at 4.10, which adds band 2's four loss-cause panels per side: the share of losses that gapped, over every classified loss, and the shares of noise, failed setup and unclassified, over the losses whose horizon has closed. Eight panels, all withheld on this fixture because it holds no loss at all, which is what a withheld panel is for. Was 19 until 6.5, which adds the `band0.researcherSeat` panel. A seat that cannot ask is a fact about the running lab and nothing in the verification harness reaches the running lab, so it is shown on the status band the morning it happens (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops). Moved at 6.8 by band 3 landing: the scoreboard writes six further account-wide panels, being one withheld hit rate where no pack version exists and five library panels, of which two are themselves withheld. The band is written on every build rather than only on days that have something to show, because a band that appeared only when there was data would be absent exactly when a reader was most likely to conclude the page had shown everything it has."
+      "note": "the first build of a date attempts every panel it produced Moved from 11 to 19 at 4.10, which adds band 2's four loss-cause panels per side: the share of losses that gapped, over every classified loss, and the shares of noise, failed setup and unclassified, over the losses whose horizon has closed. Eight panels, all withheld on this fixture because it holds no loss at all, which is what a withheld panel is for. Was 19 until 6.5, which adds the `band0.researcherSeat` panel. A seat that cannot ask is a fact about the running lab and nothing in the verification harness reaches the running lab, so it is shown on the status band the morning it happens (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops). Moved at 6.8 by band 3 landing: the scoreboard writes six further account-wide panels, being one withheld hit rate where no pack version exists and five library panels, of which two are themselves withheld. The band is written on every build rather than only on days that have something to show, because a band that appeared only when there was data would be absent exactly when a reader was most likely to conclude the page had shown everything it has. Was 26 until 7.13, when the twin outcome spread stopped being one panel over both books and became one a side. The pooled panel had been written since 6.3 under a doc comment saying the two sides are never added, and nothing could read a wrong figure off it because both windows are nought over this fixture, which is why it stood through a sign-off."
     },
     {
       "id": "scoreboard.band1.shortOfEvidence",
@@ -8819,18 +8819,18 @@
     {
       "id": "scoreboard.panels",
       "tier": "FROZEN",
-      "value": "26",
+      "value": "27",
       "checkpoint": "3.5",
       "producedBy": "the nightly build over the fixture",
-      "note": "panels built over the fixture: three health figures plus three per side. Band 2's loss panel and band 3 are not among them and say so on the page, naming 4.10 and 6.8 Changed at 3.8 from 9 to 11: band 0 gains `correctedRows` and `worstLatenessMinutes`, which are the reader the correction mark needed. The superseded rule recorded a mark so a later reader could exclude corrected rows and shipped a guard that made corrected rows impossible, so the mark had neither a producer nor a consumer. The two new panels are account-wide and carry no direction, so nothing here is pooled across the two sides. Moved from 11 to 19 at 4.10, which adds band 2's four loss-cause panels per side: the share of losses that gapped, over every classified loss, and the shares of noise, failed setup and unclassified, over the losses whose horizon has closed. Eight panels, all withheld on this fixture because it holds no loss at all, which is what a withheld panel is for. Was 19 until 6.5, which adds the `band0.researcherSeat` panel. A seat that cannot ask is a fact about the running lab and nothing in the verification harness reaches the running lab, so it is shown on the status band the morning it happens (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops). Moved at 6.8 by band 3 landing: the scoreboard writes six further account-wide panels, being one withheld hit rate where no pack version exists and five library panels, of which two are themselves withheld. The band is written on every build rather than only on days that have something to show, because a band that appeared only when there was data would be absent exactly when a reader was most likely to conclude the page had shown everything it has."
+      "note": "panels built over the fixture: three health figures plus three per side. Band 2's loss panel and band 3 are not among them and say so on the page, naming 4.10 and 6.8 Changed at 3.8 from 9 to 11: band 0 gains `correctedRows` and `worstLatenessMinutes`, which are the reader the correction mark needed. The superseded rule recorded a mark so a later reader could exclude corrected rows and shipped a guard that made corrected rows impossible, so the mark had neither a producer nor a consumer. The two new panels are account-wide and carry no direction, so nothing here is pooled across the two sides. Moved from 11 to 19 at 4.10, which adds band 2's four loss-cause panels per side: the share of losses that gapped, over every classified loss, and the shares of noise, failed setup and unclassified, over the losses whose horizon has closed. Eight panels, all withheld on this fixture because it holds no loss at all, which is what a withheld panel is for. Was 19 until 6.5, which adds the `band0.researcherSeat` panel. A seat that cannot ask is a fact about the running lab and nothing in the verification harness reaches the running lab, so it is shown on the status band the morning it happens (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops). Moved at 6.8 by band 3 landing: the scoreboard writes six further account-wide panels, being one withheld hit rate where no pack version exists and five library panels, of which two are themselves withheld. The band is written on every build rather than only on days that have something to show, because a band that appeared only when there was data would be absent exactly when a reader was most likely to conclude the page had shown everything it has. Was 26 until 7.13, when the twin outcome spread stopped being one panel over both books and became one a side. The pooled panel had been written since 6.3 under a doc comment saying the two sides are never added, and nothing could read a wrong figure off it because both windows are nought over this fixture, which is why it stood through a sign-off."
     },
     {
       "id": "scoreboard.rebuild.attempted",
       "tier": "DERIVED",
-      "value": "26",
+      "value": "27",
       "checkpoint": "3.9",
       "producedBy": "the same arithmetic off the panel structure; a rebuild produces the same panels it did the first time",
-      "note": "equal to scoreboard.attempted, which is what makes the skipped count below mean what it says Moved from 11 to 19 at 4.10, which adds band 2's four loss-cause panels per side: the share of losses that gapped, over every classified loss, and the shares of noise, failed setup and unclassified, over the losses whose horizon has closed. Eight panels, all withheld on this fixture because it holds no loss at all, which is what a withheld panel is for. Was 19 until 6.5, which adds the `band0.researcherSeat` panel. A seat that cannot ask is a fact about the running lab and nothing in the verification harness reaches the running lab, so it is shown on the status band the morning it happens (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops). Moved at 6.8 by band 3 landing: the scoreboard writes six further account-wide panels, being one withheld hit rate where no pack version exists and five library panels, of which two are themselves withheld. The band is written on every build rather than only on days that have something to show, because a band that appeared only when there was data would be absent exactly when a reader was most likely to conclude the page had shown everything it has."
+      "note": "equal to scoreboard.attempted, which is what makes the skipped count below mean what it says Moved from 11 to 19 at 4.10, which adds band 2's four loss-cause panels per side: the share of losses that gapped, over every classified loss, and the shares of noise, failed setup and unclassified, over the losses whose horizon has closed. Eight panels, all withheld on this fixture because it holds no loss at all, which is what a withheld panel is for. Was 19 until 6.5, which adds the `band0.researcherSeat` panel. A seat that cannot ask is a fact about the running lab and nothing in the verification harness reaches the running lab, so it is shown on the status band the morning it happens (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops). Moved at 6.8 by band 3 landing: the scoreboard writes six further account-wide panels, being one withheld hit rate where no pack version exists and five library panels, of which two are themselves withheld. The band is written on every build rather than only on days that have something to show, because a band that appeared only when there was data would be absent exactly when a reader was most likely to conclude the page had shown everything it has. Was 26 until 7.13, when the twin outcome spread stopped being one panel over both books and became one a side. The pooled panel had been written since 6.3 under a doc comment saying the two sides are never added, and nothing could read a wrong figure off it because both windows are nought over this fixture, which is why it stood through a sign-off."
     },
     {
       "id": "scoreboard.rebuild.outcome",
@@ -8843,10 +8843,10 @@
     {
       "id": "scoreboard.rebuild.skipped",
       "tier": "DERIVED",
-      "value": "26",
+      "value": "27",
       "checkpoint": "3.9",
       "producedBy": "every panel of a date that already carries panels, since the insert is ON CONFLICT DO NOTHING and there is no update path. Equal to the attempted count by the property being asserted rather than by a figure read back",
-      "note": "it was six of eleven until 3.9(e). The five account-wide panels were being inserted again rather than skipped, because SQLite treats nulls as distinct in a unique index and direction is null on every one of them Moved from 11 to 19 at 4.10, which adds band 2's four loss-cause panels per side: the share of losses that gapped, over every classified loss, and the shares of noise, failed setup and unclassified, over the losses whose horizon has closed. Eight panels, all withheld on this fixture because it holds no loss at all, which is what a withheld panel is for. Was 19 until 6.5, which adds the `band0.researcherSeat` panel. A seat that cannot ask is a fact about the running lab and nothing in the verification harness reaches the running lab, so it is shown on the status band the morning it happens (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops). Moved at 6.8 by band 3 landing: the scoreboard writes six further account-wide panels, being one withheld hit rate where no pack version exists and five library panels, of which two are themselves withheld. The band is written on every build rather than only on days that have something to show, because a band that appeared only when there was data would be absent exactly when a reader was most likely to conclude the page had shown everything it has."
+      "note": "it was six of eleven until 3.9(e). The five account-wide panels were being inserted again rather than skipped, because SQLite treats nulls as distinct in a unique index and direction is null on every one of them Moved from 11 to 19 at 4.10, which adds band 2's four loss-cause panels per side: the share of losses that gapped, over every classified loss, and the shares of noise, failed setup and unclassified, over the losses whose horizon has closed. Eight panels, all withheld on this fixture because it holds no loss at all, which is what a withheld panel is for. Was 19 until 6.5, which adds the `band0.researcherSeat` panel. A seat that cannot ask is a fact about the running lab and nothing in the verification harness reaches the running lab, so it is shown on the status band the morning it happens (see: The seat runs on the subscription against claude-opus-5, and the API path stays live for the day the subscription stops). Moved at 6.8 by band 3 landing: the scoreboard writes six further account-wide panels, being one withheld hit rate where no pack version exists and five library panels, of which two are themselves withheld. The band is written on every build rather than only on days that have something to show, because a band that appeared only when there was data would be absent exactly when a reader was most likely to conclude the page had shown everything it has. Was 26 until 7.13, when the twin outcome spread stopped being one panel over both books and became one a side. The pooled panel had been written since 6.3 under a doc comment saying the two sides are never added, and nothing could read a wrong figure off it because both windows are nought over this fixture, which is why it stood through a sign-off."
     },
     {
       "id": "scoreboard.skipped",
@@ -8867,10 +8867,10 @@
     {
       "id": "scoreboard.withheld",
       "tier": "FROZEN",
-      "value": "17",
+      "value": "18",
       "checkpoint": "3.5",
       "producedBy": "the nightly build over the fixture",
-      "note": "panels withheld for want of a sample: both control comparisons and the ceiling gap, on both sides. Withheld rather than printed wide, because a panel showing an interval built from a handful of nights invites a reading and the count beside it is not enough to stop that Moved from 6 to 14 at 4.10, which adds band 2's four loss-cause panels per side: the share of losses that gapped, over every classified loss, and the shares of noise, failed setup and unclassified, over the losses whose horizon has closed. Eight panels, all withheld on this fixture because it holds no loss at all, which is what a withheld panel is for. Moved at 6.8 by band 3 landing: three of its six panels are withheld, being the hit rate where no pack version exists, the count of signals separating outcomes where no outcome has closed, and the mean twin spread where no pair has been found. Each carries the count it will be over rather than a nought, which is the whole of what the checkpoint's done condition asks."
+      "note": "panels withheld for want of a sample: both control comparisons and the ceiling gap, on both sides. Withheld rather than printed wide, because a panel showing an interval built from a handful of nights invites a reading and the count beside it is not enough to stop that Moved from 6 to 14 at 4.10, which adds band 2's four loss-cause panels per side: the share of losses that gapped, over every classified loss, and the shares of noise, failed setup and unclassified, over the losses whose horizon has closed. Eight panels, all withheld on this fixture because it holds no loss at all, which is what a withheld panel is for. Moved at 6.8 by band 3 landing: three of its six panels are withheld, being the hit rate where no pack version exists, the count of signals separating outcomes where no outcome has closed, and the mean twin spread where no pair has been found. Each carries the count it will be over rather than a nought, which is the whole of what the checkpoint's done condition asks. Was 17 until 7.13, when the twin outcome spread stopped being one panel over both books and became one a side. The pooled panel had been written since 6.3 under a doc comment saying the two sides are never added, and nothing could read a wrong figure off it because both windows are nought over this fixture, which is why it stood through a sign-off."
     },
     {
       "id": "sectors.asked",
@@ -12562,18 +12562,18 @@
     {
       "id": "band3.panels",
       "tier": "DERIVED",
-      "value": "7",
+      "value": "9",
       "checkpoint": "6.8",
       "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
-      "note": "One hit rate and five library panels. Written on every build rather than only on days with something to show, so an empty band means the build has not run rather than that the loop has produced nothing. Read over the fixture as one roll-up, one pack version and five library panels."
+      "note": "One hit rate and five library panels. Written on every build rather than only on days with something to show, so an empty band means the build has not run rather than that the loop has produced nothing. Read over the fixture as one roll-up, one pack version and five library panels. Was 7 until 7.13, when the twin outcome spread stopped being one panel over both books and became one a side, and each pack version's hit rate did the same. The pooled panel had been written since 6.3 under a doc comment saying the two sides are never added, and nothing could read a wrong figure off it because both windows are nought over this fixture, which is why it stood through a sign-off."
     },
     {
       "id": "band3.withheld",
       "tier": "DERIVED",
-      "value": "4",
+      "value": "6",
       "checkpoint": "6.8",
       "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
-      "note": "The hit rate where no pack version exists, the separating-signals count where no outcome has closed, and the twin spread where no pair has been found. Each carries the count it will be over rather than a nought. The roll-up is withheld too once a version exists, saying the rate is per version rather than pooled."
+      "note": "The hit rate where no pack version exists, the separating-signals count where no outcome has closed, and the twin spread where no pair has been found. Each carries the count it will be over rather than a nought. The roll-up is withheld too once a version exists, saying the rate is per version rather than pooled. Was 4 until 7.13, when the twin outcome spread stopped being one panel over both books and became one a side, and each pack version's hit rate did the same. The pooled panel had been written since 6.3 under a doc comment saying the two sides are never added, and nothing could read a wrong figure off it because both windows are nought over this fixture, which is why it stood through a sign-off."
     },
     {
       "id": "band3.hitRate.figure",
@@ -14798,6 +14798,102 @@
       "checkpoint": "7.11",
       "producedBy": "derived by hand: the reports folder under the data root and the one night the replay forecasts",
       "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. Relative to the data root."
+    },
+    {
+      "id": "pack.population.long",
+      "tier": "DERIVED",
+      "value": "long setups: 2 over 1 session(s)",
+      "checkpoint": "7.13",
+      "producedBy": "produced by running the shipped ContextPacker over the golden fixture and reading the line back out of the pack it cut",
+      "note": "The long side's count and the sessions it is over, in one line of the pack's population section. Three lines of that section were a figure over both sides from 6.4 until 7.13, under a doc comment in the same method saying the two sides are two lines and are never added into one (see: Long and short are never pooled into one figure)."
+    },
+    {
+      "id": "pack.population.short",
+      "tier": "DERIVED",
+      "value": "short setups: 1 over 1 session(s)",
+      "checkpoint": "7.13",
+      "producedBy": "produced by running the shipped ContextPacker over the golden fixture and reading the line back out of the pack it cut",
+      "note": "The short side's, on the same terms. The two are read as separate expectations rather than as one line holding both, because an expectation over both sides would be the defect this checkpoint took out of the stage, kept in the harness."
+    },
+    {
+      "id": "pack.population.longPerSession",
+      "tier": "DERIVED",
+      "value": "long setups per session: 2.000000",
+      "checkpoint": "7.13",
+      "producedBy": "produced by running the shipped ContextPacker over the golden fixture and reading the line back out of the pack it cut",
+      "note": "The long side's rate, over the long side's own sessions. The pooled rate divided every setup by every session either side was detected on, so a side that started later was divided by nights it was never looked for on."
+    },
+    {
+      "id": "pack.population.shortPerSession",
+      "tier": "DERIVED",
+      "value": "short setups per session: 1.000000",
+      "checkpoint": "7.13",
+      "producedBy": "produced by running the shipped ContextPacker over the golden fixture and reading the line back out of the pack it cut",
+      "note": "The short side's rate, over the short side's own sessions. A side with no session at all reads none rather than nought, because nought over nought is not a smaller rate."
+    },
+    {
+      "id": "pack.population.figuresOverBothSides",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.13",
+      "producedBy": "produced by running the shipped ContextPacker over the golden fixture and reading the line back out of the pack it cut",
+      "note": "Lines of the section stating a figure about setups over both sides, which is the property rather than the shape. It was three until 7.13, being the total, the rate and the count that passed every gate, and nought is what a reader of this fixture should expect it to stay at (see: Long and short are never pooled into one figure)."
+    },
+    {
+      "id": "band3.sidedPanels",
+      "tier": "DERIVED",
+      "value": "4",
+      "checkpoint": "7.13",
+      "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
+      "note": "Band 3 panels carrying a side of their own: the twin outcome spread and each pack version's hit rate, one row each per side. Nought until 7.13, when both stopped being one row over two populations. The band's other panels are the library counts and the roll-up, which are properties of the record rather than of a book."
+    },
+    {
+      "id": "band3.twinSpread.long.population",
+      "tier": "DERIVED",
+      "value": "the setups the trailing window held on the long side",
+      "checkpoint": "7.13",
+      "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
+      "note": "What the long side's twin panel says it was taken over. Until 7.13 one pooled row read the setups the trailing window held, on both sides."
+    },
+    {
+      "id": "band3.twinSpread.short.population",
+      "tier": "DERIVED",
+      "value": "the setups the trailing window held on the short side",
+      "checkpoint": "7.13",
+      "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
+      "note": "The short side's, on the same terms."
+    },
+    {
+      "id": "band3.twinSpread.long.window",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.13",
+      "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
+      "note": "The long side's trailing window, which is the count the panel is withheld against: nought pairs over a window of four and nought over a window of 250 are different statements. The pooled panel summed the two sides' windows into one count."
+    },
+    {
+      "id": "band3.twinSpread.short.window",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.13",
+      "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
+      "note": "The short side's window, read apart from the long side's."
+    },
+    {
+      "id": "band3.hitRate.v1.long.population",
+      "tier": "DERIVED",
+      "value": "proposals filed against pack version 1 naming the long side, of which the ones that became a version and were settled",
+      "checkpoint": "7.13",
+      "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
+      "note": "What pack version 1's long panel is over: proposals filed against that version naming the long side. A proposal naming no side, being an abstention or a signal request, is in neither panel, because it can never become a version and was padding the denominator of a rate it could not reach."
+    },
+    {
+      "id": "band3.hitRate.v1.short.population",
+      "tier": "DERIVED",
+      "value": "proposals filed against pack version 1 naming the short side, of which the ones that became a version and were settled",
+      "checkpoint": "7.13",
+      "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
+      "note": "The short side's, on the same terms."
     }
   ],
   "frozenOnly": [

@@ -94,6 +94,12 @@ public sealed class SetupReader
     /// the history for no gain. The two sides are separate columns of one row and there is no field
     /// for a figure over both (see: Long and short are never pooled into one figure).
     ///
+    /// <b>That last sentence was here and false until 7.13.</b> The record carried a total and a
+    /// count of rows that passed every gate over both sides, and the pack printed both, so the
+    /// sentence describing the shape was written beside two fields that broke it. What is returned
+    /// now is per side including the session count each side's rate is over, and the only thing
+    /// answered over both is whether there is a population at all.
+    ///
     /// Bounded on the as-of like every read here: `setup` carries no observation stamp because
     /// `as_of` is the session it belongs to.
     /// </summary>
@@ -102,11 +108,18 @@ public sealed class SetupReader
         ArgumentNullException.ThrowIfNull(connection);
 
         using SqliteCommand command = connection.CreateCommand();
+
+        // Every count here is per side, including the sessions each side's rate is taken over, and
+        // no column of this statement adds the two together. A total was returned beside them until
+        // 7.13 and the pack printed it, so the reading is per side from the statement outward rather
+        // than at the surface (see: Long and short are never pooled into one figure).
         command.CommandText = """
-            SELECT COUNT(*),
-                   SUM(CASE WHEN direction = 'long' THEN 1 ELSE 0 END),
+            SELECT SUM(CASE WHEN direction = 'long' THEN 1 ELSE 0 END),
                    SUM(CASE WHEN direction = 'short' THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN passed_all = 1 THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN direction = 'long' AND passed_all = 1 THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN direction = 'short' AND passed_all = 1 THEN 1 ELSE 0 END),
+                   COUNT(DISTINCT CASE WHEN direction = 'long' THEN as_of END),
+                   COUNT(DISTINCT CASE WHEN direction = 'short' THEN as_of END),
                    COUNT(DISTINCT as_of),
                    MIN(as_of),
                    MAX(as_of)
@@ -122,16 +135,16 @@ public sealed class SetupReader
         // COUNT is never null and every SUM here is, on an empty table. Read as nought rather than
         // through a coalesce in the statement, so the empty case is visible in the code that has to
         // handle it.
-        int total = reader.GetInt32(0);
-
         return new SetupPopulation(
-            total,
+            reader.IsDBNull(0) ? 0 : reader.GetInt32(0),
             reader.IsDBNull(1) ? 0 : reader.GetInt32(1),
             reader.IsDBNull(2) ? 0 : reader.GetInt32(2),
             reader.IsDBNull(3) ? 0 : reader.GetInt32(3),
             reader.GetInt32(4),
-            reader.IsDBNull(5) ? null : StoreText.StorageTextToDate(reader.GetString(5)),
-            reader.IsDBNull(6) ? null : StoreText.StorageTextToDate(reader.GetString(6)));
+            reader.GetInt32(5),
+            reader.GetInt32(6),
+            reader.IsDBNull(7) ? null : StoreText.StorageTextToDate(reader.GetString(7)),
+            reader.IsDBNull(8) ? null : StoreText.StorageTextToDate(reader.GetString(8)));
     }
 
     /// <summary>The evidence store. Written forward, one session at a time.</summary>
@@ -253,10 +266,23 @@ public sealed record StoredSetup(
 /// see: Long and short are never pooled into one figure
 /// </summary>
 public sealed record SetupPopulation(
-    int Total,
     int Longs,
     int Shorts,
-    int PassedEveryGate,
+    int PassedEveryGateLong,
+    int PassedEveryGateShort,
+    int LongSessions,
+    int ShortSessions,
     int Sessions,
     DateOnly? FirstSession,
-    DateOnly? LastSession);
+    DateOnly? LastSession)
+{
+    /// <summary>
+    /// Whether the record holds any setup at all, which is the one question both sides answer at once.
+    ///
+    /// <b>A test rather than a figure, and that is the whole of the difference.</b> The two sides are
+    /// never added into one number a reader could quote; whether either side has a row is a property
+    /// of the record and is what says a population section has nothing to describe
+    /// (see: Long and short are never pooled into one figure).
+    /// </summary>
+    public bool IsEmpty => Longs == 0 && Shorts == 0;
+}
