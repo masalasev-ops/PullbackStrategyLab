@@ -20354,3 +20354,39 @@ Next:       **The first paper trades, and the one quantity nobody has measured.*
             21 averages and a reclaim of the previous candle's extreme. `backfill-minutes` and then
             `measure-entry-rule` on a copy are what would answer it, and act (2) above is what that
             purchase costs.
+
+## Not a checkpoint entry — 2026-09-12 — phase-7-11-the-weekly-slots — belongs to 7.11: the Saturday chain corrected, four slots running for the first time this morning and not five
+
+Not a checkpoint entry. It belongs to 7.11, which has landed. It corrects the two entries above and
+records nothing new about the lab.
+
+Corrects:   **Two entries said five weekly slots had never run, and one of the five had run three
+            times.** The 7.14 record of 2026-09-12 closed on "the first live run of `ceiling`, `twins`,
+            `pack`, `seat` and `registry`, none of which has ever run", and the switch record of the
+            same date repeated it as "the first ever run of the five weekly slots". Read from `run_log`
+            on the live store: **`ceiling` has run three times**, twice on 2026-08-29 and once on
+            Saturday 2026-09-05, each `clean`. `twin-pairs`, `build-pack`, `ask-researcher` and
+            `screen-proposals` have never run. So **Saturday 2026-09-12 is the first live run of four
+            weekly slots and not five**, which is what RUNBOOK already said in its own account of the
+            third act: the four were registered on 2026-09-08 and their first live proof was still
+            ahead. The error was in the two records, not in the document they should have been read
+            against.
+
+            **And the Saturday chain is six rows, one of which has no task.** `admit-signals` was given
+            the 08:15 slot at 7.4. The machine holds thirty-seven scheduled tasks and none of them is
+            it, so it does not run this morning either and stays on the operator's list exactly where
+            the 7.14 record left it. A sixth row in the schedule with no task behind it is the shape
+            `slot-roster` cannot see and the morning report is what sees, which is the paragraph RUNBOOK
+            carries under the third act.
+
+            **Neither correction moves anything about the switch.** No generation 1 setup row exists
+            until Monday's detect, so this morning's `ceiling` reads generation 0's rows alone and is
+            still the pre-switch bound RUNBOOK's step 3 asks for. It is the first `ceiling` taken over
+            the store at version 69, the three before it having run at 57 and 61.
+
+            **Why these six sit on a Saturday at all**, since it is the one morning with no session:
+            every one of them spends no vendor call and reads what the week recorded rather than a live
+            market, which is the reason the schedule puts them there.
+
+Found:      **Nothing.** Both corrections are readings of `run_log` and of the machine's task list,
+            and neither changes code, fixture or specification.
