@@ -738,6 +738,10 @@ public sealed class PhaseReplay : IDisposable
         // Over this store, reading generation 1 over the night and the run log the replay left.
         measurements.AddRange(ForecastFigures());
 
+        // After the close, because the refusal it measures exists only while generation 1 is in
+        // force. Before the point-in-time probe, which stays last for its own reason.
+        measurements.AddRange(RefusalFigures());
+
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
         // was added underneath it and inherited the probe silently; store.observationsAfterTheAsOf
@@ -4127,6 +4131,44 @@ public sealed class PhaseReplay : IDisposable
     /// forecast the operator runs over the live nights, against the headroom the replay's own run log
     /// leaves once every other stage of the day has spent.
     /// </summary>
+    /// <summary>
+    /// What the pack does when the design requires it to refuse, taken over this store rather than
+    /// argued about.
+    ///
+    /// <b>It runs where it runs because of what is above it.</b> The refusal exists only while
+    /// generation 1 is in force, and <see cref="GenerationCloseFigures"/> has already put it there
+    /// through the shipped act; every pack figure taken under generation 0 is taken above that line.
+    /// So this block cuts and reads rather than arranging anything.
+    ///
+    /// <b>Why it is measured at all.</b> On 2026-09-12, the first morning the pack slot ever ran,
+    /// it refused for this reason and recorded a failure, and the scheduler surfaced a red beside a
+    /// correct outcome. A refusal the design requires can hold for months, and a red that is right
+    /// every week is how a red that is wrong stops being read.
+    /// </summary>
+    private IReadOnlyList<Measurement> RefusalFigures()
+    {
+        _clock.Advance(TimeSpan.FromMinutes(1));
+
+        PackResult refused = new ContextPacker(_connections, Logger(), _clock, _options).Build(AsOf);
+
+        using SqliteConnection reading = _connections.OpenReadOnly();
+        using SqliteCommand command = reading.CreateCommand();
+        command.CommandText =
+            "SELECT outcome FROM pack_run WHERE refused_because IS NOT NULL ORDER BY observed_at DESC LIMIT 1;";
+        string rowOutcome = Convert.ToString(command.ExecuteScalar(), CultureInfo.InvariantCulture) ?? "absent";
+
+        return
+        [
+            new("pack.refusedByDesign", refused.RefusedBecause is null ? "cut a pack" : "refused"),
+            new("pack.refusedByDesign.outcome", refused.Outcome.ToStorageText()),
+            new("pack.refusedByDesign.rowOutcome", rowOutcome),
+            new("pack.refusedByDesign.namesTheGeneration",
+                refused.RefusedBecause?.Contains("generation 1", StringComparison.Ordinal) == true
+                    ? "names it"
+                    : "does not"),
+        ];
+    }
+
     private IReadOnlyList<Measurement> ForecastFigures()
     {
         _clock.Advance(TimeSpan.FromMinutes(1));

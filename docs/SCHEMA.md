@@ -1500,7 +1500,7 @@ Columns of `pack_run`. Built at 6.4 alongside the table above.
 | `null_control_planted` | INTEGER | Whether the null control reached the conditional tables. A pack that failed to plant it is a pack whose tripwire is not armed, and that has to be legible from the row rather than inferred from the body (see: One meaningless signal is planted in the conditional tables) |
 | `outcome` | TEXT | |
 
-*A refused run is held as a biconditional in both directions.* A run with outcome `failed` carries a reason, no version, no digest and no rendered section; a run with any other outcome carries none of those and does carry all of these. Stated in the store rather than left to the stage, so a half-written refusal is refused rather than recorded.
+*A refused run is held as a biconditional in both directions, keyed on the reason from 7.15.* A run carrying a reason carries no version, no digest and no rendered section, and ends `partial` or `failed`; a run carrying no reason carries all of those and cannot be a failure. Stated in the store rather than left to the stage, so a half-written refusal is refused rather than recorded. **It was keyed on `outcome = 'failed'` until 7.15**, which made the two kinds of non-pack one value: a refusal the design requires and a section that broke were recorded identically, and the first live pack, on 2026-09-12, put a red beside a correct outcome. What a run produced is what `refused_because` says; how it ended is what `outcome` says, and those are different questions.
 
 *The body is not stored and the digest is.* A pack is aggregates over a store the lab still holds,
 so it can be rebuilt from the version and the as-of; what cannot be rebuilt is whether two runs at

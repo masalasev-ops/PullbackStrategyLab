@@ -91,9 +91,17 @@ public sealed class ContextPacker
         {
             // No pack, no version, no ask. The night says which section it could not build rather
             // than cutting a short pack that would read as complete.
+            //
+            // **The exit code is what was recorded, not the fact of refusing.** A refusal the
+            // design requires exits 0, because the scheduler's red is the operator's signal that
+            // something needs looking at and this needs nothing. A section that broke still exits 1.
             Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, no pack was built, {refused}");
+            Console.WriteLine(
+                result.Outcome == RunOutcome.Failed
+                    ? $"{Name}: a section could not be built, so this is a fault and not a refusal the design requires"
+                    : $"{Name}: a refusal the design requires, so nothing here needs looking at");
             Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.RowsWritten} rows");
-            return 1;
+            return result.Outcome == RunOutcome.Failed ? 1 : 0;
         }
 
         Console.WriteLine(
@@ -168,7 +176,7 @@ public sealed class ContextPacker
             // set it did not screen and every claim against it would be judged against the wrong
             // number. So nothing is written, no version is registered, no ask is made, and the
             // night records which section it could not build.
-            return Refuse(connection, run, asOf, observedAt, failure);
+            return Refuse(connection, run, asOf, observedAt, failure, failure is DesignedRefusal);
         }
 
         int version;
@@ -216,9 +224,19 @@ public sealed class ContextPacker
         RunScope run,
         DateOnly asOf,
         DateTimeOffset observedAt,
-        Exception failure)
+        Exception failure,
+        bool byDesign)
     {
         string because = failure.Message;
+
+        // **A refusal the design requires is not a failure and is not recorded as one.** It is the
+        // stage doing what the corpus told it to, for as long as the condition holds, and the first
+        // one holds until generation 1's gate set is written as a selection rule, which has no date
+        // on it. Recorded as `failed` it puts a red beside a correct outcome every Saturday, which
+        // is how a red beside a wrong one stops being read. `partial` is what `ResearcherSeat`
+        // already records for this same event, so the two stages now agree rather than describing
+        // one morning two ways.
+        RunOutcome outcome = byDesign ? RunOutcome.Partial : RunOutcome.Failed;
 
         using (SqliteTransaction transaction = connection.BeginTransaction())
         {
@@ -230,25 +248,26 @@ public sealed class ContextPacker
                      refused_because, signals_screened, false_discovery_bar, long_setups, short_setups,
                      null_control_planted, outcome, observed_at)
                 VALUES
-                    (@as_of, NULL, NULL, NULL, 0, 0, @refused_because, 0, NULL, 0, 0, 0, 'failed', @observed_at)
+                    (@as_of, NULL, NULL, NULL, 0, 0, @refused_because, 0, NULL, 0, 0, 0, @outcome, @observed_at)
                 """;
 
             command.Parameters.AddWithValue("@as_of", StoreText.DateToStorageText(asOf));
             command.Parameters.AddWithValue("@refused_because", because);
+            command.Parameters.AddWithValue("@outcome", outcome.ToStorageText());
             command.Parameters.AddWithValue("@observed_at", StoreText.TimestampToStorageText(observedAt));
             command.ExecuteNonQuery();
 
             transaction.Commit();
         }
 
-        RunSummary summary = run.Complete(RunOutcome.Failed);
+        RunSummary summary = run.Complete(outcome);
 
         return new PackResult(
             asOf, Version: 0, VersionIsNew: false, Fingerprint: string.Empty,
             Pack: new EvidencePack(asOf, 0, string.Empty, []),
             BodyDigest: string.Empty, BodyBytes: 0,
             LongSetups: 0, ShortSetups: 0, SignalsScreened: 0, NullControlPlanted: false,
-            RowsWritten: summary.RowsWritten, Outcome: RunOutcome.Failed)
+            RowsWritten: summary.RowsWritten, Outcome: outcome)
         {
             RefusedBecause = because,
         };
@@ -282,8 +301,16 @@ public sealed class ContextPacker
                 // Named here rather than at the catch above, because "the pack could not be built"
                 // is the same sentence whichever section failed and the section is the half a
                 // reader of a run of refusals actually needs.
-                throw new InvalidOperationException(
-                    $"the \"{declared.Name}\" section could not be built: {failure.Message}", failure);
+                //
+                // **The kind survives the wrapping.** A refusal the design requires and a section
+                // that broke read identically once both are an InvalidOperationException naming a
+                // section, and the whole point of telling them apart is lost at the one line that
+                // re-throws. So the wrapper preserves what it was handed.
+                string named = $"the \"{declared.Name}\" section could not be built: {failure.Message}";
+
+                throw failure is DesignedRefusal
+                    ? new DesignedRefusal(named, failure)
+                    : new InvalidOperationException(named, failure);
             }
         }
 
@@ -355,7 +382,7 @@ public sealed class ContextPacker
         // see: Generation 1 opens with no version admissible in either family, and what reopens each is named
         if (baseline is not null && baseline.Generation >= GenerationOneChecks.Generation)
         {
-            throw new InvalidOperationException(VariantAdmitter.GenerationOneSelectionRefused);
+            throw new DesignedRefusal(VariantAdmitter.GenerationOneSelectionRefused);
         }
 
         // Ordered by id so two cuts over one store state name the same version in the same words,
