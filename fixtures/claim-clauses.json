@@ -8,7 +8,7 @@
         {
           "clause": "No trades resolved and every setup flagged that night excluded from variant scoring.",
           "disposition": "unreached",
-          "why": "variant scoring is not built, so the exclusion cannot be asserted; this verdict reaches the fetcher's count of names the vendor held nothing for"
+          "why": "variant scoring is built and the exclusion is not: `VariantScorer.UnscoredNights` takes every session `setup` holds a row for, with no bound on the night's degraded mark, so a night the fetch bought nothing for is scored like any other. Recorded at 7.14 as what is missing rather than as a component that does not exist; this verdict reaches the fetcher's count of names the vendor held nothing for"
         },
         {
           "clause": "A variant that could not be tested must not be scored as though it chose to pass.",
@@ -194,7 +194,7 @@
         {
           "clause": "Never applied per variant, or the disagreements go unscoreable.",
           "disposition": "unreached",
-          "why": "per-variant application cannot be asserted before 5.1 builds variants"
+          "why": "the cap is applied to the shared candidate list before any version selects and `setup` carries no version column, so a per-version cap is not expressible without a migration, which SetupCapper's own tests hold; this verdict reads the night's cap count and not that property"
         }
       ]
     },
@@ -274,7 +274,7 @@
         {
           "clause": "The remaining channel is the forward hit rate",
           "disposition": "unreached",
-          "why": "the forward hit rate is band 3 and ProposalRegistry, neither of which is built, so nothing here can assert that it is the channel that remains; what this verdict reaches is that the replay channel closes and says so"
+          "why": "band 3's hit rate is built from 6.8, per pack version and per side from 7.13, and `ProposalRegistry` from 6.6, so the channel exists; what nothing asserts is that it is the channel that remains once the windows are gone, and nothing can until a window is spent. This verdict reaches the replay channel closing and saying so"
         },
         {
           "clause": "which is slower.",
@@ -470,9 +470,9 @@
           "disposition": "reaches"
         },
         {
-          "clause": "Fourteen tables today.",
+          "clause": "Forty-five tables today.",
           "disposition": "unreached",
-          "why": "the document states fourteen tables and the check names twenty-eight; the figure is stale and no count check reaches a number stated inside a table cell"
+          "why": "the figure is the stamped list's own length, forty-five on 2026-09-12, and it is pinned against `PointInTimeCheck.Stamped` from 7.14 so it fails when a migration adds a stamp and the cell does not move; what no verdict reaches is the number itself, `stated-counts` reading sentences about a document's own contents rather than a count of tables stated in a cell"
         },
         {
           "clause": "The reverse direction is the one that matters",
@@ -1416,7 +1416,7 @@
         {
           "clause": "The harness re-run of the baseline's own rule must reproduce the baseline's historical selections exactly.",
           "disposition": "unreached",
-          "why": "the replay harness is not built, so its reproduction of the baseline's selections cannot be asserted"
+          "why": "the harness is built and `ReplayHarnessTests.The_baseline_replayed_reproduces_the_stored_selections_exactly` holds the reproduction over an authored store with a non-empty selection; no check in the roster and no verdict of this claim reaches it, which is what leaves it here"
         },
         {
           "clause": "If it does not, the harness and the live detector disagree and every replay result is worthless.",
@@ -1436,12 +1436,13 @@
         {
           "clause": "and proposal hit rate compared across pack versions.",
           "disposition": "unreached",
-          "why": "phase 6 is not built"
+          "why": "the panels exist from 6.8 and are one a version and one a side from 7.13, and the fixture holds each of them withheld with the count it will be over; what no verdict reaches is a comparison across versions, and nothing can until a second version carries a settled proposal"
         },
         {
           "clause": "The pack built from the fixture is byte-stable across runs",
-          "disposition": "unreached",
-          "why": "phase 6 is not built"
+          "disposition": "elsewhere",
+          "why": "`pack.byteStableAcrossRuns` cuts the fixture's pack twice and compares the two digests",
+          "by": "fixture-replay"
         },
         {
           "clause": "so a pack change is a deliberate change.",
@@ -1450,13 +1451,15 @@
         },
         {
           "clause": "The planted null signal is present.",
-          "disposition": "unreached",
-          "why": "phase 6 is not built"
+          "disposition": "elsewhere",
+          "why": "`pack.nullControlPlanted` reads the planted null off the pack the fixture cut",
+          "by": "fixture-replay"
         },
         {
           "clause": "No component outside the proposal store accepts a write from the researcher.",
-          "disposition": "unreached",
-          "why": "phase 6 is not built"
+          "disposition": "elsewhere",
+          "why": "the seat's only declared write is to `proposal`, reconciled against SCHEMA in both directions",
+          "by": "writer-ownership"
         }
       ]
     },
@@ -1471,12 +1474,13 @@
         {
           "clause": "Then generation 1's gate set and execution rule measured over the calibration minutes on a store copy before anything registers",
           "disposition": "unreached",
-          "why": "generation 1's gate set is 7.5's and its measurement 7.9's, so nothing of it exists at 7.1"
+          "why": "generation 1's gate set is built at 7.5 and its measurement ran at 7.9 over the fixture's own calibration rows, which `fixture-replay` holds; the run on a copy of the live store is the operator's half of 7.9 and is a fact about the running lab rather than about the build, which no check in this corpus reaches"
         },
         {
           "clause": "and the switch night with generation 0's record kept beside it.",
-          "disposition": "unreached",
-          "why": "the switch is 7.11's"
+          "disposition": "elsewhere",
+          "why": "the switch night over the fixture writes a row in `setup` and one in `setup_generation_zero` for a name both rules flag, and the join reproduces it",
+          "by": "fixture-replay"
         },
         {
           "clause": "A weekday the guard refused reconciled to thirty-two rows and none missing.",
@@ -1486,13 +1490,15 @@
         },
         {
           "clause": "Every clause of generation 1 still naming its source",
-          "disposition": "unreached",
-          "why": "`clause-provenance` holds generation 0's twenty clauses today, and generation 1's gate set is 7.5's"
+          "disposition": "elsewhere",
+          "why": "it reconciles generation 1's clause rows and the exit forms against the detector's and the two exit rule sets' lists in both directions, and requires a quotation where a row claims one",
+          "by": "clause-provenance"
         },
         {
           "clause": "and every row read against the gate list of its own night across the switch.",
-          "disposition": "unreached",
-          "why": "the date-aware gate list is 7.2's and the switch 7.11's"
+          "disposition": "elsewhere",
+          "why": "it holds the switch night's rows to generation 1's list, the companion rows to generation 0's, and the night before to the list the register says ran",
+          "by": "check-completeness"
         }
       ]
     },

@@ -29,13 +29,24 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// fetch buys minutes for.
 ///
 /// <b>The headroom is the ceiling less what the day's other stages spent</b>, read from the run log
-/// for the vendor's quota day holding that evening, because `universe-build` alone spends about two
-/// thousand calls and a cost set against the whole ceiling would read far too comfortable.
+/// for the vendor's quota day the fetch of this night's list falls in, because `universe-build` alone
+/// spends about two thousand calls and a cost set against the whole ceiling would read far too
+/// comfortable.
 ///
-/// <b>Which names get minutes when the ceiling binds is the fetch's own order, and the report names
-/// them.</b> The fetch asks for names in ticker order and stops at the ceiling, so where a night's
-/// cost exceeds the headroom the names past the last one it could afford go without, and the report
-/// lists them rather than leaving the order to be inferred.
+/// <b>A night's list is bought on the next session's evening, and pairing it with its own evening was
+/// wrong until 7.14.</b> The 20:30 fetch buys the minutes of the session that has just closed for the
+/// names flagged on the evening before it, so night N's list is bought on the evening of the session
+/// after N. This read the quota day holding N's own evening, which is the day the previous night's
+/// list spends in. Monday to Wednesday the two days hold much the same spend and the error is small;
+/// a Friday's list was set against a Saturday UTC day holding almost nothing where its fetch really
+/// spends beside Tuesday's `universe-build`. Found at the 7.12 sign-off, which could not repair it.
+///
+/// <b>An overrun does not cost the fetch's later names, and saying it did was the second half of the
+/// same error.</b> The quota day opens at midnight UTC, which is 20:00 Eastern in summer, so the
+/// 20:30 fetch is the first stage to spend in its day: `RunLogger` hands it nearly the whole ceiling
+/// and it buys every name on the list. What the ceiling then cuts is the stages of the evening after
+/// it, `universe-build` among them, and that is the one stage no rerun replaces. So the report states
+/// what a night is over its headroom by and what that costs, and lists no names at all.
 ///
 /// <b>The flagged count is one list across both sides, and that is the fetch's list rather than a
 /// pooled figure.</b> A name flagged long and short is one name to buy minutes for, so its size and
@@ -49,8 +60,11 @@ public sealed class GenerationOneForecast
 {
     public const string Name = "forecast-generation-one";
 
-    /// <summary>When the fetch runs on a night, which is what places the night in the vendor's quota day.</summary>
+    /// <summary>When the fetch runs, which is what places a list in the vendor's quota day.</summary>
     public static readonly TimeOnly EveningOfTheNight = new(20, 30);
+
+    /// <summary>How far forward the next recorded session is looked for before the pairing is assumed.</summary>
+    public const int DaysToLookForTheNextSession = 10;
 
     private readonly StoreConnectionFactory _connections;
     private readonly RunLogger _runLogger;
@@ -92,10 +106,12 @@ public sealed class GenerationOneForecast
         {
             Console.WriteLine(
                 $"{Name}: {night.AsOf:yyyy-MM-dd}, {night.Flagged} name(s) flagged ({night.Long} long, {night.Short} short), "
-                + $"{night.CallCost} call(s) against a headroom of {night.Headroom}, the ceiling of {report.Ceiling} less "
+                + $"{night.CallCost} call(s) bought on {night.BoughtOn:yyyy-MM-dd} in quota day {night.QuotaDay:yyyy-MM-dd} "
+                + $"against a headroom of {night.Headroom}, the ceiling of {report.Ceiling} less "
                 + $"{night.SpentElsewhere} the other stages spent; generation 0 flagged "
                 + $"{night.GenerationZeroFlagged} at {night.GenerationZeroCallCost}"
-                + (night.WithoutMinutes.Count == 0 ? string.Empty : $"; {night.WithoutMinutes.Count} name(s) would get no minutes"));
+                + (night.BoughtOnIsRecorded ? string.Empty : "; no session is recorded after this night, so its evening is assumed")
+                + (night.OverBy == 0 ? string.Empty : $"; over by {night.OverBy} call(s), which the next evening's first stages pay"));
         }
 
         Console.WriteLine($"{Name}: {report.Nights.Count} night(s), {report.NightsOverTheHeadroom} over the headroom");
@@ -128,33 +144,61 @@ public sealed class GenerationOneForecast
 
             IReadOnlyList<string> generationZero = IntradayFetcher.FlaggedNames(connection, night);
 
-            // The evening the night's stages ran in, and what every stage but the fetch spent in the
-            // vendor's day holding it.
-            int spentElsewhere = RunLogger.CallsUsedOn(
-                connection,
-                VendorQuotaDay.Containing(SessionBoundaries.At(night, EveningOfTheNight, _options.SessionZone)),
-                IntradayFetcher.Name);
+            // The evening this night's list is bought on, and the vendor day that evening's fetch
+            // spends in, which is the day after it in UTC.
+            (DateOnly buyingEvening, bool recorded) = NextSession(connection, night);
+            VendorQuotaDay quotaDay = VendorQuotaDay.Containing(
+                SessionBoundaries.At(buyingEvening, EveningOfTheNight, _options.SessionZone));
 
+            int spentElsewhere = RunLogger.CallsUsedOn(connection, quotaDay, IntradayFetcher.Name);
             int headroom = Math.Max(0, ceiling - spentElsewhere);
-            int affordable = headroom / EodhdClient.IntradayCost;
+            int callCost = flagged.Length * EodhdClient.IntradayCost;
 
             nights.Add(new ForecastNight(
                 night,
                 longs.Length,
                 shorts.Length,
                 flagged.Length,
-                flagged.Length * EodhdClient.IntradayCost,
+                callCost,
+                buyingEvening,
+                recorded,
+                quotaDay.Date,
                 spentElsewhere,
                 headroom,
                 generationZero.Count,
                 generationZero.Count * EodhdClient.IntradayCost,
-                [.. flagged.Skip(affordable)]));
+                Math.Max(0, callCost - headroom)));
         }
 
         string path = Write(from, to, ceiling, nights);
         run.Complete(RunOutcome.Clean);
 
         return new GenerationOneForecastReport(from, to, ceiling, nights, path);
+    }
+
+    /// <summary>
+    /// The session whose evening buys this night's list, and whether the store records it.
+    ///
+    /// <b>The store's own sessions rather than a calendar</b>, because the lab authors no market
+    /// calendar and a Friday's list is bought on Monday's evening. Where the store records no session
+    /// after the night, which is the ordinary state of the last night in a range, the next calendar
+    /// day stands in and the report says so of that night rather than quietly reading a day of its
+    /// own choosing. RUNBOOK's step 2 tells the operator to end the range one session past the last
+    /// night they want read, which is what keeps that stand-in off the nights they are reading.
+    /// </summary>
+    private static (DateOnly Evening, bool Recorded) NextSession(SqliteConnection connection, DateOnly night)
+    {
+        for (int ahead = 1; ahead <= DaysToLookForTheNextSession; ahead++)
+        {
+            DateOnly candidate = night.AddDays(ahead);
+
+            if (UniverseSnapshotReader.Members(connection, candidate).Count > 0)
+            {
+                return (candidate, true);
+            }
+        }
+
+        return (night.AddDays(1), false);
     }
 
     private string Write(DateOnly from, DateOnly to, int ceiling, IReadOnlyList<ForecastNight> nights)
@@ -170,8 +214,10 @@ public sealed class GenerationOneForecast
             to = to.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             ceiling,
             callsPerName = EodhdClient.IntradayCost,
-            order = "ticker order, the fetch's own, stopping where the headroom runs out",
-            headroom = "the ceiling less what every other stage spent in the vendor's quota day holding the night's evening",
+            boughtOn = "the evening of the session after the night, which is when the fetch buys that night's list",
+            headroom = "the ceiling less what every other stage spent in the vendor's quota day the fetch falls in",
+            overrun = "a night over its headroom costs the next evening's first stages, universe-build among them, "
+                + "because the fetch is the first stage to spend in a quota day that opens at midnight UTC",
             nights = nights.Select(n => new
             {
                 asOf = n.AsOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
@@ -179,11 +225,14 @@ public sealed class GenerationOneForecast
                 n.Short,
                 n.Flagged,
                 n.CallCost,
+                boughtOn = n.BoughtOn.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                boughtOnIsRecorded = n.BoughtOnIsRecorded,
+                quotaDay = n.QuotaDay.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 n.SpentElsewhere,
                 n.Headroom,
                 n.GenerationZeroFlagged,
                 n.GenerationZeroCallCost,
-                n.WithoutMinutes,
+                n.OverBy,
             }),
         };
 
@@ -195,14 +244,19 @@ public sealed class GenerationOneForecast
         var text = new StringBuilder();
         text.AppendLine(CultureInfo.InvariantCulture, $"Generation 1's flagged count and minute cost, {from:yyyy-MM-dd} to {to:yyyy-MM-dd}");
         text.AppendLine(CultureInfo.InvariantCulture,
-            $"{EodhdClient.IntradayCost} calls a name, in ticker order, against the ceiling of {ceiling} less what the day's other stages spent.");
+            $"{EodhdClient.IntradayCost} calls a name, against the ceiling of {ceiling} less what the other stages spent in the quota day the fetch of that night's list falls in.");
+        text.AppendLine(
+            "A night's list is bought on the evening of the session after it, and a night over its headroom costs "
+            + "the next evening's first stages rather than its own later names.");
 
         foreach (ForecastNight night in nights)
         {
             text.AppendLine(
                 $"{night.AsOf:yyyy-MM-dd}: {night.Flagged} flagged ({night.Long} long, {night.Short} short), {night.CallCost} calls "
-                + $"against a headroom of {night.Headroom}; generation 0 {night.GenerationZeroFlagged} at {night.GenerationZeroCallCost}"
-                + (night.WithoutMinutes.Count == 0 ? string.Empty : $"; no minutes for {string.Join(" ", night.WithoutMinutes)}"));
+                + $"bought on {night.BoughtOn:yyyy-MM-dd}{(night.BoughtOnIsRecorded ? string.Empty : " (no session recorded after this night, so the evening is assumed)")} "
+                + $"in quota day {night.QuotaDay:yyyy-MM-dd}, against a headroom of {night.Headroom}; "
+                + $"generation 0 {night.GenerationZeroFlagged} at {night.GenerationZeroCallCost}"
+                + (night.OverBy == 0 ? string.Empty : $"; over by {night.OverBy} call(s), which the next evening's first stages pay"));
         }
 
         File.WriteAllText(Path.Combine(folder, stem + ".txt"), text.ToString(), new UTF8Encoding(false));
@@ -218,11 +272,14 @@ public sealed record ForecastNight(
     int Short,
     int Flagged,
     int CallCost,
+    DateOnly BoughtOn,
+    bool BoughtOnIsRecorded,
+    DateOnly QuotaDay,
     int SpentElsewhere,
     int Headroom,
     int GenerationZeroFlagged,
     int GenerationZeroCallCost,
-    IReadOnlyList<string> WithoutMinutes);
+    int OverBy);
 
 /// <summary>The forecast over a range of nights, and where its report was written, relative to the data root.</summary>
 public sealed record GenerationOneForecastReport(

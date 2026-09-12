@@ -21,6 +21,7 @@ public sealed record LabStatusView(
     string? Session,
     string? LastRunStage,
     string? LastRunOutcome,
+    string? LastRunSession,
     long UniverseMembers,
     long BarsStored,
     int CallsUsed,
@@ -39,7 +40,7 @@ public sealed record LabStatusView(
     /// what was wrong.
     /// </summary>
     public static LabStatusView Down(string why) =>
-        new(false, why, "unreachable", UnknownVersion, UnknownVersion, null, null, null, 0, 0, 0, 0, null, null, null, null);
+        new(false, why, "unreachable", UnknownVersion, UnknownVersion, null, null, null, null, 0, 0, 0, 0, null, null, null, null);
 
     /// <summary>
     /// The version fields when nothing answered, which is not nought.
@@ -58,15 +59,24 @@ public sealed record LabStatusView(
     /// <summary>
     /// The night's worst outcome and the stage that reached it, with the session it is about.
     ///
-    /// <b>The session travels with it from 6.8.</b> The band reads the newest session in the log and
-    /// bounds on that session's own calendar day, and the lab's night runs 17:15 to 22:00, so a
-    /// stage rerun in the early hours to repair the session before falls inside the window. Naming
-    /// the session is what stops a reader taking the stage as this evening's; telling the two apart
-    /// from the log alone would need a session on `run_log`, which it does not carry.
+    /// <b>The session travels with it from 6.8, and until 7.14 the wrong one did.</b> The band reads
+    /// the newest session in the log and bounds on that session's own calendar day, and the lab's
+    /// night runs 17:15 to 22:00, so a stage rerun in the early hours to repair the session before
+    /// falls inside the window. Naming the session is what stops a reader taking the stage as this
+    /// evening's.
+    ///
+    /// <b>What it named was the session the store is current to.</b> `LabStatus.LatestRun` computed
+    /// the run's own session to bound its query and returned a payload without it, so the band
+    /// rendered the run followed by the last session a universe snapshot exists for. The two agree
+    /// on an ordinary night and come apart on the night `universe-build` failed, which is the night
+    /// the band exists for: the run would have been shown against the session before it, and a
+    /// reader would have concluded the failing stage belonged to a night that had already been
+    /// reported clean. The run's own session is on the wire now, and where it is absent the band
+    /// says so rather than reaching for the other one.
     /// </summary>
     public string LastRunText => LastRunStage is null
         ? "nothing has run"
-        : $"{LastRunStage} · {LastRunOutcome} · for {SessionText}";
+        : $"{LastRunStage} · {LastRunOutcome} · for {LastRunSession ?? "a session the log does not name"}";
 
     public string CallsText => string.Create(
         CultureInfo.InvariantCulture, $"{CallsUsed:N0} of {DailyCallCeiling:N0}");

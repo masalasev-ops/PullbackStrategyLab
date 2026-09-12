@@ -111,6 +111,7 @@ public sealed class LabApiClient
                 payload.Session,
                 payload.LastRun?.Stage,
                 payload.LastRun?.Outcome,
+                payload.LastRun?.Session,
                 payload.UniverseMembers,
                 payload.BarsStored,
                 payload.CallsUsed,
@@ -973,5 +974,6 @@ public sealed class LabApiClient
         int? ShortPositionsOpen,
         decimal? RiskAtStake);
 
-    private sealed record RunPayload(string Stage, string StartedAt, string? EndedAt, string Outcome, int CallsUsed);
+    private sealed record RunPayload(
+        string Stage, string StartedAt, string? EndedAt, string Outcome, int CallsUsed, string? Session);
 }

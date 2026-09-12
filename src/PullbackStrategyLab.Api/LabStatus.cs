@@ -217,7 +217,14 @@ public static class LabStatus
             // A run with no outcome did not finish. Reported as it stands rather than as clean,
             // because a stage that was killed part way is exactly what the band is for.
             reader.IsDBNull(3) ? "unfinished" : reader.GetString(3),
-            reader.GetInt32(4));
+            reader.GetInt32(4),
+
+            // The session this run belongs to, which this method has computed since 6.8 and did not
+            // return until 7.14. The band rendered the run followed by the session the store is
+            // current to, being the last session a universe snapshot exists for, and the two come
+            // apart on exactly the night the band is for: one `universe-build` failed. A correct
+            // answer dropped between the component that computed it and the surface that showed it.
+            session.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
     }
 
     /// <summary>
@@ -276,4 +283,5 @@ public sealed record StatusResponse(
             null, null, null, null);
 }
 
-public sealed record RunSummaryResponse(string Stage, string StartedAt, string? EndedAt, string Outcome, int CallsUsed);
+public sealed record RunSummaryResponse(
+    string Stage, string StartedAt, string? EndedAt, string Outcome, int CallsUsed, string Session);

@@ -13,5 +13,6 @@ repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=tools/shell-provenance.sh
 . "$repository_root/tools/shell-provenance.sh"
 shell_provenance migrate
+refuse_without_a_data_root migrate "$repository_root"
 
 exec dotnet run --project "$repository_root/src/PullbackStrategyLab.Worker" -- migrate "$@"

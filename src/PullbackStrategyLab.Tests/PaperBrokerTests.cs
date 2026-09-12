@@ -483,7 +483,7 @@ public sealed class PaperBrokerTests : IDisposable
     /// <summary>The view the band renders, built from the payload the read surface answered with.</summary>
     private static LabStatusView View(StatusResponse status) => new(
         true, null, status.Store, status.SchemaVersion, status.SchemaVersionExpected,
-        status.Session, null, null, status.UniverseMembers, status.BarsStored,
+        status.Session, null, null, null, status.UniverseMembers, status.BarsStored,
         status.CallsUsed, status.DailyCallCeiling, status.MarketMood,
         status.PositionsOpen, status.ShortPositionsOpen, status.RiskAtStake);
 
