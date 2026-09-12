@@ -20108,3 +20108,93 @@ Next:       **The rest of what the two sign-offs left is code and is not built h
             unset data root, the status band's session, eight clause reasons that name what is missing
             today, and the surface claim the provisional list says holds band 3's signal-library
             panel. 6.9's fifth is this checkpoint's first two paragraphs.
+
+## 7.14 — 2026-09-12 — phase-7-14-what-the-sign-offs-left — the forecast paired with the evening that buys its list, two scripts that refuse a store they were not given, the band's own session, and thirteen clause reasons brought to today
+
+Built:      **(a) The forecast pairs a night with the evening its list is bought on.** `IntradayFetcher`
+            runs at 20:30 and buys the minutes of the session just closed for the names flagged the
+            evening before, so night N's list is bought on the evening of the session after N.
+            `GenerationOneForecast` read the quota day holding N's own evening, which is the day the
+            night before's list spends in. It now looks forward for the next session the store records,
+            falls back to the next calendar day and says on the row when it has, and reports the quota
+            day it read. **And it no longer names the wrong casualty**: the fetch is the first stage to
+            spend in a quota day that opens at midnight UTC, so it buys every name on the list, and what
+            the ceiling cuts is the next evening's first stages, `universe-build` among them. The list of
+            names the fetch could not afford is gone and `overBy` is what stands in its place.
+
+            **(b) `tools/migrate` and `tools/snapshot-db` refuse when no data root is set**, naming the
+            variable, saying nothing was run, and listing the roots under `data/` with which of them
+            holds a store. Exit 2, kept apart from the wrapper's 3, which is no usable bash. The refusal
+            is in the two bash scripts and in the shared provenance file beside the line they already
+            share, and not in the two wrappers, which delegate. Ruled at the 6.9 sign-off as a refusal
+            rather than a default, because a root derived from the script's own location would put
+            `data/live` under whichever checkout ran it and would read exactly right while being wrong.
+
+            **(c) The status band names the session its run belongs to.** `LabStatus.LatestRun` computed
+            that session to bound its own query and returned a payload without it, so the band rendered
+            the run followed by the session the store is current to. The two agree on an ordinary night
+            and come apart on the night `universe-build` failed, which is the night the band exists for.
+            The session is on the wire now and the band says so; where it is absent the band says that
+            rather than reaching for the other one.
+
+            **(d) Thirteen clause reasons describe today's corpus.** Four said phase 6 is not built.
+            Four more named variant scoring, 5.1, the replay harness and a table count the reason itself
+            called stale. Five of phase 7's own P6 and P7 clauses had gone the same way inside this
+            phase, being reasons written at 7.0 and left behind by 7.5, 7.9 and 7.11. Six of the
+            thirteen are `elsewhere` now, each naming a check in the roster that does assert the clause;
+            seven stay `unreached` and say what is missing today. **And the stamped-table count is
+            pinned**: the failure table's cell read fourteen where `PointInTimeCheck.Stamped` holds
+            forty-five, so the cell is corrected and `pinned-constants` holds the two together from now
+            on.
+
+            **(e) Band 3's signal-library panel has the surface claim the provisional list says holds
+            it.** Claim 11's "Held by" cell read "a surface claim" and none existed. The claim asserts
+            the stage's own population string on the rendered scoreboard, so the three counts of the
+            same rows under different verdicts cannot be read as the library's size.
+
+Measured:   `tools/ci.ps1` green on Windows, **34 steps, 1,320 tests**.
+
+            **Seven new `DERIVED` expectations and one retired.** `forecast.boughtOn`,
+            `forecast.boughtOnIsRecorded`, `forecast.quotaDay` and `forecast.overBy` are the pairing and
+            what an overrun costs; `forecast.withoutMinutes` is retired because the stage no longer
+            produces it and the figure it carried was the wrong casualty. The fixture's own quota day
+            moves from the night's evening to the buying evening, 2026-08-25 to 2026-08-26.
+
+            **Three tests hold the pairing over a store the fixture cannot be.** Two quota days holding
+            400 and 2,000 calls, so which of them the headroom is taken from is observable; the fetch's
+            own spend excluded on the day it ran; and a night with no session after it saying its evening
+            was assumed. Over the golden fixture every replay stage runs at 22:00 UTC on the as-of, so
+            the spend term is a structural nought and both readings agree.
+
+            **The band's two dates are separated over a store that holds both**, a snapshot for the 27th
+            and a failed `universe-build` on the 28th, and the page fixture carries a run rather than a
+            null, so the line 6.8 added to the band renders on a page for the first time.
+
+            `tools/verify-phase.ps1` GREEN: 163 claims, 163 passed, **0 out of scope before and 0
+            after**, 0 unexamined.
+
+Found:      **Nothing excludes a night the fetch bought nothing for from variant scoring, and the
+            failure table says it must.** `VariantScorer.UnscoredNights` takes every session `setup`
+            holds a row for, bounded by the version's registration and the session being run, with no
+            bound on the night's degraded mark, so a night with no minutes would be scored as though
+            every variant had chosen to pass on it. Found while bringing that clause's reason to today
+            rather than by any instrument. **It binds from the first admitted version and none exists**,
+            no generation 1 version being admissible and generation 0's register holding V0 alone, so it
+            blocks nothing built and breaks no check. **Named rather than carried**, on 6.9's own
+            grounds: the repair is a build session's, a row due at a landed checkpoint is what
+            `carried-obligations` refuses, and the reason it sits in now is read by
+            `architecture-conformance` on every run rather than by nobody.
+
+Carried:    **None raised, none discharged.** The row raised at 7.11 and widened at 7.12 is untouched:
+            nothing here reads `setup` across the switch.
+
+            **No operator's half at this checkpoint.** The forecast's repair is read by the operator
+            before the switch, on RUNBOOK's corrected step 2, and the two refusals are felt the next time
+            either script is run by hand.
+
+            **This session committed code and may not sign it off.**
+
+Next:       **What is left of the two sign-offs' lists is one row and one ruling.** The filter or stated
+            population each reader in the widened row needs, which waits on the operator's reading of
+            whether the scoreboard reads across the switch; and the exclusion above, which waits on a
+            version existing.

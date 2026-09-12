@@ -4147,7 +4147,14 @@ public sealed class PhaseReplay : IDisposable
             new("forecast.headroom", Count(night.Headroom)),
             new("forecast.generationZeroFlagged", Count(night.GenerationZeroFlagged)),
             new("forecast.generationZeroCallCost", Count(night.GenerationZeroCallCost)),
-            new("forecast.withoutMinutes", night.WithoutMinutes.Count == 0 ? "none" : string.Join(" ", night.WithoutMinutes)),
+            new("forecast.overBy", Count(night.OverBy)),
+
+            // 7.14. Which evening buys this night's list and which vendor day that fetch spends in,
+            // which is the pairing the forecast had wrong: it read the day holding the night's own
+            // evening, and that is the day the night before's list is bought in.
+            new("forecast.boughtOn", night.BoughtOn.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)),
+            new("forecast.boughtOnIsRecorded", night.BoughtOnIsRecorded ? "recorded" : "assumed"),
+            new("forecast.quotaDay", night.QuotaDay.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)),
             new("forecast.reportPath", report.Path.Replace('\\', '/')),
         ];
     }

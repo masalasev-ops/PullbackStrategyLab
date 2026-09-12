@@ -357,7 +357,7 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
     }
 
     private static LabStatusView Band(int? positionsOpen, int? shortPositionsOpen, decimal? riskAtStake) =>
-        new(true, null, "ready", 38, 38, "2026-08-31", "spreads", "clean", 100, 1000, 10, 5000,
+        new(true, null, "ready", 38, 38, "2026-08-31", "spreads", "clean", "2026-08-31", 100, 1000, 10, 5000,
             "neutral", positionsOpen, shortPositionsOpen, riskAtStake);
 
     [Fact]

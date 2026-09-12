@@ -845,9 +845,22 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
         }
         """;
 
+    /// <summary>
+    /// The band as a page renders it, with a run in it.
+    ///
+    /// <b>It carried `lastRun: null` until 7.14, so every rendered page took the "nothing has run"
+    /// arm</b> and the whole of what 6.8 added to that line was exercised by no page at all. The run
+    /// here belongs to a session the store holds no snapshot for, which is the state the band exists
+    /// to report: `universe-build` failed on 2026-08-25, so the store is current to the 24th while
+    /// the newest run in the log is the 25th's. Those two dates are the same on an ordinary night,
+    /// and a fixture where they matched would have let the band go on naming the wrong one.
+    /// </summary>
     private const string Status = """
         { "store": "ready", "schemaVersion": 20, "schemaVersionExpected": 32,
-          "session": "2026-08-24", "lastRun": null,
+          "session": "2026-08-24",
+          "lastRun": { "stage": "universe-build", "startedAt": "2026-08-25T21:15:00Z",
+                       "endedAt": "2026-08-25T21:15:40Z", "outcome": "failed", "callsUsed": 0,
+                       "session": "2026-08-25" },
           "universeMembers": 2070, "barsStored": 1482108, "callsUsed": 0, "dailyCallCeiling": 5000,
           "marketMood": null, "positionsOpen": null, "shortPositionsOpen": null, "riskAtStake": null }
         """;

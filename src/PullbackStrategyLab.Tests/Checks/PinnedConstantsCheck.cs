@@ -133,6 +133,18 @@ public sealed class PinnedConstantsCheck
             ScanSpans.AnchorWindowSessions == 27,
             "ScanSpans.AnchorWindowSessions"));
 
+        // The stamped-table count, stated in a cell of the failure table and held by the check's own
+        // list. **It was stale for three phases and nothing could see it**: the cell read fourteen
+        // while the list held forty-five, and `stated-counts` reads what a document states about its
+        // own contents rather than a count of tables stated inside a table cell. Pinned at 7.14, so a
+        // migration that adds a stamp and leaves the cell alone fails here rather than quietly
+        // widening the gap.
+        pins.Add(Pin.Number(
+            "ARCHITECTURE.html, failure behaviour, stamped tables in the point-in-time list",
+            architecture.Contains("Forty-five tables today.", StringComparison.Ordinal) ? PointInTimeCheck.Stamped.Count : -1,
+            PointInTimeCheck.Stamped.Count,
+            "PointInTimeCheck.Stamped"));
+
         // The four store pragmas, stated in SCHEMA and set at open in one place.
         string factory = RepositoryLayout.Read(
             Path.Combine(RepositoryLayout.Source, "PullbackStrategyLab.Data", "StoreConnectionFactory.cs"));

@@ -14784,12 +14784,36 @@
       "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
     },
     {
-      "id": "forecast.withoutMinutes",
+      "id": "forecast.overBy",
       "tier": "DERIVED",
-      "value": "none",
-      "checkpoint": "7.11",
-      "producedBy": "derived by hand from the same generation 1 counts and the fetch's arithmetic: 16 long and 8 short with no name on both sides, 24 names at 5 calls each; generation 0's list over this store is HOOD, INTC and the authored IESC row, 3 names; the replay's stages all ran at 22:00 UTC on the as-of while the night's fetch at 20:30 Eastern falls in the next UTC quota day, so nothing else was spent in that day and the headroom is the whole ceiling",
-      "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled. The cost is far inside the headroom, so every name gets minutes."
+      "value": "0",
+      "checkpoint": "7.14",
+      "producedBy": "produced by running the shipped GenerationOneForecast over the golden fixture",
+      "note": "What the night's list costs beyond the headroom, which is nought here: 120 calls against the whole ceiling. It replaces a list of the names the fetch could not afford, which named the wrong casualty. The fetch is the first stage to spend in a quota day that opens at midnight UTC, so it buys every name and what the ceiling cuts is the next evening's first stages, universe-build among them."
+    },
+    {
+      "id": "forecast.boughtOn",
+      "tier": "DERIVED",
+      "value": "2026-08-25",
+      "checkpoint": "7.14",
+      "producedBy": "produced by running the shipped GenerationOneForecast over the golden fixture",
+      "note": "The evening this night's list is bought on, being the session after it. The fixture holds one market day, so no session is recorded after 2026-08-24 and the next calendar day stands in, which the figure below says outright."
+    },
+    {
+      "id": "forecast.boughtOnIsRecorded",
+      "tier": "DERIVED",
+      "value": "assumed",
+      "checkpoint": "7.14",
+      "producedBy": "produced by running the shipped GenerationOneForecast over the golden fixture",
+      "note": "Whether the buying evening is a session the store records. Assumed over this fixture, which is the ordinary state of the last night of a range and is why RUNBOOK tells the operator to end the range one session past the last night they want read."
+    },
+    {
+      "id": "forecast.quotaDay",
+      "tier": "DERIVED",
+      "value": "2026-08-26",
+      "checkpoint": "7.14",
+      "producedBy": "produced by running the shipped GenerationOneForecast over the golden fixture",
+      "note": "The vendor day the fetch of this night's list spends in, read from 20:30 Eastern on the buying evening, which is after midnight UTC. It was 2026-08-25 until 7.14, being the day holding the night's own evening, which is the day the night before's list is bought in."
     },
     {
       "id": "forecast.reportPath",

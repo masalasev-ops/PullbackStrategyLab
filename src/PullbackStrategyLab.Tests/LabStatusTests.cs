@@ -199,6 +199,57 @@ public sealed class LabStatusTests : IDisposable
         Assert.StartsWith("2026-08-28T21:30", run.StartedAt, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The run carries the session it belongs to, and it is not the session the store is current to.
+    ///
+    /// <b>The night the band exists for is the night the two differ.</b> `universe-build` fails, so
+    /// the store's newest snapshot is the session before, while the newest run in the log is
+    /// tonight's. The band rendered the run followed by the store's session until 7.14, so tonight's
+    /// failure would have been shown against a night already reported clean. `LatestRun` computed
+    /// the right session to bound its own query and threw it away before returning, which is a
+    /// correct answer discarded between the component and the surface.
+    ///
+    /// Raised at the 6.9 sign-off, which could not take it.
+    /// </summary>
+    [Fact]
+    public void The_run_names_the_session_it_belongs_to_rather_than_the_one_the_store_is_current_to()
+    {
+        // The session the store is current to: a snapshot for the 27th and none for the 28th,
+        // because that is the stage that failed.
+        Execute("""
+            INSERT INTO security (ticker, name, exchange, type, first_seen)
+            VALUES ('AAA', 'AAA', 'US', 'Common Stock', '2020-01-02');
+            INSERT INTO universe_snapshot (as_of, ticker) VALUES ('2026-08-27', 'AAA');
+            """);
+
+        Seed("""
+                ('r1', 'universe-build', '2026-08-28T21:15:00.000Z', '2026-08-28T21:15:40.000Z', 'failed', 0, 0, 1)
+        """);
+
+        StatusResponse status = Read();
+        RunSummaryResponse run = Assert.IsType<RunSummaryResponse>(status.LastRun);
+
+        Assert.Equal("2026-08-27", status.Session);
+        Assert.Equal("2026-08-28", run.Session);
+
+        // And the band says the run's own, so the two cannot be confused on the one night it matters.
+        Assert.Contains(
+            "for 2026-08-28",
+            new PullbackStrategyLab.Web.Shell.LabStatusView(
+                true, null, status.Store, status.SchemaVersion, status.SchemaVersionExpected,
+                status.Session, run.Stage, run.Outcome, run.Session, 0, 0, 0, 5000,
+                null, null, null, null).LastRunText,
+            StringComparison.Ordinal);
+    }
+
+    private void Execute(string sql)
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.ExecuteNonQuery();
+    }
+
     [Fact]
     public void A_store_with_no_runs_reports_no_run_rather_than_throwing()
     {
@@ -273,5 +324,5 @@ public sealed class LabStatusTests : IDisposable
 
     /// <summary>A band over a reachable store at the two versions given, and nothing else stated.</summary>
     private static LabStatusView Band(int store, int build) =>
-        new(true, null, "ready", store, build, null, null, null, 0, 0, 0, 5000, null, null, null, null);
+        new(true, null, "ready", store, build, null, null, null, null, 0, 0, 0, 5000, null, null, null, null);
 }

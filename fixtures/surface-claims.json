@@ -105,6 +105,15 @@
       "producedBy": "the page"
     },
     {
+      "name": "band-threes-signal-library-panel",
+      "sentence": "the scoreboard carries the signal library's counts, each over the library it is taken against",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "/scoreboard",
+      "mustCarry": "the signal library as the store holds it",
+      "producedBy": "ScoreboardBuilder.Library",
+      "why": "The holder the provisional list says claim 11 has and did not. That list records twelve claims that pass today over populations the loop will fill, and claim 11, band 3's signal-library panel, named \"a surface claim\" while no claim in this file carried it: the only band 3 entry was claim 10's. Held, admitted and refused are three counts of the same rows under different verdicts, so the population string is what stops one of them being read as the library's size, and the string is the stage's own rather than the page's."
+    },
+    {
       "name": "band-three-panels-are-one-per-side",
       "sentence": "the page renders each once under the band it belongs to",
       "statedIn": "docs/BUILD_PLAN.md",

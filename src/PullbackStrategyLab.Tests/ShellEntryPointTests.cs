@@ -181,6 +181,77 @@ public sealed class ShellEntryPointTests
         }
     }
 
+    /// <summary>The two entry points that open a store and assign no data root of their own.</summary>
+    public static TheoryData<string> StoreOpeners => new() { "migrate", "snapshot-db" };
+
+    /// <summary>
+    /// With no data root set, each of the two store-opening scripts refuses, names the variable, and
+    /// lists the roots that exist, having run nothing.
+    ///
+    /// <b>The fault this closes is louder than a no-op and worse.</b> Of the ten entry points
+    /// `shell-executable` reconciles, four assign a data root and all four run stages; these two open
+    /// the store and assign none, so both took the relative default and resolved it against the
+    /// process working directory. Run from the repository root on 2026-09-08 `tools/migrate` created
+    /// an empty store at a third root, applied sixty-one migrations and printed "version 0 to 61"
+    /// while the live store stayed at 57 with 2,531,141 rows: a transcript of work that really
+    /// happened somewhere else.
+    ///
+    /// <b>A refusal rather than a default</b>, ruled at the 6.9 sign-off, which could not take the
+    /// repair because it was signing off the code it would have written. Exit 2 is kept apart from 3,
+    /// which is a wrapper saying it found no bash, so "you did not say which store" is never read as
+    /// "this machine cannot run it".
+    ///
+    /// Run from a temporary working directory, because a regression here creates a store at whatever
+    /// the default resolves to, and that must not be inside the repository.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(StoreOpeners))]
+    public void A_store_opening_script_with_no_data_root_refuses_and_says_which_roots_exist(string script)
+    {
+        string elsewhere = Directory.CreateTempSubdirectory("entry-point-noroot").FullName;
+
+        try
+        {
+            ProcessStartInfo start = OperatingSystem.IsWindows()
+                ? PowerShell(Path.Combine(RepositoryLayout.Root, "tools", script + ".ps1"))
+                : new ProcessStartInfo("bash")
+                {
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                };
+
+            if (!OperatingSystem.IsWindows())
+            {
+                start.ArgumentList.Add(Path.Combine(RepositoryLayout.Root, "tools", script));
+            }
+
+            start.WorkingDirectory = elsewhere;
+            start.Environment.Remove("PullbackStrategyLab__DataRoot");
+
+            using Process process = Process.Start(start)!;
+            string error = process.StandardError.ReadToEnd();
+            process.WaitForExit(120_000);
+
+            Assert.Equal(2, process.ExitCode);
+            Assert.Contains("PullbackStrategyLab__DataRoot is not set", error, StringComparison.Ordinal);
+            Assert.Contains("nothing was run", error, StringComparison.Ordinal);
+
+            // And it says where to look, which is the half that turns a refusal into an instruction.
+            Assert.Contains("roots under", error, StringComparison.Ordinal);
+
+            // Nothing was created at the root the default would have resolved to, which is the whole
+            // of what the refusal is for.
+            Assert.False(
+                Directory.Exists(Path.Combine(elsewhere, "data")),
+                "a store was created at the guessed root, so the script ran rather than refusing.");
+        }
+        finally
+        {
+            Directory.Delete(elsewhere, recursive: true);
+        }
+    }
+
     private static ProcessStartInfo PowerShell(string file)
     {
         var start = new ProcessStartInfo("powershell.exe")

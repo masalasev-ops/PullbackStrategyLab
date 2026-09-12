@@ -3179,3 +3179,13 @@ Why:  Found at the 7.12 sign-off reading the procedure as the operator will. The
 Was:  "**The phase is thirteen rows and it exists because the gate set was never the strategy's.**"; and the build order "7.0, then 7.1 to 7.11 in their numbered order, then 7.12."
 Now:  fourteen rows, and the order carried on to 7.13; the row itself added after the sign-off's.
 Why:  The 7.12 sign-off found the pack's population section adding the two sides in three lines and could not repair it, being the session that signed the phase off, and the same sign-off repeated the two band 3 panels 6.9 had found and left. A row added after a phase signs off is a row like any other, on the footing 6.10 to 6.12 stand on: its done condition is written before the build and it satisfies all seven. Nothing in the sign-off is reopened, because none of the three fails a done condition or breaks a check.
+
+### 2026-09-12 — BUILD_PLAN.md — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  "**The phase is fourteen rows and it exists because the gate set was never the strategy's.**"; and the build order "7.0, then 7.1 to 7.11 in their numbered order, then 7.12, then 7.13."
+Now:  fifteen rows, and the order carried on to 7.14; the row itself added after 7.13's.
+Why:  The 6.9 sign-off named five code findings and the 7.12 sign-off repeated four of them beside two of its own, and neither session could take any of it: both were signing off the code they would have written. The work had no checkpoint to land at, and a row due at a landed checkpoint is what `carried-obligations` refuses, so it gets one of its own.
+
+### 2026-09-12 — ARCHITECTURE.html — cites Every phase ends in a generated phase report, not in a page somebody looks at
+Was:  in the failure table, the row for a migration adding an observation column: "Fourteen tables today."
+Now:  "Forty-five tables today."
+Why:  The figure was stale by thirty-one and the clause register's own reason said so, which is a defect recorded where nobody reads it rather than repaired. `stated-counts` reads what a document states about its own contents and this is a count of tables stated inside a table cell, so nothing reached it. It is pinned against `PointInTimeCheck.Stamped` from 7.14, so a migration that adds a stamp and leaves the cell alone fails `pinned-constants` rather than widening the gap again.
