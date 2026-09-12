@@ -8,7 +8,7 @@ Operator procedures. How to set the lab up, run it, move it and recover it. Writ
 
 1. Install the .NET SDK. Confirm `dotnet --info` reports the arm64 runtime on Apple Silicon.
 2. Clone, then `dotnet restore` and `dotnet build`.
-3. Nothing to create. The lab keeps two stores under two data roots, `data/live` under the production checkout the nightly runs from and `data/ci` under the working tree, for a scratch store `tools/ci.*` drops and recreates on every run, and `/data` is gitignored in both (see: The lab keeps one store per purpose under one data root, and CI never opens the operator's). **Do not set `PullbackStrategyLab:DataRoot`, spelled `PullbackStrategyLab__DataRoot` in the environment, as a standing value, and do not point it at a synced folder.** The two hand-run commands are the exception and they are exceptions for one command at a time: step 6 and the stale-store recovery both say to set it for the run and read the path back, because those two scripts name no root of their own and the 6.9 ruling has not been taken yet. A sync client copying an open database mid-write is a real corruption risk rather than a theoretical one, and the repository is the one place both entry points already agree about. **This step said to create a root outside the repository until 4.17**, which contradicted the decision the shipped code follows and is what once armed the fault 3.14 corrected: an operator who followed it and exported the variable had `tools/ci.*` delete whatever it pointed at on its first step. The scripts no longer yield to the variable, so nothing is armed today. **The two roots sat under one repository until the production checkout existed**, and the sentence above is the only thing that changed with it: each root is still derived from the location of the script that opens it, which is the property that keeps the variable unset (see: The nightly runs from its own checkout, updated once a night before the first slot).
+3. Nothing to create. The lab keeps two stores under two data roots, `data/live` under the production checkout the nightly runs from and `data/ci` under the working tree, for a scratch store `tools/ci.*` drops and recreates on every run, and `/data` is gitignored in both (see: The lab keeps one store per purpose under one data root, and CI never opens the operator's). **Do not set `PullbackStrategyLab:DataRoot`, spelled `PullbackStrategyLab__DataRoot` in the environment, as a standing value, and do not point it at a synced folder.** The two hand-run commands are the exception and they are exceptions for one command at a time: step 6 and the stale-store recovery both say to set it for the run and read the path back, because those two scripts name no root of their own. **From 7.14 they refuse rather than guessing one**: run with the variable unset, each prints that nothing was run, names the variable, and lists the roots under `data/` with which of them holds a store, exiting 2. So a forgotten root is a refusal you read rather than a store created somewhere you did not mean. A sync client copying an open database mid-write is a real corruption risk rather than a theoretical one, and the repository is the one place both entry points already agree about. **This step said to create a root outside the repository until 4.17**, which contradicted the decision the shipped code follows and is what once armed the fault 3.14 corrected: an operator who followed it and exported the variable had `tools/ci.*` delete whatever it pointed at on its first step. The scripts no longer yield to the variable, so nothing is armed today. **The two roots sat under one repository until the production checkout existed**, and the sentence above is the only thing that changed with it: each root is still derived from the location of the script that opens it, which is the property that keeps the variable unset (see: The nightly runs from its own checkout, updated once a night before the first slot).
 4. Put the vendor API key in `appsettings.Secrets.json`, beside `appsettings.json` in each project that needs it. Gitignored, never committed. It is plaintext, so treat it like a key file: it travels by deliberate copy rather than by accident, and it stays out of any backup that leaves the machine.
 5. Confirm `ANTHROPIC_API_KEY` is **not** set anywhere in the environment. It stays out on both researcher transports: on the subscription path its presence silently defeats plan auth and bills API rates, and on the API path the key belongs in `appsettings.Secrets.json` with every other secret, so one in the environment means two places supply the same credential and nothing on the surface says which won.
 6. `tools/migrate.ps1` on Windows, `tools/migrate` on macOS, to create the schema. It calls the snapshot first and refuses to run without a successful one. **The two are named apart because the second will not run on Windows and does not say so**: `tools/migrate` is a bash script with no extension, and PowerShell called by name returns 0 having done nothing, which reads exactly like a schema that was created. The wrapper finds a bash, says which one it used, and exits 3 with a named message where the machine has none. **Set `PullbackStrategyLab__DataRoot` for this one command and read back the path it prints**, because neither script names a root and both take a default that resolves against the directory you happen to be in. The 6.9 ruling under "After a merge that carries a migration" says why that is the scripts' defect rather than the default's, and what closes it.
@@ -156,7 +156,7 @@ reconciled against this document.
 | `recheck` | A repair bounded by the lateness rule, taking `--apply` and `--restore`, which is an act on the running store with a person deciding it (see: A late answer is attributed to the session it was fetched for, up to a recorded lateness bound) |
 | `reconstructed-read` | It reads a calibration store copy, which is research on a copy rather than the night |
 | `backfill-minutes` | From 7.7. A one-time purchase of one-minute history for the flagged calibration rows, outside the nightly ceiling, into `calibration_minute_bar` and never into `intraday_bar`. **Run it with `--dry-run` first**, which lays the windows out and prints the calls they cost and the rows they leave short of warm-up without spending anything; then run it on the store 7.9 will copy. A run stopped part way resumes, because a window already recorded is not bought again (see: A one-time backfill is outside the nightly ceiling, whether it buys daily history or minutes). **Outside the lab's count is not outside the vendor's allowance**: the evening's stages spend from the same vendor day, and a run that leaves the vendor nothing before 17:15 is the 2026-08-31 night above arriving by another route, so read the dry run's figure against that allowance less the evening's spend in the UTC day the run falls in |
-| `forecast-generation-one` | From 7.11. Generation 1's gate set over the recorded nights between two dates, each night's flagged count per side and the names it would buy minutes for, their call cost against the ceiling less what the day's other stages spent, and the names the fetch could not afford in its own ticker order. **Run it on a store copy** over the nights since 7.4 landed, before the switch, and read the report under the data root's `reports` folder (see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole) |
+| `forecast-generation-one` | From 7.11. Generation 1's gate set over the recorded nights between two dates, each night's flagged count per side and the names it would buy minutes for, and their call cost against the ceiling less what the day's other stages spent in the quota day that night's fetch falls in. **From 7.14 it pairs a night with the evening its list is bought on**, being the next session's, says on the row where no later session is recorded and it has assumed one, names the quota day it read, and states what a night is over its headroom by instead of listing names: the fetch spends first in its day and buys every name, so an overrun costs the next evening's first stages rather than the fetch's own later names. **Run it on a store copy** over every night the store holds a snapshot for, ending one session past the last night you want read, before the switch, and read the report under the data root's `reports` folder (see: Generation 0 is retired as measuring the entry-level mismatch, and generation 1 registers only once its rule is whole) |
 | `measure-entry-rule` | From 7.9. Generation 1's entry rule run over the calibration minutes `backfill-minutes` bought, per side: how many flagged rows produce an entry and why the rest do not, the stops against the ceiling, and the win-rate ceiling's bound over the stops that entered. **Run it on a store copy**, never the live store, after the backfill, and read the report it writes under the data root's `reports` folder, which names the level set it was computed over and says the anchored level was not evaluated. A second run beside the first once the anchor is ruled (see: Order prices and the share count resolve at the entry minute) |
 
 `slot-roster` excludes the six by name and holds this table to them, so a verb that gains a slot or loses its reason fails there rather than going quiet.
@@ -365,9 +365,16 @@ transcript of work that really happened somewhere else.
 
 **The live store was migrated on 2026-09-08 by setting the same variable the slot script sets**,
 `PullbackStrategyLab__DataRoot` to `<repository>/data/live`, which snapshotted 436 MB first and took
-it 57 to 61 with `integrity_check` ok and the row count unchanged. **Until the repair below lands
-that is also what this document prescribes**: set `PullbackStrategyLab__DataRoot` to the root you
-mean for the one command, and read the path the command prints back before believing it.
+it 57 to 61 with `integrity_check` ok and the row count unchanged. **And that is what this document
+prescribes**: set `PullbackStrategyLab__DataRoot` to the root you mean for the one command, and read
+the path the command prints back before believing it. The same variable took the store 61 to 69 on
+2026-09-12, snapshotting 855 MB first, with `quick_check` ok and 367 setup rows unchanged.
+
+**From 7.14 forgetting it is a refusal rather than a phantom store.** Both scripts exit 2 with a
+named message when the variable is unset, saying nothing was run and listing the roots under `data/`
+with which of them holds a store, so the failure this section is about cannot be produced by
+forgetting the variable any more. What it cannot catch is a variable set to the wrong root, which is
+why reading the printed path back is still the instruction.
 
 **Ruled at the 6.9 sign-off on 2026-09-08, and the defect is the two entry points rather than the
 default.** Of the ten entry points `shell-executable` reconciles, four assign a data root and all
@@ -390,7 +397,9 @@ caller breaks: `tools/ci.*` run the Worker verb directly and never the script, t
 `snapshot` slot runs the stage under its own root, and the rehearsal job passes a root inline. The
 line belongs in the two bash scripts and not in the two `.ps1` wrappers, which delegate so that a
 migration entry point has one implementation rather than two. **Not taken at 6.9**, which ruled and
-could not repair without signing off code it had just written.
+could not repair without signing off code it had just written, and **taken at 7.14** with a test that
+runs each script from a directory outside the repository with the variable unset and asserts that it
+refuses, names the roots and creates nothing.
 
 **One earlier trace exists and it does not prove which command left it.** `data/snapshots` is present
 and empty, created 2026-09-01 01:02 and last written 2026-09-03 21:26, which is a Worker command run
@@ -417,19 +426,18 @@ irreversible by design, which is why every step before it is a reading (see: Gen
 2. **Forecast on a store copy.** `forecast-generation-one <from> <to>` with the data root set to the
    copy. **The range is every night the store holds a universe snapshot for, not only the nights since
    7.4 landed**: the forecast runs generation 1's detector over the stored bars and figures and reads
-   nothing 7.4 froze, and until the production checkout carries 7.4 there are no such nights. Read the
-   report on two corrections, found at the 7.12 sign-off. **A night's names are bought on the next
-   session's evening**, because the 20:30 fetch buys the minutes of the session just closed for the
-   names flagged the evening before it, so read each night's call cost against the headroom printed on
-   the row after it, and end the range one session past the last night you want read; the report
-   pairs a night with its own evening's quota day. **And a night over the headroom does not leave its
-   later names without minutes.** The fetch is the first stage to spend in its quota day, which opens
-   at midnight UTC, 20:00 Eastern in summer and 19:00 in winter, so it buys every name up to the whole
-   ceiling, and what the ceiling then cuts is
-   the next evening's first stages, `universe-build` among them, which is the one stage no rerun
-   replaces. The names the report lists as going without are what a fetch spending last would lose,
-   and no fetch here spends last. So a night over the headroom is a night the switch would cost the next
-   evening's snapshot, and that is settled before the switch rather than found on its first night.
+   nothing 7.4 froze. **End the range one session past the last night you want read**, because a
+   night's list is bought on the evening of the session after it, and a night with no later session in
+   the store is one whose buying evening the report has had to assume; it says so on that row rather
+   than leaving the assumption to be noticed. **The two corrections the 7.12 sign-off found are in the
+   report from 7.14** rather than being yours to make by hand: each row names the evening its list is
+   bought on and the vendor quota day that evening's fetch spends in, and an overrun is stated as what
+   the night is over its headroom by. **A night over the headroom does not leave its own later names
+   without minutes.** The fetch is the first stage to spend in its quota day, which opens at midnight
+   UTC, 20:00 Eastern in summer and 19:00 in winter, so it buys every name up to the whole ceiling, and
+   what the ceiling then cuts is the next evening's first stages, `universe-build` among them, which is
+   the one stage no rerun replaces. So a night over the headroom is a night the switch would cost the
+   next evening's snapshot, and that is settled before the switch rather than found on its first night.
 3. **Settle what binds from the switch night, or take it knowingly.** The obligations table's row
    raised at 7.11 and widened at 7.12 names what reads `setup` across the switch: band 1 from the switch
    night; `ceiling`, `twin-pairs` and `admit-signals` from the Saturday after it; and the cap, whose rank
