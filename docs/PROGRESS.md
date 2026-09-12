@@ -20547,3 +20547,44 @@ Next:       **The two remaining are an act and a ruling.** The Saturday `signals
             task, so the stage that seeds the signal library runs only when somebody runs it by hand,
             which is what happened this morning; and the nightly clone the runbook specifies does not
             exist, so every scheduled task still points at the working tree.
+
+## Not a checkpoint entry — 2026-09-12 — phase-7-15-the-two-rows-on-disk — belongs to 7.15: the only two refusals the lab has ever written are the ones the entry said did not exist
+
+Not a checkpoint entry. It belongs to 7.15, which has landed as `d55f2e1`. It corrects one sentence
+of that entry and the same sentence in the comment of migration 070, and records what the live store
+holds after the migration.
+
+Corrects:   **"Every refusal written before this was a section that broke" is false, and it is false
+            of every row there is.** The 7.15 entry says no row on disk changes value because `failed`
+            is the right reading of each refusal written before migration 070, and the migration's own
+            comment says it in the same words. The live store holds exactly two `pack_run` refusals,
+            both written on 2026-09-12 at 15:57:04Z and 15:58:31Z, being the pack slot's cut and the
+            seat's own cut of the same morning. **Both are refusals the design requires**: each reason
+            reads `the "Rule in force" section could not be built: no selection version is admitted in
+            generation 1 yet`. So the sentence is not merely imprecise, it is wrong about the entire
+            population it describes, and the population is two.
+
+            **The rows keep their value and that is deliberate.** `pack_run` records what a run did at
+            the instant it ran, and the stage of that morning recorded `failed` because it could not
+            tell the two kinds apart, which is the defect 7.15 repairs rather than something to write
+            over now. Rewriting them would make the store say the lab did something it did not do, on
+            the same grounds a record is corrected by a new entry rather than edited. **What makes
+            them readable anyway is the reason column**, which names generation 1 on both, so the
+            distinction the outcome cannot carry is on the row in words.
+
+            **The claim was true of the fixture and stated over the store.** It was written while
+            reasoning about what a refusal generally is, and the live store's only two rows are the
+            one case it excluded. That is the fifth shape `CLAUDE.md` names arriving through prose
+            rather than through arithmetic: the sentence is about a population, and nobody looked at
+            the population before writing it.
+
+Operator:   **Migration 070 applied to the live store.** The production checkout moved to `8899b08`,
+            then `tools/migrate.ps1` with `PullbackStrategyLab__DataRoot` set for the one command
+            snapshotted to `pullbackstrategylab-20260912-234620.db` and took the store **69 to 70**,
+            printing the `data\live` path. Read back after it: `user_version` 70, `quick_check` ok,
+            `foreign_key_check` clean, `setup` 367 rows, `signal_definition` 54, `run_log` 354,
+            `daily_bar` 2,432,632, and the register holding V0 retired and V1 open. **Nothing moved
+            that the rebuild should not have moved**, `pack_run` holding its two rows across it.
+
+Found:      **Nothing new.** This entry is a reading of two rows and changes no code, no fixture and
+            no specification.
