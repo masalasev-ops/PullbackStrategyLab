@@ -171,8 +171,8 @@ The job counts calls as it goes and stops rather than overrunning the ceiling. A
 
 ### The schedule as installed
 
-**Thirty-seven tasks named `PullbackStrategyLab-<slot>`, registered in three acts**: seventeen on
-2026-08-27, fifteen on 2026-09-03 and the last five on 2026-09-08, each running
+**Thirty-seven tasks named `<slot>` in the Task Scheduler folder `\PullbackStrategyLab\`, registered in
+three acts**: seventeen on 2026-08-27, fifteen on 2026-09-03 and the last five on 2026-09-08, each running
 `tools/nightly.ps1 -Slot <slot>`, weekdays for the nightly slots and Saturday for the five weekly
 ones. The machine's own timezone is Eastern, so the table's ET times are its local times and no
 conversion is involved; a machine in another zone converts them.
@@ -184,6 +184,16 @@ parameters, so each set differs only in the four lines that must differ: the des
 the start boundary and the slot in the arguments. **Read back after the third act, all thirty-seven
 fall into one configuration group** on principal, logon type, run level, execution limit, instance
 policy, battery and idle settings, priority, command and working directory.
+
+**Two changes since, both on 2026-09-14 and neither to what a task runs.** Every task now carries
+`WakeToRun`, so a sleeping machine wakes for its slot. **It does nothing for a machine that is off**,
+which is the failure this machine has actually had: a desktop with no battery, whose power was out
+from 16:33 to 20:27 on Friday 2026-09-11 across the whole detection window and out again across
+Saturday's weekly slots. And the thirty-seven moved out of the scheduler's root into their own folder
+beside the other projects', each re-registered from the XML its original exported and compared with
+that original field by field before the original was removed: arguments, working directory, trigger
+start and days, the four settings above, principal, logon type, run level, and the next run time. The
+names lost their `PullbackStrategyLab-` prefix because the folder carries it.
 
 **The count is written in parts rather than as one number, and that is the point of it.** Between the
 first two acts fifteen slots were declared in the slot table, the parameter set, the worker's stages
@@ -261,7 +271,7 @@ set an S4U principal, or a stored password. Neither was available when these wer
 logged-out evening is a lost night, and a lost night's universe snapshot is the one thing that cannot
 be recovered by rerunning tomorrow. Raised as an obligation.
 
-**To remove or re-create them:** `Get-ScheduledTask -TaskName 'PullbackStrategyLab-*'`, then
+**To remove or re-create them:** `Get-ScheduledTask -TaskPath '\PullbackStrategyLab\'`, then
 `Unregister-ScheduledTask`. On macOS they become launchd definitions, which is step 7 of the move.
 
 ### Every morning

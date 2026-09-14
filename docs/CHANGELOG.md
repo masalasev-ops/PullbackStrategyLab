@@ -3214,3 +3214,20 @@ Why:  7.15 is added, holding what the first live run of the weekly chain found.
 Was:  7.0, then 7.1 to 7.11 in their numbered order, then 7.12, then 7.13 and 7.14. **Nothing registers before 7.11.**
 Now:  7.0, then 7.1 to 7.11 in their numbered order, then 7.12, then 7.13, 7.14 and 7.15. **Nothing registers before 7.11.**
 Why:  The build order names every row, so a row added names itself here too.
+
+### 2026-09-14 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  **Thirty-seven tasks named `PullbackStrategyLab-<slot>`, registered in three acts**: seventeen on
+2026-08-27, fifteen on 2026-09-03 and the last five on 2026-09-08, each running
+Now:  **Thirty-seven tasks named `<slot>` in the Task Scheduler folder `\PullbackStrategyLab\`, registered in
+three acts**: seventeen on 2026-08-27, fifteen on 2026-09-03 and the last five on 2026-09-08, each running
+Why:  The operator asked for the lab's tasks in their own folder beside the other projects'. The folder carries the name the prefix carried. Scheduling lives outside the application, which is why the cited decision is where this section's authority comes from.
+
+### 2026-09-14 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  policy, battery and idle settings, priority, command and working directory.
+Now:  policy, battery and idle settings, priority, command and working directory, followed by a paragraph recording the two changes of 2026-09-14: `WakeToRun` on every task, stated with what it cannot do for a machine that is off, and the move into `\PullbackStrategyLab\` with how each copy was compared against its original before the original was removed.
+Why:  The paragraph said all thirty-seven fall into one configuration group, and a setting changed on all of them afterwards is a fact about that group a reader would otherwise find only on the machine.
+
+### 2026-09-14 — RUNBOOK.md — cites Every line of code runs unmodified on Windows and on Apple Silicon macOS
+Was:  **To remove or re-create them:** `Get-ScheduledTask -TaskName 'PullbackStrategyLab-*'`, then
+Now:  **To remove or re-create them:** `Get-ScheduledTask -TaskPath '\PullbackStrategyLab\'`, then
+Why:  The old pattern matches nothing since the move, and an instruction that returns no tasks reads the same as a machine with none registered.
