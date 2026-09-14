@@ -171,8 +171,45 @@ The job counts calls as it goes and stops rather than overrunning the ceiling. A
 
 ### The schedule as installed
 
-**Thirty-seven tasks named `<slot>` in the Task Scheduler folder `\PullbackStrategyLab\`, registered in
-three acts**: seventeen on 2026-08-27, fifteen on 2026-09-03 and the last five on 2026-09-08, each running
+**Five tasks from 7.17, one per window, in the Task Scheduler folder `\PullbackStrategyLab\`, each running
+`tools/nightly-window.ps1 -Window <window>`.** A window runs its slots back to back, each through
+`tools/nightly.ps1 -Slot <slot>` in a process of its own, so the pause, the tree guard, the commit line and
+the did-not-run line are that script's exactly as before, and the table above is the order they run in.
+
+| Task | Fires | Runs |
+|---|---|---|
+| `spread-open` | weekdays 10:15 | `spread-open` |
+| `spread-close` | weekdays 15:45 | `spread-close` |
+| `evening` | weekdays 17:15 | `universe` to `watchlist`, sixteen slots |
+| `night` | weekdays 20:30 | `intraday` to `snapshot`, fourteen slots |
+| `weekly` | Saturday 08:00 | `ceiling` to `registry`, six slots, `signals` among them |
+
+**Five start times are load-bearing and the rest were spacing.** The spread passes read a live book at
+their own minute. The evening needs the day's bulk prices, published by 17:15. The night needs the minute
+bars, published two to three hours after the close, and 20:30 is past midnight UTC, so the fetch spends
+first in its quota day. The weekly slots read the week on Saturday morning. On 2026-09-04 the sixteen
+evening slots did three minutes of work across eighty-five, and the ten night slots that ran clean did two
+and a half minutes across ninety. **A slot's time in the table above is now its place in its window**,
+so on an ordinary evening `detect` runs a few minutes after 17:15 rather than at 18:20.
+
+**A slot that fails does not stop its window**, because thirty-seven separate tasks never did: on
+2026-09-04 `vwap`, `resolve` and `orders` refused on the tree guard and every slot after them ran. The
+window exits with the first code that was not nought, so the scheduler still shows a night that needs
+reading. **And a window runs one build in practice**, because its slots finish within minutes of each
+other: that same night ran its slots from five commits, `a47517b`, `72f4a17`, `1ea33bb`, `22a6dde` and
+`5bb9654`, as the checkout moved between tasks.
+
+**To rerun one slot**, `tools/nightly.ps1 -Slot <slot>` as before. **To rerun a whole window**,
+`tools/nightly-window.ps1 -Window <window>`.
+
+**The five replace the thirty-seven in one act**, each registered with an existing task's settings and
+principal and its own start, days and arguments, and compared with that task before any of the
+thirty-seven is removed. `spread-open` and `spread-close` keep their names and times and are replaced in
+place, since a window of one slot fires when that slot did. PROGRESS records the act when it is taken. What follows is the history
+of the thirty-seven, kept because it is what the machine held.
+
+**Thirty-seven tasks named `<slot>`, registered in three acts until 7.17**: seventeen on
+2026-08-27, fifteen on 2026-09-03 and the last five on 2026-09-08, each running
 `tools/nightly.ps1 -Slot <slot>`, weekdays for the nightly slots and Saturday for the five weekly
 ones. The machine's own timezone is Eastern, so the table's ET times are its local times and no
 conversion is involved; a machine in another zone converts them.

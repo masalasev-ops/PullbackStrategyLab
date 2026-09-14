@@ -3246,3 +3246,27 @@ Why:  The build order names every row.
 Was:  A holiday inside the forty-five day search costs a further 100 each, so the real range for the stage is 2,005 to 3,205 and the night is 2,803 to 4,003.
 Now:  The same sentence, followed by two saying that from 7.16 a holiday the index history already places is skipped without a request so the range stands as a bound, and what the empty-answer rule cost on 2026-09-07.
 Why:  The cited decision is that a holiday is read from the index history, and the screen was the one stage that read it from the vendor instead.
+
+### 2026-09-14 — RUNBOOK.md — cites A slot that did not run is recorded the next night from its log, and a holiday is read from the index history
+Was:  ### The schedule as installed
+
+**Thirty-seven tasks named `<slot>` in the Task Scheduler folder `\PullbackStrategyLab\`, registered in
+three acts**: seventeen on 2026-08-27, fifteen on 2026-09-03 and the last five on 2026-09-08, each running
+Now:  The section opens on the five windows of 7.17: the tasks, when each fires and what it runs; why five start times are load-bearing; that a failed slot does not stop its window; how to rerun a slot or a window; and that the five replace the thirty-seven in one act PROGRESS records, carrying an existing task's settings and principal, with the two spread tasks replaced in place. The thirty-seven follow as history, their opening sentence beginning "Thirty-seven tasks named `<slot>`, registered in three acts until 7.17".
+Why:  The operator asked for fewer scheduled jobs. The cited decision is why every slot still goes through the dispatcher that writes the did-not-run line the next night reads.
+
+### 2026-09-14 — CLAUDE.md — cites A slot that did not run is recorded the next night from its log, and a holiday is read from the index history
+Was:  nightly.ps1  the slot dispatcher the scheduler calls, not run by CI
+Now:  nightly.ps1  the slot dispatcher, one slot at a time, not run by CI
+      nightly-window.ps1  what the scheduler calls from 7.17: one of five windows, its slots back to back through nightly.ps1. Not run by CI
+Why:  A file in tools/ the layout does not name is one a fresh session finds and has to guess the purpose of.
+
+### 2026-09-14 — BUILD_PLAN.md — cites A slot that did not run is recorded the next night from its log, and a holiday is read from the index history
+Was:  **The phase is seventeen rows and it exists because the gate set was never the strategy's.**
+Now:  **The phase is eighteen rows and it exists because the gate set was never the strategy's.**
+Why:  7.17 is added, holding the five windows.
+
+### 2026-09-14 — BUILD_PLAN.md — cites A slot that did not run is recorded the next night from its log, and a holiday is read from the index history
+Was:  then 7.12, then 7.13, 7.14, 7.15 and 7.16. **Nothing registers before 7.11.**
+Now:  then 7.12, then 7.13, 7.14, 7.15, 7.16 and 7.17. **Nothing registers before 7.11.**
+Why:  The build order names every row.

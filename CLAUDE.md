@@ -45,7 +45,9 @@ Do not read the whole corpus. It is small on purpose and it is still larger than
 /docs             ARCHITECTURE.html  SCHEMA.md  BUILD_PLAN.md
                   DECISIONS.md  PROGRESS.md  CHANGELOG.md  RUNBOOK.md
 /tools            ci.ps1  ci.sh  verify-phase  verify-phase.ps1  snapshot-db  migrate
-                  nightly.ps1  the slot dispatcher the scheduler calls, not run by CI
+                  nightly.ps1  the slot dispatcher, one slot at a time, not run by CI
+                  nightly-window.ps1  what the scheduler calls from 7.17: one of five windows, its
+                  slots back to back through nightly.ps1. Not run by CI
                   update-nightly.ps1  moves the production checkout to the tip of main at
                   17:00, so a night's slots run one build. Scheduled, not a slot, not run by CI
                   slot-log-verdict.ps1  what a slot log says about a stage, read by the

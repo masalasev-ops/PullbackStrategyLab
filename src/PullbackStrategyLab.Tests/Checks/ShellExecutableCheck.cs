@@ -56,6 +56,7 @@ public sealed class ShellExecutableCheck
             ["tools/snapshot-db.ps1"] = "snapshot-db",
             ["tools/nightly.ps1"] = "nightly",
             ["tools/update-nightly.ps1"] = "update-nightly",
+            ["tools/nightly-window.ps1"] = "nightly-window",
         };
 
     /// <summary>

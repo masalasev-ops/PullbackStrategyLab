@@ -113,6 +113,13 @@ public sealed partial class SlotRosterCheck
     [GeneratedRegex(@"'(?<name>[a-z-]+)'", RegexOptions.CultureInvariant)]
     private static partial Regex QuotedName();
 
+    /// <summary>
+    /// One entry of <c>tools/nightly-window.ps1</c>'s <c>$windows</c> table and the slots it lists, which
+    /// wrap over lines for the two long windows. From 7.17.
+    /// </summary>
+    [GeneratedRegex(@"^\s*'(?<window>[a-z-]+)'\s*=\s*@\((?<body>[^)]*)\)", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    private static partial Regex WindowEntry();
+
     [Fact]
     [Trait("check", "slot-roster")]
     public void The_dispatcher_its_parameter_set_the_worker_and_the_runbook_name_the_same_slots()
@@ -133,6 +140,18 @@ public sealed partial class SlotRosterCheck
         string[] documented = [.. slots.Where(slot =>
             SlotVerbsOf(script, slot).Any(verb => runbook.Contains($"`{verb}`", StringComparison.Ordinal)))];
 
+        // The five scheduled tasks, from 7.17. The window script is a second table naming slots, so it is
+        // held to the Core declaration the same way the slot table is, rather than trusted to agree.
+        string windowScript = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Tools, "nightly-window.ps1"));
+        Dictionary<string, string[]> scriptWindows = WindowEntry().Matches(windowScript).ToDictionary(
+            m => m.Groups["window"].Value,
+            m => QuotedName().Matches(m.Groups["body"].Value).Select(n => n.Groups["name"].Value).ToArray(),
+            StringComparer.Ordinal);
+        Match windowAttribute = ValidateSet().Match(windowScript);
+        string[] windowsAccepted = windowAttribute.Success
+            ? [.. QuotedName().Matches(windowAttribute.Groups["body"].Value).Select(m => m.Groups["name"].Value).Order(StringComparer.Ordinal)]
+            : [];
+
         IReadOnlyList<string> vocabulary = DidNotRunBecause.Reasons;
         string[] constrained = ReasonsTheStoreAccepts();
         string[] scriptWrites =
@@ -149,6 +168,9 @@ public sealed partial class SlotRosterCheck
             .Examined("stages the worker advertises", Program.StageNames.Count)
             .Examined("slots whose verbs RUNBOOK's schedule names", documented.Length)
             .Examined("slots the Core declaration the morning report reads holds", NightlySchedule.Slots.Count)
+            .Examined("windows tools/nightly-window.ps1 declares", scriptWindows.Count)
+            .Examined("window names its parameter set accepts", windowsAccepted.Length)
+            .Examined("slots the window script runs across its windows", scriptWindows.Values.Sum(v => v.Length))
             .Scan(
                 "the slot table, the parameter set, the worker's roster and RUNBOOK's schedule name the same things",
                 CheckCoverage.Backing.Runner(
@@ -274,6 +296,31 @@ public sealed partial class SlotRosterCheck
             $"{wrongTime.Length} slot(s) declare a time RUNBOOK's schedule does not have a row for, so the "
             + "morning report and the operator's own table disagree about when the night runs:\n  "
             + string.Join("\n  ", wrongTime));
+
+        // 6. The window script against the Core declaration of the windows, from 7.17, every direction
+        //    and in order. A window the parameter set refuses is a task that fails to bind; a window the
+        //    Core declaration lacks is one the tests of what a window may hold never examined; and a slot
+        //    listed out of order, or in a window it is not declared in, runs before the slot whose rows it
+        //    reads or not at all. The count comes first for the reason the slot count does: a pattern
+        //    that stopped matching would hand every comparison below two empty sets.
+        Assert.True(scriptWindows.Count == NightlySchedule.Windows.Count,
+            $"tools/nightly-window.ps1 parses to {scriptWindows.Count} windows and NightlySchedule declares "
+            + $"{NightlySchedule.Windows.Count}, so the table was not read or the two disagree.");
+
+        string[] coreWindows = [.. NightlySchedule.Windows.Select(w => w.Window).Order(StringComparer.Ordinal)];
+
+        Assert.Equal(coreWindows, scriptWindows.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(coreWindows, windowsAccepted);
+
+        string[] disordered =
+            [.. NightlySchedule.Windows
+                .Where(w => !scriptWindows[w.Window].SequenceEqual(w.Slots, StringComparer.Ordinal))
+                .Select(w => $"{w.Window}: declares [{string.Join(", ", w.Slots)}] and the script runs "
+                    + $"[{string.Join(", ", scriptWindows[w.Window])}]")];
+
+        Assert.True(disordered.Length == 0,
+            $"{disordered.Length} window(s) run different slots, or the same slots in a different order, in the "
+            + "script and in NightlySchedule:\n  " + string.Join("\n  ", disordered));
 
         // 5a. The worker's advertised stages the other way round, from 7.4: every stage no slot runs is
         //     an operator verb RUNBOOK names or a stage that is not the night's, by name, and every name

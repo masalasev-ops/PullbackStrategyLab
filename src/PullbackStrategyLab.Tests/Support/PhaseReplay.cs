@@ -745,6 +745,15 @@ public sealed class PhaseReplay : IDisposable
         // Reads the index history the fixture captured and writes nothing.
         measurements.AddRange(MarketDayFigures());
 
+        // The scheduled windows, a declaration rather than a reading of the store.
+        measurements.AddRange(
+        [
+            new("schedule.windows", NightlySchedule.Windows.Count.ToString(CultureInfo.InvariantCulture)),
+            new("schedule.window.evening.slots", NightlySchedule.Windows.Single(w => w.Window == "evening").Slots.Count.ToString(CultureInfo.InvariantCulture)),
+            new("schedule.window.night.slots", NightlySchedule.Windows.Single(w => w.Window == "night").Slots.Count.ToString(CultureInfo.InvariantCulture)),
+            new("schedule.window.weekly.slots", NightlySchedule.Windows.Single(w => w.Window == "weekly").Slots.Count.ToString(CultureInfo.InvariantCulture)),
+        ]);
+
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
         // was added underneath it and inherited the probe silently; store.observationsAfterTheAsOf

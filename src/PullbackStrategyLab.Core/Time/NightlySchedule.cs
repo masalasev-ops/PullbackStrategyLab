@@ -179,7 +179,61 @@ public static class NightlySchedule
     /// <summary>The slot one stage belongs to, or null where no slot runs it.</summary>
     public static NightSlot? SlotOf(string stage) =>
         Slots.FirstOrDefault(s => s.Stages.Contains(stage, StringComparer.Ordinal));
+
+    /// <summary>
+    /// The five scheduled tasks, each running its slots back to back in the order <see cref="Slots"/>
+    /// declares them, from 7.17.
+    ///
+    /// <b>Five start times are load-bearing and the other thirty-three were spacing.</b> The two spread
+    /// passes read a live book and have to fire inside the session at their own minute. The evening
+    /// needs the day's bulk prices published, which they are by 17:15. The night needs the minute bars,
+    /// which publish two to three hours after the close, and 20:30 is also past midnight UTC, so the
+    /// fetch is the first stage to spend in its vendor quota day, which is what the budget reasoning
+    /// rests on. The weekly slots read the week's record on Saturday morning. Everything between those
+    /// starts was a gap between slots that read what the slot before them wrote, and on 2026-09-04 the
+    /// sixteen evening slots did three minutes of work across eighty-five, and the ten night slots that
+    /// ran clean did two and a half minutes across ninety.
+    ///
+    /// <b>A slot that fails does not stop its window.</b> Thirty-seven separate tasks never did: on
+    /// 2026-09-04 <c>vwap</c>, <c>resolve</c> and <c>orders</c> each refused on the tree guard and every
+    /// slot after them ran. A window that stopped at its first refusal would lose the rest of the
+    /// night for one slot's fault, so it runs them all and reports the first code that was not nought.
+    /// A slot's own verbs still stop at the first failure, because the second reads what the first
+    /// wrote.
+    ///
+    /// <b>A slot's time is its place in its window rather than when it fires.</b> Nothing computes
+    /// anything from those times, and the window's own time is the one a task is registered at.
+    /// </summary>
+    public static IReadOnlyList<NightWindow> Windows { get; } =
+    [
+        new("spread-open", "10:15", ["spread-open"]),
+        new("spread-close", "15:45", ["spread-close"]),
+        new("evening", "17:15",
+            ["universe", "actions", "bars", "rebuild", "index", "indicators", "scans", "sectors", "regime",
+             "detect", "seal", "controls", "cap", "versions", "plans", "watchlist"]),
+        new("night", "20:30",
+            ["intraday", "vwap", "resolve", "orders", "fills", "manage", "trades", "audit", "forward", "losses",
+             "scores", "acceptance", "scoreboard", "snapshot"]),
+        new("weekly", "08:00", ["ceiling", "twins", "signals", "pack", "seat", "registry"], WeeklyOn: DayOfWeek.Saturday),
+    ];
+
+    /// <summary>The window one slot runs in, or null where none runs it.</summary>
+    public static NightWindow? WindowOf(string slot) =>
+        Windows.FirstOrDefault(w => w.Slots.Contains(slot, StringComparer.Ordinal));
 }
+
+/// <summary>
+/// One scheduled task: when it fires, and the slots it runs back to back.
+/// </summary>
+/// <param name="Window">The name <c>tools/nightly-window.ps1</c> takes and the task is registered under.</param>
+/// <param name="At">The local time in the session zone the task fires at.</param>
+/// <param name="Slots">The slots it runs, in the order <see cref="NightlySchedule.Slots"/> declares them.</param>
+/// <param name="WeeklyOn">The one day of the week it fires on, or null where it fires on every weekday.</param>
+public sealed record NightWindow(
+    string Window,
+    string At,
+    IReadOnlyList<string> Slots,
+    DayOfWeek? WeeklyOn = null);
 
 /// <summary>
 /// One slot of the night: when it fires, and the stages it runs in order.
