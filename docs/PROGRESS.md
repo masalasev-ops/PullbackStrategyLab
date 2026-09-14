@@ -20588,3 +20588,63 @@ Operator:   **Migration 070 applied to the live store.** The production checkout
 
 Found:      **Nothing new.** This entry is a reading of two rows and changes no code, no fixture and
             no specification.
+
+## Not a checkpoint entry — 2026-09-14 — phase-7-15-the-schedule-in-its-folder — belongs to 7.15: Friday's missing evening was a power cut and not the schedule, and the thirty-seven tasks in their own folder
+
+Not a checkpoint entry. It belongs to 7.15, which has landed. It corrects two records of
+2026-09-12, records two changes to the scheduled tasks, and brings RUNBOOK to them.
+
+Corrects:   **Friday 2026-09-11's evening chain did not run because the machine had no power, and not
+            because the chain is scheduled Monday to Thursday.** The 7.14 record of 2026-09-12 says
+            "the 17:15 to 18:40 tasks are registered Monday to Thursday, so Friday's universe, bars,
+            detect and the 20:30 fetch never fired", and the switch record of the same date repeats the
+            Monday-to-Thursday schedule twice. **Both are false.** Read from the machine on 2026-09-13,
+            every one of those tasks carries `DaysOfWeek` 62, which is Monday to Friday, and so does the
+            21:00 to 22:00 chain. `detect` reports one missed run and a last run of Thursday 2026-09-10.
+            The system log says why: **an unexpected shutdown at 16:33:14 on Friday and a Kernel-Power
+            41 at 20:27:43**, the system having rebooted without shutting down cleanly after losing
+            power. The machine was off across the whole detection window and back in time for the 21:00
+            chain, which is why `acceptance` and the rest of that chain ran and nothing before it did.
+
+            **The schedule reading was never taken; it was inherited.** Neither record queried a trigger.
+            Both repeated a description that was in the session's context, and the fact that settles
+            it was one command away. That is the seventh shape `CLAUDE.md` names arriving in the record
+            itself: a statement about the running system written without reading the running system.
+
+            **And Saturday 2026-09-12 has no evening chain at all**, the weekly slots aside, so the
+            21:00 chain did not run that night by design. It was said in conversation that it would, and
+            that was the same inherited description.
+
+Operator:   **(1) `WakeToRun` set on all thirty-seven tasks**, on 2026-09-13, from `False` on every one,
+            read back after as `True` on all thirty-seven with triggers, days, slots and next run times
+            unchanged. **It does not address the failure that happened.** The machine is a desktop with
+            no battery, sleep on mains is set to never, and wake timers are allowed on mains and not on
+            battery, so the only case it covers is a machine somebody put to sleep. Friday and Saturday
+            were both a machine with no power, which a wake timer cannot reach. It stays because it is
+            harmless and covers the case it covers.
+
+            **(2) The thirty-seven moved from the scheduler's root into `\PullbackStrategyLab\`**, on
+            2026-09-14 at 07:51, two hours and twenty-four minutes before the next trigger, so the brief
+            overlap could not fire a slot twice. Each was re-registered from the XML its original
+            exported, with the URI removed so the registration named the new location, and **compared
+            with its original on thirteen fields before any original was removed**: arguments, working
+            directory, executable, trigger start, days, `WakeToRun`, `StartWhenAvailable`, execution
+            limit, instance policy, user, logon type, run level and next run time. **All thirty-seven
+            matched on all thirteen**, and only then were the originals unregistered. Read back after:
+            no task in the root carries the prefix, thirty-seven sit in the folder, all `Ready`, and
+            Monday's order runs `spread-open` at 10:15 through `detect` at 18:20 as before. The names lost
+            the `PullbackStrategyLab-` prefix because the folder carries it, matching the other projects'
+            folders on the same machine.
+
+            **RUNBOOK names the tasks in two live places and both are brought to the folder**, being the
+            schedule section's opening sentence and the instruction for removing or re-creating them. The
+            2026-09-08 reading that thirty-seven tasks match `PullbackStrategyLab-*` stays as written,
+            because it is what the machine held on that date.
+
+Found:      **Two power cuts in two days, and the lab has no answer to either from inside itself.** A
+            desktop with no battery loses a night whenever the power fails across its slots, and every
+            task runs as an interactive logon, so after the power returns nothing runs until somebody
+            signs in. The second half is the obligation raised at 3.6 and already in the table; the
+            first is new and has no row, because the remedy is hardware or firmware, being a UPS or the
+            BIOS setting that powers the machine on when mains returns, and neither is a build or a
+            ruling. **Named rather than carried**, since no due point the table accepts could close it.
