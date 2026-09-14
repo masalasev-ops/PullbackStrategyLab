@@ -742,6 +742,9 @@ public sealed class PhaseReplay : IDisposable
         // force. Before the point-in-time probe, which stays last for its own reason.
         measurements.AddRange(RefusalFigures());
 
+        // Reads the index history the fixture captured and writes nothing.
+        measurements.AddRange(MarketDayFigures());
+
         // Last, and this comment governs this one call. It writes a row into the store on purpose,
         // so nothing above it may see one. That sentence stood alone until 3.12, when a new method
         // was added underneath it and inherited the probe silently; store.observationsAfterTheAsOf
@@ -4166,6 +4169,36 @@ public sealed class PhaseReplay : IDisposable
                 refused.RefusedBecause?.Contains("generation 1", StringComparison.Ordinal) == true
                     ? "names it"
                     : "does not"),
+        ];
+    }
+
+    /// <summary>
+    /// Whether the market held a day, read from the fixture's captured index history through the one
+    /// rule the reconciler and the universe screen both ask, from 7.16.
+    ///
+    /// <b>The third figure is the one that was wrong.</b> The capture holds SPY, QQQ and IWM from
+    /// 2025-08-25 to the as-of, with a bar on 2026-07-02 and 2026-07-06 and none on 2026-07-03, the
+    /// observed Independence Day. That day is thirty-six sessions before the as-of and the read takes
+    /// thirty, so every bar the reader returns is later than it. The rule as the reconciler first
+    /// wrote it called that not held, which is the right word for the wrong reason, and would have
+    /// said the same of a real session that far back. It is not yet known, because the read cannot
+    /// see past it.
+    /// </summary>
+    private IReadOnlyList<Measurement> MarketDayFigures()
+    {
+        using SqliteConnection connection = _connections.OpenReadOnly();
+        IReadOnlyList<string> trackers = _options.Value.IndexSymbols;
+        string zone = _options.Value.SessionZone;
+        DateTimeOffset now = _clock.UtcNow;
+
+        string On(DateOnly day) =>
+            NightReconciler.MarketOn(connection, day, AsOf, now, zone, trackers).ToString();
+
+        return
+        [
+            new("market.asOf", On(AsOf)),
+            new("market.dayAfterTheAsOf", On(AsOf.AddDays(1))),
+            new("market.independenceDayBeyondTheRead", On(new DateOnly(2026, 7, 3))),
         ];
     }
 
