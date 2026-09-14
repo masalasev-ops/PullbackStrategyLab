@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
+using PullbackStrategyLab.Core.Time;
 using PullbackStrategyLab.Data;
 using PullbackStrategyLab.Tests.Support;
 using PullbackStrategyLab.Worker.Stages;
@@ -198,6 +199,93 @@ public sealed class UniverseBuilderTests : IDisposable
 
         Assert.DoesNotContain(vendor.DatesRequested, d => d.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday);
         Assert.Equal(20, vendor.DatesRequested.Count);
+    }
+
+    /// <summary>
+    /// A weekday the index history already says the market did not hold is not a session, even
+    /// when the vendor answers for it. On 2026-09-07, Labor Day, the bulk endpoint returned 3,651
+    /// rows of thinly traded names rather than nothing, the walk counted the day as one of the
+    /// twenty, every liquid name was left one bar short, and the universe was empty on 2026-09-08,
+    /// 09-09 and 09-10 with every stage reporting clean.
+    ///
+    /// <b>This fails without the repair, and it fails the way the live store did</b>: the holiday
+    /// is counted, AAA holds nineteen bars of twenty, and nothing survives.
+    /// </summary>
+    [Fact]
+    public async Task A_weekday_the_index_history_says_was_closed_is_not_a_session_even_when_the_vendor_answers_it()
+    {
+        var holiday = new DateOnly(2026, 8, 21);
+        var vendor = new FakeMarketDataVendor().Listing("AAA");
+
+        int written = 0;
+        for (DateOnly date = AsOf; written < 20; date = date.AddDays(-1))
+        {
+            if (date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday || date == holiday)
+            {
+                continue;
+            }
+
+            vendor.Bar(date, "AAA", close: 100m, volume: 300_000);
+            written++;
+        }
+
+        // What the vendor sent for the holiday: a few names nobody screens for, and not nothing.
+        vendor.Bar(holiday, "JUNK", close: 1m, volume: 10);
+
+        SeedIndexHistory(through: AsOf.AddDays(-1), except: holiday);
+
+        UniverseBuildResult result = await Builder(vendor).BuildAsync(AsOf);
+
+        Assert.Equal(["AAA"], Members());
+        Assert.DoesNotContain(holiday, vendor.DatesRequested);
+        Assert.Equal(EodhdClient.SymbolListCost + (20 * EodhdClient.BulkEndOfDayCost), result.CallsUsed);
+    }
+
+    /// <summary>
+    /// The night's own session is never skipped. The index history is ingested after this stage
+    /// runs, so no tracker has moved past tonight yet and the day reads as not yet known, which is
+    /// asked for exactly as it was before the repair.
+    /// </summary>
+    [Fact]
+    public async Task The_nights_own_session_is_asked_for_though_no_tracker_holds_it_yet()
+    {
+        var vendor = new FakeMarketDataVendor().Listing("AAA");
+        vendor.Trading("AAA", AsOf, 20, close: 100m, volume: 300_000);
+
+        SeedIndexHistory(through: AsOf.AddDays(-1), except: null);
+
+        await Builder(vendor).BuildAsync(AsOf);
+
+        Assert.Contains(AsOf, vendor.DatesRequested);
+        Assert.Equal(["AAA"], Members());
+    }
+
+    private void SeedIndexHistory(DateOnly through, DateOnly? except)
+    {
+        using SqliteConnection connection = _connections.OpenWrite();
+
+        for (DateOnly date = through.AddDays(-60); date <= through; date = date.AddDays(1))
+        {
+            if (date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday || date == except)
+            {
+                continue;
+            }
+
+            foreach (string symbol in new PullbackStrategyLabOptions().IndexSymbols)
+            {
+                using SqliteCommand command = connection.CreateCommand();
+                command.CommandText = """
+                    INSERT INTO index_bar (symbol, bar_date, open, high, low, close, adj_close, volume, observed_at)
+                    VALUES (@symbol, @bar_date, '1', '1', '1', '1', '1', 1, @observed_at);
+                    """;
+                command.Parameters.AddWithValue("@symbol", symbol);
+                command.Parameters.AddWithValue("@bar_date", StoreText.DateToStorageText(date));
+                command.Parameters.AddWithValue(
+                    "@observed_at",
+                    StoreText.TimestampToStorageText(SessionBoundaries.At(date, new TimeOnly(17, 50), SessionBoundaries.UsEquities)));
+                command.ExecuteNonQuery();
+            }
+        }
     }
 
     [Fact]

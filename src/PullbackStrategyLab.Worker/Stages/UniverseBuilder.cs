@@ -205,6 +205,27 @@ public sealed class UniverseBuilder
                 continue;
             }
 
+            // **A weekday the index history says the market did not hold is not a session, whatever
+            // the vendor answers for it.** Until 7.16 a holiday was recognised only by an empty
+            // answer, and on 2026-09-07, Labor Day, the bulk endpoint answered with 3,651 rows of
+            // thinly traded names against 50,311 the Friday before. The walk counted it as one of
+            // the twenty, every liquid name was then one bar short of the window and failed the
+            // rule below that a name must trade on every session screened, and the universe was
+            // empty for three nights with this stage and every stage after it reporting clean.
+            //
+            // Skipped without a request, on the reconciler's own reading rather than a second one.
+            // A day no tracker has moved past yet reads as not yet known and is asked for exactly as
+            // before, which is every night's own session and every day of a store with no index
+            // history, so the only days this changes are the ones the store already knows were
+            // closed. The empty-answer test below stays as the second guard.
+            // see: A slot that did not run is recorded the next night from its log, and a holiday is read from the index history
+            if (NightReconciler.MarketOn(
+                    connection, date, asOf, _clock.UtcNow, _options.SessionZone, _options.IndexSymbols)
+                == MarketDay.NotHeld)
+            {
+                continue;
+            }
+
             VendorResult<IReadOnlyList<VendorDailyBar>> bars = await _vendor
                 .GetBulkEndOfDayAsync(exchange, date, run, cancellationToken).ConfigureAwait(false);
 

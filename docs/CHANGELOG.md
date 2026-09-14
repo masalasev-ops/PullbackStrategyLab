@@ -3231,3 +3231,18 @@ Why:  The paragraph said all thirty-seven fall into one configuration group, and
 Was:  **To remove or re-create them:** `Get-ScheduledTask -TaskName 'PullbackStrategyLab-*'`, then
 Now:  **To remove or re-create them:** `Get-ScheduledTask -TaskPath '\PullbackStrategyLab\'`, then
 Why:  The old pattern matches nothing since the move, and an instruction that returns no tasks reads the same as a machine with none registered.
+
+### 2026-09-14 — BUILD_PLAN.md — cites A slot that did not run is recorded the next night from its log, and a holiday is read from the index history
+Was:  **The phase is sixteen rows and it exists because the gate set was never the strategy's.**
+Now:  **The phase is seventeen rows and it exists because the gate set was never the strategy's.**
+Why:  7.16 is added: the universe screen read a holiday only from an empty vendor answer and was empty for three nights after Labor Day.
+
+### 2026-09-14 — BUILD_PLAN.md — cites A slot that did not run is recorded the next night from its log, and a holiday is read from the index history
+Was:  7.0, then 7.1 to 7.11 in their numbered order, then 7.12, then 7.13, 7.14 and 7.15. **Nothing registers before 7.11.**
+Now:  7.0, then 7.1 to 7.11 in their numbered order, then 7.12, then 7.13, 7.14, 7.15 and 7.16. **Nothing registers before 7.11.**
+Why:  The build order names every row.
+
+### 2026-09-14 — RUNBOOK.md — cites A slot that did not run is recorded the next night from its log, and a holiday is read from the index history
+Was:  A holiday inside the forty-five day search costs a further 100 each, so the real range for the stage is 2,005 to 3,205 and the night is 2,803 to 4,003.
+Now:  The same sentence, followed by two saying that from 7.16 a holiday the index history already places is skipped without a request so the range stands as a bound, and what the empty-answer rule cost on 2026-09-07.
+Why:  The cited decision is that a holiday is read from the index history, and the screen was the one stage that read it from the vendor instead.

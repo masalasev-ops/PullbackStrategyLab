@@ -225,25 +225,57 @@ public sealed partial class NightReconciler
     /// and none holds one dated on it; where no tracker holds a later bar the ingest has not reached
     /// past it yet and nothing can be said.
     /// </summary>
-    private MarketDay Market(SqliteConnection connection, DateOnly session)
-    {
-        DateOnly today = _clock.SessionDate(_clock.UtcNow, _options.SessionZone);
-        bool everyTrackerHasALaterBar = _options.IndexSymbols.Count > 0;
+    private MarketDay Market(SqliteConnection connection, DateOnly session) =>
+        MarketOn(
+            connection, session, _clock.SessionDate(_clock.UtcNow, _options.SessionZone), _clock.UtcNow,
+            _options.SessionZone, _options.IndexSymbols);
 
-        foreach (string symbol in _options.IndexSymbols)
+    /// <summary>
+    /// Whether the market held a weekday, read from the index trackers' own history: held where any
+    /// tracker holds a bar dated on it, not held where every tracker holds a later bar and none holds
+    /// one on it, and not yet known where no tracker has moved past it.
+    ///
+    /// <b>Public from 7.16, because a second stage needs the same answer and must not compute its
+    /// own.</b> <c>UniverseBuilder</c> asks it before buying a day of the screening window. On
+    /// 2026-09-07, Labor Day, the vendor's bulk endpoint answered with 3,651 rows of thinly traded
+    /// names rather than with nothing, the screen counted that as a session, and every liquid name
+    /// was left one bar short of the window and failed it. The universe was empty on 2026-09-08,
+    /// 09-09 and 09-10 with every stage reporting clean. The index history had already said the day
+    /// was not a session: this is the reader that said it.
+    /// see: A slot that did not run is recorded the next night from its log, and a holiday is read from the index history
+    /// </summary>
+    public static MarketDay MarketOn(
+        SqliteConnection connection,
+        DateOnly session,
+        DateOnly today,
+        DateTimeOffset now,
+        string sessionZone,
+        IReadOnlyList<string> indexSymbols)
+    {
+        ArgumentNullException.ThrowIfNull(indexSymbols);
+
+        bool everyTrackerPlacesIt = indexSymbols.Count > 0;
+
+        foreach (string symbol in indexSymbols)
         {
             IReadOnlyList<StoredDailyBar> bars = IndexBarReader.Read(
-                connection, symbol, today, IndexSessionsRead, _clock.UtcNow, _options.SessionZone);
+                connection, symbol, today, IndexSessionsRead, now, sessionZone);
 
             if (bars.Any(b => b.BarDate == session))
             {
                 return MarketDay.Held;
             }
 
-            everyTrackerHasALaterBar &= bars.Any(b => b.BarDate > session);
+            // **A later bar alone does not place a day, from 7.16.** The read is the last
+            // IndexSessionsRead sessions, so every bar in it is later than any day older than the
+            // read, and a real session that far back would come out not held. The reconciler never
+            // asked about a day that old; the universe screen's window runs close enough to the edge
+            // that the answer has to be right there too. So the read has to hold a bar on each side
+            // of the day, and a day it cannot see past is not yet known.
+            everyTrackerPlacesIt &= bars.Any(b => b.BarDate > session) && bars.Any(b => b.BarDate < session);
         }
 
-        return everyTrackerHasALaterBar ? MarketDay.NotHeld : MarketDay.NotYetKnown;
+        return everyTrackerPlacesIt ? MarketDay.NotHeld : MarketDay.NotYetKnown;
     }
 
     private IReadOnlyList<string> ReadLog(DateOnly session)
@@ -338,10 +370,13 @@ public enum MarketDay
     /// <summary>A tracker holds a bar dated on it.</summary>
     Held,
 
-    /// <summary>Every tracker holds a later bar and none holds one dated on it.</summary>
+    /// <summary>Every tracker holds a bar on each side of it and none holds one dated on it.</summary>
     NotHeld,
 
-    /// <summary>No tracker holds a bar after it yet, so a lost night and a holiday cannot be told apart.</summary>
+    /// <summary>
+    /// No tracker has moved past it yet, so a lost night and a holiday cannot be told apart, or the
+    /// read does not reach back far enough to hold a bar before it.
+    /// </summary>
     NotYetKnown,
 
     /// <summary>A weekend day, which is nobody's session.</summary>

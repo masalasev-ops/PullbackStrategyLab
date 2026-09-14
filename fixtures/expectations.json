@@ -14784,6 +14784,30 @@
       "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
     },
     {
+      "id": "market.asOf",
+      "tier": "DERIVED",
+      "value": "Held",
+      "checkpoint": "7.16",
+      "producedBy": "derived from fixtures/captured/history-SPY.json, history-QQQ.json and history-IWM.json, whose last bar is dated on the as-of, then run through the shipped NightReconciler.MarketOn",
+      "note": "The fixture's own session, which every tracker holds a bar dated on. The one rule the reconciler and, from 7.16, the universe screen both ask."
+    },
+    {
+      "id": "market.dayAfterTheAsOf",
+      "tier": "DERIVED",
+      "value": "NotYetKnown",
+      "checkpoint": "7.16",
+      "producedBy": "derived from the same three captures, none of which holds a bar after the as-of, then run through the shipped NightReconciler.MarketOn",
+      "note": "No tracker has moved past it, so a lost night and a holiday cannot be told apart. This is what the universe screen reads for the night's own session, which is why that session is still asked for: the index history is ingested after the screen runs."
+    },
+    {
+      "id": "market.independenceDayBeyondTheRead",
+      "tier": "DERIVED",
+      "value": "NotYetKnown",
+      "checkpoint": "7.16",
+      "producedBy": "derived from history-SPY.json, which holds bars on 2026-07-02 and 2026-07-06 and none on 2026-07-03, thirty-six sessions before the as-of against a read of thirty, then run through the shipped NightReconciler.MarketOn",
+      "note": "A real holiday the read cannot see past. The rule as first written called this NotHeld, because every bar in a thirty-session read is later than a day older than the read, and it would have said the same of a real session that far back. From 7.16 a day is placed only where the read holds a bar on each side of it. It is the figure that was wrong, and the right word for it was never the one the rule gave."
+    },
+    {
       "id": "pack.refusedByDesign",
       "tier": "DERIVED",
       "value": "refused",

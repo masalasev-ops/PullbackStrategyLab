@@ -20648,3 +20648,76 @@ Found:      **Two power cuts in two days, and the lab has no answer to either fr
             first is new and has no row, because the remedy is hardware or firmware, being a UPS or the
             BIOS setting that powers the machine on when mains returns, and neither is a build or a
             ruling. **Named rather than carried**, since no due point the table accepts could close it.
+
+## 7.16 — 2026-09-14 — phase-7-16-a-holiday-the-vendor-answered — the universe screen reads a holiday from the index history, and the rule it reads places a day only where it can see both sides of it
+
+Built:      **(a) The universe screen skips a weekday the index history says the market did not hold,
+            without buying it.** It recognised a holiday only by an empty answer from the vendor's bulk
+            endpoint. Asked on 2026-09-14 for 2026-09-07, Labor Day, the endpoint returns **3,651 rows,
+            every one dated 2026-09-07**, against 50,311 for Friday 2026-09-04; 3,649 of the tickers
+            appear on both days and the sample the answer opens with is `DSOL`, `GLNS`, `TRGM`,
+            `ARIZF`, `JMIH`. The walk counted Labor Day as one of its twenty sessions, and the screen
+            passes a name only if it traded on every session screened, so every liquid name was one bar
+            short. **The universe was empty on 2026-09-08, 09-09 and 09-10**: each night's log reads
+            about 17,900 screened and 0 survivors at 2,005 calls, which is twenty bulk days with none
+            skipped, and `indicators`, `detect-long`, `detect-short`, `cap` and `plans` each wrote
+            nothing and reported clean. It would have stayed empty until the holiday left the window,
+            about 2026-10-05, so generation 1's switch night would have detected nothing for a reason
+            that has nothing to do with generation 1. **Those three nights are gone**: the universe is
+            never rebuilt for a past date, on the grounds RUNBOOK gives.
+
+            **It asks the reconciler's rule rather than a second one.** `NightReconciler` already read
+            a holiday from the index history, which is the decision it cites; the rule is made public as
+            `MarketOn` and the screen calls it before each weekday of its walk. A day no tracker has
+            moved past reads as not yet known and is asked for exactly as before, which is every night's
+            own session, since the index history is ingested at 17:50 and the screen runs at 17:15, and
+            every day of a store with no index history. So the only days that change are the ones the
+            store already knew were closed. The empty-answer test stays behind it as the second guard.
+
+            **(b) The rule placed a day as not held wherever every tracker held a later bar**, and the
+            read is the last thirty sessions, so every bar in it is later than any day older than the
+            read. A real session that far back would have come out closed. The reconciler never asked
+            about a day that old, which is why it never showed; the screen's window runs close enough to
+            the edge that the answer has to be right there. **A day is placed now only where the read
+            holds a bar on each side of it.** Every existing reconciler test seeds a bar on both sides
+            of the holiday it reads, and all of them stand.
+
+Measured:   `tools/ci.ps1` green on Windows, **34 steps, 1,325 tests**.
+
+            **The repair is proved by the failure it repairs.** A store whose index history places
+            2026-08-21 as closed, and a vendor answering that day with a bar for a name nobody screens,
+            leaves `AAA`, which trades every real session, in the universe; the day is never requested,
+            and the stage costs 2,005 calls, as the budget row states. **With the skip removed the test
+            fails the way the live store did**: expected `AAA`, got an empty universe. A second test
+            holds that the night's own session is still asked for when the trackers stop at yesterday.
+
+            **Three `DERIVED` expectations over the fixture's captured index history.** SPY, QQQ and IWM
+            each hold a bar on 2026-07-02 and 2026-07-06 and none on 2026-07-03, the observed
+            Independence Day, and end on the as-of. `market.asOf` is `Held`; `market.dayAfterTheAsOf` is
+            `NotYetKnown`; and `market.independenceDayBeyondTheRead` is `NotYetKnown`, because 2026-07-03
+            is thirty-six sessions before the as-of and the thirty-bar read begins at 2026-07-14. **With
+            (b) removed that third figure reads `NotHeld`**, run rather than argued: the replay failed
+            with exactly `expected NotYetKnown, got NotHeld`, and it is the right word for the wrong
+            reason.
+
+Found:      **A holiday evening is still read from the vendor.** The chain runs Monday to Friday with no
+            calendar, so on a weekday holiday the screen asks for that night's own session, which no
+            tracker has moved past, and a non-empty answer is counted as before. That night's universe
+            can come out empty, on a night the market did not trade, and the next night reads the
+            holiday from the index history and skips it. **Named rather than carried**: it costs a night
+            with nothing to detect, the repair would be a calendar the lab has ruled it does not author,
+            and no due point the table accepts would close it.
+
+            **A screen that passes nothing out of about 17,900 names reports clean.** That is the
+            silence that hid this for three nights, and it is RUNBOOK's own account of the stage: a
+            night without a universe flags nothing and the run reports clean while recording it. Not
+            changed here, because what an empty universe should be called is a question about the
+            outcome vocabulary rather than about holidays, and the day of the switch is not the day to
+            move it. Named.
+
+Carried:    **None raised and none discharged.**
+
+            **The operator's half is the move to the tip before 17:15**, since this changes the stage
+            that runs first tonight. No migration.
+
+            **This session committed code and may not sign it off.**
