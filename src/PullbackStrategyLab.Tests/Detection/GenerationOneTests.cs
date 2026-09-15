@@ -102,7 +102,53 @@ public sealed class GenerationOneTests
             new("uptrend", true, null),
         ];
 
-        Assert.True(GenerationOneChecks.PassedAll(results));
+        Assert.True(GenerationOneChecks.PassedAll(results, GenerationOneChecks.Generation));
+    }
+
+    /// <summary>
+    /// Generation 2 requires the daily range generation 1 recorded, and nothing else about the two gate
+    /// sets differs: a name failing only `moves-enough` passes generation 1 and not generation 2, and a
+    /// name failing only a clause both record passes both. From 7.19.
+    /// see: The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it
+    /// </summary>
+    [Fact]
+    public void Generation_two_requires_the_daily_range_generation_one_recorded_and_nothing_else_differs()
+    {
+        CheckResult[] slow =
+        [
+            new("tradable", true, null),
+            new("moves-enough", false, 0.003m),
+            new("uptrend", true, null),
+            new("held-floor", false, null),
+            new("cluster", false, 1m),
+        ];
+
+        CheckResult[] fast =
+        [
+            new("tradable", true, null),
+            new("moves-enough", true, 0.067m),
+            new("uptrend", true, null),
+            new("held-floor", false, null),
+            new("cluster", false, 1m),
+        ];
+
+        Assert.True(GenerationOneChecks.PassedAll(slow, 1));
+        Assert.False(GenerationOneChecks.PassedAll(slow, 2));
+        Assert.True(GenerationOneChecks.PassedAll(fast, 1));
+        Assert.True(GenerationOneChecks.PassedAll(fast, 2));
+
+        Assert.Equal(
+            GenerationOneChecks.RecordedNotRequired.Except(["moves-enough"]).Order(StringComparer.Ordinal),
+            GenerationOneChecks.RecordedNotRequiredFor(2).Order(StringComparer.Ordinal));
+
+        // The distance a row sits from being a candidate reads the same rule.
+        (string, bool)[] pairs = [.. slow.Select(r => (r.Name, r.Passed))];
+        Assert.Equal(0, SetupChecks.GatingFailures(pairs, 1));
+        Assert.Equal(1, SetupChecks.GatingFailures(pairs, 2));
+
+        // And the floor that decides what is recorded does not move, so a slow name is still recorded.
+        Assert.DoesNotContain("moves-enough", GenerationOneChecks.RecordingFloorLong);
+        Assert.DoesNotContain("moves-enough", GenerationOneChecks.RecordingFloorShort);
     }
 
     [Fact]

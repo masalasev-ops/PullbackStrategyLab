@@ -402,6 +402,15 @@
       "mustCarry": "none of them matched",
       "producedBy": "SetupsView.EmptiedByTheFilter",
       "why": "The gallery gained a second filter at 6.12 and the sentence explaining an empty page named the first one. A night that flagged nothing and a night whose filter left nothing render identically, so the reason is the only thing telling them apart, and it was about to become wrong for half the filters on the page."
+    },
+    {
+      "name": "the-pack-page-shows-a-count-rather-than-a-nought",
+      "sentence": "With one pack version and nought proposals the page shows a count rather than a nought",
+      "statedIn": "docs/DECISIONS.md",
+      "surface": "/packs",
+      "mustCarry": "0 proposal(s)",
+      "producedBy": "the page",
+      "why": "Stated at 6.0(b) and never declared, because the reverse read could not see it: a less-than sign in a code span near the top of DECISIONS.md paired with a script tag far below and the strip took everything between as one tag. Found at 7.19 when a quotation with a greater-than sign in it moved the pairing. The claim is that a version's proposals are drawn as a count with its unit, so nought reads as nought proposals rather than as a bare nought."
     }
   ],
   "aSurfaceCanBePartOfAPageThatExists": "Two of the deferred claims name a panel rather than a page. `/scoreboard` is built and both panels are on it declaring the checkpoint that fills them, so the surface a reader looks at exists and the thing it must carry does not. Naming the page alone would have made the out-of-scope line read \"/scoreboard does not exist yet\", which is false and is the kind of wrong reason that survives because nobody reads a passing check's detail."

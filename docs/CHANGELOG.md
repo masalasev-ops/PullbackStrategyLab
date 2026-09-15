@@ -3294,3 +3294,28 @@ Why:  7.18 is added.
 Was:  then 7.12, then 7.13, 7.14, 7.15, 7.16 and 7.17. **Nothing registers before 7.11.**
 Now:  then 7.12, then 7.13, 7.14, 7.15, 7.16, 7.17 and 7.18. **Nothing registers before 7.11.**
 Why:  The build order names every row.
+
+### 2026-09-15 — SOURCES.md — cites The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it
+Was:  what generation 1 does with it. Three rules produce every row (see: Generation 1's baseline is written clause by clause from SOURCES.md, and a stated qualifier makes a gate recorded rather than screening).
+Now:  The same sentence citing the entry that superseded it, and after the paragraph on the recording floor a paragraph saying generation 2 requires `moves-enough`, that the tables' last column stays generation 1's, and that the recording floor does not move.
+Why:  7.19. The operator ruled that the figure he states screens, and the citation follows the supersession.
+
+### 2026-09-15 — SCHEMA.md — cites The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it
+Was:  the operator runs it (see: Generation 1's baseline is written clause by clause from SOURCES.md, and a stated qualifier makes a gate recorded rather than screening).
+Now:  the operator runs it (see: The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it).
+Why:  7.19. The cited entry moved to Previously decided, superseded by the one cited now.
+
+### 2026-09-15 — RUNBOOK.md — cites The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it
+Was:  The generation 1 switch steps closing on step 6, with nothing after it.
+Now:  A paragraph after step 6 taking generation 2: after the merge and the move of the checkout, `close-generation V2 --generation-two`, dry run first, before the evening's detect slot.
+Why:  7.19. A store switched to generation 2 by an older build would score generation 2's rows with generation 1's gate set.
+
+### 2026-09-15 — BUILD_PLAN.md — cites The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it
+Was:  **The phase is nineteen rows and it exists because the gate set was never the strategy's.**
+Now:  **The phase is twenty rows and it exists because the gate set was never the strategy's.**
+Why:  7.19 is added.
+
+### 2026-09-15 — BUILD_PLAN.md — cites The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it
+Was:  then 7.12, then 7.13, 7.14, 7.15, 7.16, 7.17 and 7.18. **Nothing registers before 7.11.**
+Now:  then 7.12, then 7.13, 7.14, 7.15, 7.16, 7.17, 7.18 and 7.19. **Nothing registers before 7.11.**
+Why:  The build order names every row.

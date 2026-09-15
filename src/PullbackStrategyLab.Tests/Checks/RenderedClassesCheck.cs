@@ -79,6 +79,8 @@ public sealed partial class RenderedClassesCheck : IClassFixture<WebApplicationF
             ["register"] = "names the ledger's register of versions. Drawn by `ledger` beside it",
             ["versions"] = "names the register's table. Drawn by `ledger` beside it",
             ["differences"] = "names the ledger's difference-series block. Drawn by `ledger` beside it",
+            ["difference"] = "names the pack comparison page's block saying what its versions differ on. Drawn by "
+                + "`packs` beside it. First rendered at 7.19, when the surface stub gained a pack version",
             ["twins"] = "names the ledger's twin-pair block. Drawn by `ledger` beside it",
             ["pairs"] = "names the twin-pair table. Drawn by `ledger` beside it",
             ["holdout"] = "names the ledger's holdout block. Drawn by `ledger` beside it",

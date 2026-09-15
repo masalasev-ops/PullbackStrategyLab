@@ -774,7 +774,7 @@ for a paired comparison and is a departure worth recording as one.
 Generation 1's two gate lists, written from this trace clause by clause at 7.5 and run by nothing
 live until the switch night at 7.11. **The verdict columns are the trace's own**, in the vocabulary
 the twenty clauses above carry, and say what each generation 1 clause rests on; the last column says
-what generation 1 does with it. Three rules produce every row (see: Generation 1's baseline is written clause by clause from SOURCES.md, and a stated qualifier makes a gate recorded rather than screening).
+what generation 1 does with it. Three rules produce every row (see: The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it).
 A form and a number from the source ship together. A form with no number ships with generation 0's
 number carried and marked as the author's. A stated qualifier makes the clause recorded rather than
 screening. Two clauses leave selection because their sourced forms are tests at the minute of entry,
@@ -821,6 +821,14 @@ the tighter of half the range and 5%, and both move to the execution rule at 7.8
 `tradable-shortable`, its ladder and `thrust`, and not `moves-enough`, which no longer screens. So it
 records the slower names generation 0 read and discarded, which is what his qualifier asks for and
 what the flagged count at 7.11 has to be measured over.
+
+**Generation 2 requires `moves-enough`, and nothing else in the two tables changes.** From 7.19 the
+clause marked recorded and never required for his qualifier screens at his 5%, on both sides, because
+on generation 1's first night the recorded clause passed 18 of 24 long names moving less than that
+(see: The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it).
+The last column above is generation 1's and stays as it was written; generation 2 reads it with that
+one row gating. The recording floor does not move, so generation 2 still records the slower names,
+failing the clause.
 
 ### weekly-trend, long
 

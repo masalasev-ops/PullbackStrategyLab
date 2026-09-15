@@ -129,12 +129,15 @@ public sealed class GenerationOneDetector
     }
 }
 
-/// <summary>One name's generation 1 verdicts on one side.</summary>
-public sealed record GenerationOneVerdict(string Ticker, IReadOnlyList<CheckResult> Results)
+/// <summary>
+/// One name's sourced verdicts on one side. Passed under generation 1's gate set unless another sourced
+/// generation is named, because the forecast this serves was written for the switch to generation 1.
+/// </summary>
+public sealed record GenerationOneVerdict(string Ticker, IReadOnlyList<CheckResult> Results, int Generation = GenerationOneChecks.Generation)
 {
     public bool Recorded(bool isLong) => GenerationOneChecks.ClearsRecordingFloor(Results, isLong);
 
-    public bool PassedAll => GenerationOneChecks.PassedAll(Results);
+    public bool PassedAll => GenerationOneChecks.PassedAll(Results, Generation);
 
     public bool Passed(string check) => Results.Any(r => r.Name == check && r.Passed);
 }
@@ -158,4 +161,14 @@ public sealed record GenerationOneNight(
         direction == SetupDirection.Long
             ? Long.Count(v => v.Recorded(true) && v.PassedAll)
             : Short.Count(v => v.Recorded(false) && v.PassedAll);
+
+    /// <summary>
+    /// The same count under another sourced generation's gate set, from 7.19. The verdicts are one
+    /// evidence and every generation from 1 reads the same clauses, so a generation's candidates are a
+    /// reading of the vectors rather than a second evaluation.
+    /// </summary>
+    public int CandidatesOn(string direction, int generation) =>
+        direction == SetupDirection.Long
+            ? Long.Count(v => v.Recorded(true) && GenerationOneChecks.PassedAll(v.Results, generation))
+            : Short.Count(v => v.Recorded(false) && GenerationOneChecks.PassedAll(v.Results, generation));
 }

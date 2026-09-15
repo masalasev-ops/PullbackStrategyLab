@@ -14808,6 +14808,30 @@
       "note": "The same population at the averages, so none is refused for a missing session and the thirty computed are unchanged."
     },
     {
+      "id": "generation2.long.candidates",
+      "tier": "FROZEN",
+      "value": "0",
+      "checkpoint": "7.19",
+      "producedBy": "read from the replay on 2026-09-15: generation 1's verdicts on the fixture night rescored under generation 2's gate set",
+      "note": "Generation 1's two long candidates on this night both fail moves-enough. Frozen because which two they are is not stated by any figure the fixture carries, so the count cannot be reached by hand."
+    },
+    {
+      "id": "generation2.short.candidates",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.19",
+      "producedBy": "derived by hand before the replay was read: generation 2's gate set requires every clause generation 1's requires and one more, so it cannot pass a name generation 1 does not, and generation1.short.candidates is 0",
+      "note": "The short side under generation 2, never pooled with the long."
+    },
+    {
+      "id": "generationClose.generationTwoOntoGenerationZero",
+      "tier": "DERIVED",
+      "value": "refused",
+      "checkpoint": "7.19",
+      "producedBy": "derived by hand before the replay was read: the register holds generation 0 alone when the figure is taken, closing it opens generation 1, and generation 2's named baseline describes generation 2",
+      "note": "Refused and nothing written, which the generationClose figures beside it confirm by finding the register as it was."
+    },
+    {
       "id": "schedule.windows",
       "tier": "DERIVED",
       "value": "5",
