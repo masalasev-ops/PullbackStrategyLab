@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using PullbackStrategyLab.Core.Detection;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Research;
@@ -144,6 +145,46 @@ public sealed class GenerationCloserTests : IDisposable
         Assert.Equal(VariantStatus.Retired, all.Single(v => v.VariantId == TestVersions.Baseline).Status);
         Assert.Equal(VariantStatus.Retired, all.Single(v => v.VariantId == "V-next").Status);
         Assert.Equal(2, all.Single(v => v.VariantId == "V-after").Generation);
+    }
+
+    /// <summary>
+    /// Generation 2's named baseline goes only onto the close of generation 1, from 7.19: onto
+    /// generation 0 it is refused and nothing is written, and after generation 1 it opens generation 2
+    /// with its definition naming the daily range as required.
+    /// </summary>
+    [Fact]
+    public void Generation_twos_baseline_is_refused_onto_any_close_but_generation_ones()
+    {
+        SeedGenerationZero();
+
+        GenerationClosure onto0 = Closer().Close(
+            "V2", GenerationCloser.GenerationTwoDefinition, GenerationCloser.GenerationTwoTarget,
+            opens: GenerationOneChecks.MovesEnoughRequiredFrom);
+
+        Assert.NotNull(onto0.RefusedBecause);
+        Assert.Equal(VariantStatus.Open, Read(TestVersions.Baseline).Status);
+        Assert.Equal(VariantStatus.Open, Read("V-open-long").Status);
+
+        _clock.Advance(TimeSpan.FromMinutes(1));
+        GenerationClosure one = Closer().Close(
+            "V1", GenerationCloser.GenerationOneDefinition, GenerationCloser.GenerationOneTarget,
+            opens: GenerationOneChecks.Generation);
+        Assert.Null(one.RefusedBecause);
+
+        _clock.Advance(TimeSpan.FromMinutes(1));
+        GenerationClosure two = Closer().Close(
+            "V2", GenerationCloser.GenerationTwoDefinition, GenerationCloser.GenerationTwoTarget,
+            opens: GenerationOneChecks.MovesEnoughRequiredFrom);
+
+        Assert.Null(two.RefusedBecause);
+        Assert.Equal(1, two.ClosedGeneration);
+        Assert.Equal(VariantStatus.Retired, Read("V1").Status);
+
+        StoredVariant v2 = Read("V2");
+        Assert.Equal(2, v2.Generation);
+        Assert.True(v2.IsBaseline);
+        Assert.Equal(VariantStatus.Open, v2.Status);
+        Assert.Contains("moves-enough required", v2.Definition, StringComparison.Ordinal);
     }
 
     [Fact]

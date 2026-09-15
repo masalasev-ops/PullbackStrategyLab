@@ -886,7 +886,7 @@ SignalVectorizer freezes on every setup**, which is the one respect in which the
 candidates above: a rule written over them can be replayed across every night from 7.4, which is what
 lets generation 1's gate set be counted over the live nights before it registers. They stay candidates
 until the admission test rules on them, and SignalBackfiller reaches the rows recorded before 7.4 when
-the operator runs it (see: Generation 1's baseline is written clause by clause from SOURCES.md, and a stated qualifier makes a gate recorded rather than screening).
+the operator runs it (see: The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it).
 
 | Signal | Formula | Source columns | Status | Clause |
 |---|---|---|---|---|

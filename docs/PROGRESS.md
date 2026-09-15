@@ -20907,3 +20907,70 @@ Carried:    **None raised.** The 1.1 entry carried that a name joining the unive
             only what the refetch already writes.
 
             **This session committed code and may not sign it off.**
+
+## 7.19 — 2026-09-15 — phase-7-19-moves-enough — generation 2, which requires the daily range generation 1 recorded
+
+Built:      **Generation 2's gate set, and the act that registers it.** On generation 1's first night,
+            2026-09-14, 18 of the 24 long names it passed moved less than 5% a day, from 0.3% to 4.9%,
+            because `moves-enough` was recorded and never required on the reading that his qualifier made
+            the figure optional. HZO passed at 0.3%, a stock sitting flat after one jump, which the ladder,
+            the thrust, the dip and the contraction all read as a pullback. **The operator ruled on
+            2026-09-15 that the figure he states screens.** One decision records it, superseding the entry
+            generation 1 was written under, whose first two cases carry over unchanged.
+
+            `GenerationOneChecks` names `MovesEnoughRequiredFrom`, generation 2, and the recorded set for
+            each generation. Both detectors pass a row under the gate set of the generation in force, and
+            `SetupChecks.GatingFailures` reads the same rule, so the distance a row sits from being a
+            candidate cannot disagree with its pass. `close-generation --generation-two` registers
+            generation 2's baseline with its definition and target, **and any named baseline is refused onto
+            a close that does not open its generation**, so generation 1's or generation 2's definition can
+            never be written onto the wrong one. The recording floor does not move: a slower name is still
+            recorded, failing the clause, so generation 1's verdict on every later night is a reading of
+            the stored vector.
+
+            **`surface-claims` reads markdown whole.** Its tag pattern took everything between a less-than
+            sign and the next greater-than sign as one tag. In `DECISIONS.md` a `<=` in a code span near line
+            79 paired with a `<script>` far below, and 238,342 characters were stripped as one tag, so the
+            reverse read never saw most of the file and reported nothing missing. Quoting his `>5%` in the new
+            decision moved the pairing, and one undeclared claim came into view: that the pack comparison page
+            draws nought proposals as a count. The pattern now reads a tag only where the bracket opens a
+            letter or a slash. The claim is declared against `/packs`, whose stub gains one pack version with
+            nought proposals, and rendering that version for the first time put `difference` on a page with no
+            rule in `lab.css`; it names a block `packs` draws and is declared unstyled.
+
+Measured:   `tools/ci.ps1` green on Windows, **34 steps, 1,346 tests**.
+
+            **The rule, the act and the night are each run, and the night was broken to watch it fail.** A
+            name failing only `moves-enough` passes generation 1 and not generation 2, a name failing only a
+            clause both record passes both, and the gating distance is 0 against 1. Generation 2's baseline is
+            refused onto generation 0's close with the baseline and an open version left open, and after
+            generation 1's close it opens generation 2 as an open baseline naming the daily range. **The
+            fixture's night detected under generation 2** records the 16 long and 8 short names generation 1
+            records, and every row's pass is generation 2's rule over its own vector. **With both detectors
+            scoring under generation 1 instead, that test fails**, so the fixture carries a name generation 1
+            passes that moves less than 5%. With the old tag pattern restored, the proof that a less-than sign
+            hides nothing after it fails.
+
+            **Expectations.** `generationClose.generationTwoOntoGenerationZero` is `DERIVED` at refused: the
+            register holds generation 0 alone when the figure is taken and generation 2's baseline describes
+            generation 2. `generation2.short.candidates` is `DERIVED` at 0: generation 2 requires every clause
+            generation 1 requires and one more, and `generation1.short.candidates` is 0.
+            `generation2.long.candidates` is `FROZEN` at 0, read from the replay, because which two names are
+            generation 1's long candidates is stated by no figure the fixture carries. Both fail
+            `moves-enough`.
+
+Found:      **The surface check's narrowing is the first shape of CLAUDE.md's Verification section**, a
+            check asserting less than its label, and it was invisible for the reason that section gives: it
+            reported nothing missing. Its floors held because the scope they sit on counts matched sentences,
+            and the sentences that were stripped were never matched. A corrected pattern over the six
+            documents it reads matches two more sentences in `DECISIONS.md` and changes nothing in the other
+            five.
+
+Carried:    **None raised and none discharged.**
+
+            **The operator's half is the act on the live store**: after the merge and the move of the
+            checkout, `close-generation V2 --generation-two --dry-run`, then without `--dry-run`, before an
+            evening's detect slot. RUNBOOK says why the order matters: a store switched to generation 2 by an
+            older build would score its rows with generation 1's gate set.
+
+            **This session committed code and may not sign it off.**

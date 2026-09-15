@@ -68,6 +68,27 @@ public sealed class SurfaceClaimsCheckProof
             + "as green.");
     }
 
+    /// <summary>
+    /// A less-than sign in prose opens no tag, so nothing after it is hidden from the reverse read, and a
+    /// real tag is still taken out. From 7.19: with the pattern that read anything between a less-than
+    /// and the next greater-than as a tag, the sentence here disappears and this fails.
+    /// </summary>
+    [Fact]
+    public void A_less_than_sign_in_prose_hides_nothing_after_it_and_a_real_tag_is_still_removed()
+    {
+        const string text =
+            "The read is bounded by `observed_at <= EndOfSession(asOf)`. The page shows a count rather than a nought. "
+            + "A CDN <script src=\"x\"></script> is named and <b>bold</b> is kept as words.";
+
+        string read = SurfaceClaimsCheck.WithoutMarkup(text);
+
+        Assert.Contains("The page shows a count rather than a nought", read, StringComparison.Ordinal);
+        Assert.Contains("<= EndOfSession", read, StringComparison.Ordinal);
+        Assert.DoesNotContain("<b>", read, StringComparison.Ordinal);
+        Assert.DoesNotContain("<script", read, StringComparison.Ordinal);
+        Assert.Contains("bold", read, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void With_the_corpus_claims_declared_nothing_is_reported()
     {

@@ -230,9 +230,9 @@ public static class SetupChecks
     /// <summary>
     /// The same count under the gate set a row was scored with, from 7.11.
     ///
-    /// <b>A row's gate set is its generation's</b>, and the two differ in which clauses are recorded
-    /// and never required: generation 0 records `cluster` alone and generation 1 also records
-    /// `moves-enough`, `held-floor` and `no-reclaim`. Counting a generation 1 row against generation
+    /// <b>A row's gate set is its generation's</b>, and they differ in which clauses are recorded
+    /// and never required: generation 0 records `cluster` alone, generation 1 also records
+    /// `moves-enough`, `held-floor` and `no-reclaim`, and generation 2 requires `moves-enough` again. Counting a generation 1 row against generation
     /// 0's set would put a candidate one gate away for failing a clause it was never required to pass.
     /// </summary>
     public static int GatingFailures(IEnumerable<(string Name, bool Passed)> checks, int generation)
@@ -244,7 +244,7 @@ public static class SetupChecks
 
     /// <summary>The clauses recorded and never required under one generation's gate set.</summary>
     public static IReadOnlySet<string> RecordedNotRequiredFor(int generation) =>
-        generation >= GenerationOneChecks.Generation ? GenerationOneChecks.RecordedNotRequired : RecordedNotRequired;
+        generation >= GenerationOneChecks.Generation ? GenerationOneChecks.RecordedNotRequiredFor(generation) : RecordedNotRequired;
 }
 
 /// <summary>

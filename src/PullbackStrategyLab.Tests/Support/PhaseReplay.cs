@@ -3111,6 +3111,10 @@ public sealed class PhaseReplay : IDisposable
             {
                 figures.Add(new Measurement($"generation1.{direction}.passed.{check}", Count(night.PassedOn(direction, check))));
             }
+
+            // 7.19. The same verdicts read under generation 2's gate set, which requires the daily range.
+            figures.Add(new Measurement($"generation2.{direction}.candidates",
+                Count(night.CandidatesOn(direction, GenerationOneChecks.MovesEnoughRequiredFrom))));
         }
 
         foreach ((string ticker, string direction) in new[] { ("HOOD", SetupDirection.Long), ("IESC", SetupDirection.Long), ("INTC", SetupDirection.Short) })
@@ -3760,6 +3764,13 @@ public sealed class PhaseReplay : IDisposable
     {
         _clock.Advance(TimeSpan.FromMinutes(1));
 
+        // 7.19. Generation 2's named baseline offered to the close of the fixture's generation 0 first,
+        // which it does not describe, so the act refuses it and the close below finds the register as
+        // it was.
+        GenerationClosure misplaced = new GenerationCloser(_connections, Logger(), _clock, _options).Close(
+            "V2-fixture", GenerationCloser.GenerationTwoDefinition, GenerationCloser.GenerationTwoTarget,
+            opens: GenerationOneChecks.MovesEnoughRequiredFrom);
+
         GenerationClosure closure = new GenerationCloser(_connections, Logger(), _clock, _options).Close(
             FixtureNextBaseline,
             "the fixture's placeholder for a next generation, registered only to prove the act",
@@ -3776,6 +3787,7 @@ public sealed class PhaseReplay : IDisposable
 
         return
         [
+            new("generationClose.generationTwoOntoGenerationZero", misplaced.RefusedBecause is null ? "written" : "refused"),
             new("generationClose.closedGeneration", closure.ClosedGeneration.ToString(CultureInfo.InvariantCulture)),
             new("generationClose.unresolvedWritten", registered
                 .Count(v => v.Generation == closure.ClosedGeneration && v.Status == VariantStatus.Unresolved)
@@ -4271,6 +4283,40 @@ public sealed class PhaseReplay : IDisposable
     /// to `setup` and generation 0's to its companion, and generation 0's clauses retire in the check
     /// register on this night.
     /// </summary>
+    /// <summary>The baseline the generation 2 night registers after the switch night's.</summary>
+    public const string GenerationTwoBaseline = "V2-fixture";
+
+    /// <summary>
+    /// The fixture's night detected under generation 2, from 7.19: generation 1 registered as the switch
+    /// night registers it, then closed through the act with generation 2's baseline, then the detectors.
+    /// </summary>
+    public SwitchNight RunTheGenerationTwoNight()
+    {
+        var measurements = new List<Measurement>();
+        var stages = new List<StageRun>();
+
+        ThroughTheRegime(measurements, stages);
+
+        using (SqliteConnection connection = _connections.OpenWrite())
+        {
+            new CheckRegister(_clock).Register(connection, SetupDirection.Long, SetupChecks.Long, AsOf.AddDays(-1));
+            new CheckRegister(_clock).Register(connection, SetupDirection.Short, SetupChecks.Short, AsOf.AddDays(-1));
+        }
+
+        var closer = new GenerationCloser(_connections, Logger(), _clock, _options);
+        closer.Close(SwitchNightBaseline, GenerationCloser.GenerationOneDefinition, GenerationCloser.GenerationOneTarget);
+
+        _clock.Advance(TimeSpan.FromMinutes(1));
+        GenerationClosure closure = closer.Close(
+            GenerationTwoBaseline, GenerationCloser.GenerationTwoDefinition, GenerationCloser.GenerationTwoTarget,
+            opens: GenerationOneChecks.MovesEnoughRequiredFrom);
+
+        DetectResult longs = new LongSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
+        DetectResult shorts = new ShortSetupDetector(_connections, Logger(), _clock, _options).Detect(AsOf);
+
+        return new SwitchNight(closure, longs, shorts);
+    }
+
     public SwitchNight RunTheSwitchNight()
     {
         var measurements = new List<Measurement>();

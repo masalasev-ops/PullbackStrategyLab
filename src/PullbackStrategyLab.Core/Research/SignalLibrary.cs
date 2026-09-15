@@ -207,7 +207,7 @@ public static class SignalLibrary
         // SOURCES.md clause it was derived from. Candidates that SignalVectorizer freezes nightly, so
         // a rule written over them replays across every night from 7.4 before generation 1 registers;
         // they stay candidates until the admission test rules on them.
-        // see: Generation 1's baseline is written clause by clause from SOURCES.md, and a stated qualifier makes a gate recorded rather than screening
+        // see: The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it
         new("ema_150_distance",
             "(adjusted close − the 150-session exponential average of adjusted closes) / that average, over the last 300 sessions stored",
             "daily_bar.adj_close",

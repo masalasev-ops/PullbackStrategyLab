@@ -5,15 +5,16 @@ namespace PullbackStrategyLab.Core.Detection;
 /// <summary>
 /// Generation 1's two gate lists, clause by clause from <c>SOURCES.md</c>, from 7.5.
 ///
-/// <b>Written from the decision on what generation 1 is, and nothing else.</b> Where the source gives a
+/// <b>Written from the decision on what a baseline is, and nothing else.</b> Where the source gives a
 /// form and a number the clause ships both; where it gives a form and no number, the form ships with
-/// the number carried from generation 0 and marked as the author's; where it gives a qualifier the
-/// clause is recorded and never required. `exit-tight` and `trigger-near` leave the selection list
+/// the number carried from generation 0 and marked as the author's. Generation 1 recorded a clause
+/// whose figure the source qualifies and required nothing of it; from generation 2 that figure screens,
+/// which is the one way the two generations' gate sets differ. `exit-tight` and `trigger-near` leave the selection list
 /// altogether, because their sourced forms are tests at the minute of entry and move to 7.8. And a
 /// clause the source never mentions on the short side is the long side's sourced form mirrored and
 /// marked as the author's mirror, on his own word that he trades shorts by flipping the long side
 /// around. The weekly screen is new on both sides.
-/// see: Generation 1's baseline is written clause by clause from SOURCES.md, and a stated qualifier makes a gate recorded rather than screening
+/// see: The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it
 /// see: The give-up gate is retired at selection and reborn as the entry-time ceiling
 /// see: Generation 1's selection keeps what the evening can decide, and the short side's unsourced clauses are the long side's mirrored
 ///
@@ -61,28 +62,51 @@ public static class GenerationOneChecks
     ];
 
     /// <summary>
-    /// The clauses recorded and never required. `moves-enough` because his own words set the figure
-    /// aside in the same breath; `held-floor` and `no-reclaim` because his reclaim happens at the
-    /// minute of entry and the evening can only describe the session before; `cluster` as in
+    /// The clauses generation 1 recorded and never required. `moves-enough` because his own words set
+    /// the figure aside in the same breath; `held-floor` and `no-reclaim` because his reclaim happens at
+    /// the minute of entry and the evening can only describe the session before; `cluster` as in
     /// generation 0.
     /// </summary>
     public static IReadOnlySet<string> RecordedNotRequired { get; } =
         new HashSet<string>(StringComparer.Ordinal) { "moves-enough", "held-floor", "no-reclaim", "cluster" };
 
     /// <summary>
-    /// What decides a name is worth recording under generation 1: the cheap gating clauses. Not
-    /// `moves-enough`, which no longer screens, so generation 1 records the slower names generation 0
-    /// discarded unread.
+    /// The generation from which `moves-enough` is required. From 7.19.
+    ///
+    /// <b>His qualifier is a judgement the lab cannot make.</b> "I mainly trade stocks with >5% ADR, but
+    /// this isn't a hard rule. I sometimes trade slower stocks with a tighter stop, depending on what's
+    /// working lately and the quality of the setup" (`P3`). Generation 1 read the second sentence as
+    /// licence to require nothing, and on its first night 18 of the 24 names it passed moved less than
+    /// 5% a day, down to 0.3%. What he describes is an exception he takes on a judgement of the setup,
+    /// and a rule that cannot take the judgement is left with the figure he trades by.
+    /// see: The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it
+    /// </summary>
+    public const int MovesEnoughRequiredFrom = 2;
+
+    /// <summary>The clauses recorded and never required from generation 2: generation 1's, less `moves-enough`.</summary>
+    public static IReadOnlySet<string> RecordedNotRequiredFromGenerationTwo { get; } =
+        new HashSet<string>(StringComparer.Ordinal) { "held-floor", "no-reclaim", "cluster" };
+
+    /// <summary>The clauses recorded and never required under one sourced generation's gate set.</summary>
+    public static IReadOnlySet<string> RecordedNotRequiredFor(int generation) =>
+        generation >= MovesEnoughRequiredFrom ? RecordedNotRequiredFromGenerationTwo : RecordedNotRequired;
+
+    /// <summary>
+    /// What decides a name is worth recording from generation 1: the cheap gating clauses. Not
+    /// `moves-enough`, so the slower names generation 0 discarded unread are recorded, and from
+    /// generation 2, which requires it, they are recorded failing it. That keeps generation 1's verdict
+    /// on every later night a reading of the stored vector rather than a night nobody recorded.
     /// </summary>
     public static IReadOnlyList<string> RecordingFloorLong { get; } = ["tradable", "uptrend", "thrust"];
 
     public static IReadOnlyList<string> RecordingFloorShort { get; } = ["tradable-shortable", "downtrend", "thrust"];
 
-    /// <summary>Whether every gating clause passed.</summary>
-    public static bool PassedAll(IEnumerable<CheckResult> results)
+    /// <summary>Whether every gating clause of <paramref name="generation"/>'s gate set passed.</summary>
+    public static bool PassedAll(IEnumerable<CheckResult> results, int generation)
     {
         ArgumentNullException.ThrowIfNull(results);
-        return results.All(r => r.Passed || RecordedNotRequired.Contains(r.Name));
+        IReadOnlySet<string> recorded = RecordedNotRequiredFor(generation);
+        return results.All(r => r.Passed || recorded.Contains(r.Name));
     }
 
     /// <summary>Whether the side's floor clauses all passed.</summary>

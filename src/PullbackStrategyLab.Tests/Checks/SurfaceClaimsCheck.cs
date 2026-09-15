@@ -121,8 +121,22 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex ClaimsSomethingAppearsOnASurface();
 
-    [GeneratedRegex(@"<[^>]+>", RegexOptions.CultureInvariant)]
+    /// <summary>
+    /// A tag: an opening angle bracket followed by a letter or a slash, up to the next closing one, and
+    /// never across another opening one. From 7.19.
+    ///
+    /// <b>It read any text between a less-than sign and the next greater-than sign as a tag until 7.19</b>,
+    /// and a markdown document is full of less-than signs that open nothing. In `DECISIONS.md` a `&lt;=` in a
+    /// code span near the top paired with a `&lt;script&gt;` far below and 238,342 characters were stripped as
+    /// one tag, so every sentence in them was invisible to the reverse read and it reported nothing
+    /// missing. It surfaced when a quotation with a greater-than sign in it moved the pairing and one
+    /// undeclared claim about the pack comparison page came into view.
+    /// </summary>
+    [GeneratedRegex(@"</?[A-Za-z][^<>]*>", RegexOptions.CultureInvariant)]
     private static partial Regex Markup();
+
+    /// <summary>A document's text with its tags taken out, as the reverse read sees it.</summary>
+    internal static string WithoutMarkup(string text) => Markup().Replace(text, " ");
 
     [GeneratedRegex(@"(?<=[.!?])\s+", RegexOptions.CultureInvariant)]
     private static partial Regex Sentences();
@@ -202,8 +216,8 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
 
         foreach (string document in Corpus)
         {
-            string text = Markup().Replace(
-                RepositoryLayout.Read(Path.Combine(RepositoryLayout.Root, document)), " ");
+            string text = WithoutMarkup(
+                RepositoryLayout.Read(Path.Combine(RepositoryLayout.Root, document)));
 
             foreach (string sentence in Sentences().Split(text))
             {
@@ -585,6 +599,7 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
                 _ when path.StartsWith("/journal", StringComparison.Ordinal) => Trades,
                 _ when path.StartsWith("/research", StringComparison.Ordinal) => Register,
                 _ when path.StartsWith("/night", StringComparison.Ordinal) => Slots,
+                _ when path.StartsWith("/packs", StringComparison.Ordinal) => Packs,
                 _ when path.StartsWith("/chart/trade", StringComparison.Ordinal) => Held,
                 _ => Status,
             };
@@ -594,6 +609,19 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
                 Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json"),
             };
         });
+
+    /// <summary>
+    /// One pack version with nought proposals, from 7.19, which is the state the decision on the pack
+    /// comparison page describes: a version asked nothing yet, whose proposals are drawn as a count with
+    /// its unit rather than as a bare nought.
+    /// </summary>
+    private const string Packs = """
+        { "asOf": "2026-08-24", "absent": null, "lastCut": null,
+          "versions": [ { "version": 1, "fingerprint": "5f3a9c1e7b2d4a60", "sections": "7 of 7", "signalsScreened": "41",
+            "signalsScreenedCount": 41, "correctionForm": "holm", "correctionLevel": 0.05, "familyWiseThreshold": null,
+            "modelIdentifier": "claude-opus-5", "proposals": 0, "ruleChanges": 0, "signalRequests": 0,
+            "abstentions": 0, "noAnswer": 0, "statuses": [] } ] }
+        """;
 
     /// <summary>
     /// The same night with the outcome filter applied and nothing left, so the page renders the

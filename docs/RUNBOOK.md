@@ -502,6 +502,14 @@ irreversible by design, which is why every step before it is a reading (see: Gen
    no selection or execution version is admitted and the weekly pack refuses with the reason, until the
    conditions that reopen each are met (see: Generation 1 opens with no version admissible in either family, and what reopens each is named).
 
+**Generation 2, from 7.19, is taken the same way and only after its code is on the production
+checkout.** A store switched to generation 2 by an older build would score its rows with generation 1's
+gate set under generation 2's number. So: merge, move the checkout to the tip, then
+`close-generation V2 --generation-two --dry-run`, then the same without `--dry-run`, before the evening's
+detect slot. The act closes generation 1 and is refused onto any other generation. The morning after,
+`setup` rows carry `generation` 2 and pass only names whose `moves-enough` passed, and the slower names
+are still recorded, failing it.
+
 ---
 
 ## Recovery

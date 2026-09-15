@@ -10,7 +10,7 @@ namespace PullbackStrategyLab.Core.Indicators;
 /// the session's own low; his ceiling on a stop is half the daily range capped at 5%; and his squeeze
 /// is read on the weekly averages. Each is frozen nightly as a candidate signal, so a rule written
 /// over it can be replayed across every night from 7.4 before generation 1 registers.
-/// see: Generation 1's baseline is written clause by clause from SOURCES.md, and a stated qualifier makes a gate recorded rather than screening
+/// see: The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it
 ///
 /// <b>Arithmetic only, in Core</b>, because the vectorizer freezes these and a replay reads them, and a
 /// second implementation of one would eventually disagree with the first by an amount nobody could

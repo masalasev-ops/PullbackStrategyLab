@@ -303,7 +303,7 @@ public sealed class ShortSetupDetector
                     continue;
                 }
 
-                bool sourcedAll = GenerationOneChecks.PassedAll(sourced);
+                bool sourcedAll = GenerationOneChecks.PassedAll(sourced, generation);
                 if (sourcedAll)
                 {
                     passedAll++;

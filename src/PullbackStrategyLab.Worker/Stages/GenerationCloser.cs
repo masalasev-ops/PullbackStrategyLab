@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
+using PullbackStrategyLab.Core.Detection;
 using Microsoft.Extensions.Options;
 using PullbackStrategyLab.Core.Configuration;
 using PullbackStrategyLab.Core.Measurement;
@@ -74,6 +75,29 @@ public sealed class GenerationCloser
     public const string GenerationOneTarget =
         "the reference every version of generation 1 is differenced against";
 
+    /// <summary>
+    /// Registers generation 2's baseline, from 7.19: generation 1's in every respect but one, that
+    /// `moves-enough` is required. Refused unless the generation it closes is 1, so the definition can
+    /// never be written onto a generation it does not describe.
+    /// see: The baseline is written clause by clause from SOURCES.md, and a figure he states screens even where he qualifies it
+    /// </summary>
+    public const string GenerationTwoFlag = "--generation-two";
+
+    /// <summary>Generation 2's baseline in words, which is generation 1's with the daily range required.</summary>
+    public const string GenerationTwoDefinition =
+        "generation 2: generation 1's baseline with moves-enough required, a daily range of 5% or more on both "
+        + "sides as his own words state it; selection by the gate lists SOURCES.md traces clause by clause, being "
+        + "the weekly screen, the ladders, the thrust, the dip or bounce, contraction, the ceiling's confluence, the "
+        + "tradable floors and the daily range, with held-floor, no-reclaim and cluster recorded and never required; "
+        + "execution by the entry rule, a flush into the hourly 9 and 21 averages taken on the first break of the "
+        + "previous candle, the stop at the session's extreme switching to the entry candle's past 2% and refused "
+        + "past the tighter of half the daily range and 5%, and by the exits, 15% trims at 3R and 5R, the long "
+        + "trail on the 9-day average and the short held three sessions";
+
+    /// <summary>What generation 2's baseline is for.</summary>
+    public const string GenerationTwoTarget =
+        "the reference every version of generation 2 is differenced against";
+
     /// <summary>Why the act refuses an empty register.</summary>
     public const string NothingToClose =
         "the register holds no version, so there is no generation to close. The first baseline is "
@@ -104,8 +128,12 @@ public sealed class GenerationCloser
         // read the definition as the name when the name is left off.
         string? nextBaseline = args.Length > 0 && !args[0].StartsWith("--", StringComparison.Ordinal) ? args[0] : null;
         bool generationOne = args.Contains(GenerationOneFlag, StringComparer.Ordinal);
-        string? definition = Flag(args, DefinitionFlag) ?? (generationOne ? GenerationOneDefinition : null);
-        string? target = Flag(args, TargetFlag) ?? (generationOne ? GenerationOneTarget : null);
+        bool generationTwo = args.Contains(GenerationTwoFlag, StringComparer.Ordinal);
+        string? definition = Flag(args, DefinitionFlag)
+            ?? (generationOne ? GenerationOneDefinition : generationTwo ? GenerationTwoDefinition : null);
+        string? target = Flag(args, TargetFlag)
+            ?? (generationOne ? GenerationOneTarget : generationTwo ? GenerationTwoTarget : null);
+        int? opens = generationOne ? GenerationOneChecks.Generation : generationTwo ? GenerationOneChecks.MovesEnoughRequiredFrom : null;
         bool dryRun = args.Contains(DryRunFlag, StringComparer.Ordinal);
 
         if (string.IsNullOrWhiteSpace(nextBaseline)
@@ -115,11 +143,12 @@ public sealed class GenerationCloser
             Console.Error.WriteLine(
                 $"{Name}: name the next generation's baseline and say what it is. usage: {Name} <variant-id> "
                 + $"{DefinitionFlag} \"<what it is>\" {TargetFlag} \"<what it is for>\" [{DryRunFlag}], or "
-                + $"{Name} <variant-id> {GenerationOneFlag} [{DryRunFlag}] for generation 1's baseline");
+                + $"{Name} <variant-id> {GenerationOneFlag} [{DryRunFlag}] for generation 1's baseline, or "
+                + $"{Name} <variant-id> {GenerationTwoFlag} [{DryRunFlag}] for generation 2's");
             return 2;
         }
 
-        GenerationClosure closure = Close(nextBaseline, definition, target, dryRun);
+        GenerationClosure closure = Close(nextBaseline, definition, target, dryRun, opens);
 
         if (closure.RefusedBecause is string refused)
         {
@@ -156,7 +185,7 @@ public sealed class GenerationCloser
     /// plan out to nothing, and one reading between the registration and the close would find two
     /// generations open at once.
     /// </summary>
-    public GenerationClosure Close(string nextBaselineId, string definition, string target, bool dryRun = false)
+    public GenerationClosure Close(string nextBaselineId, string definition, string target, bool dryRun = false, int? opens = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(nextBaselineId);
         ArgumentException.ThrowIfNullOrWhiteSpace(definition);
@@ -178,6 +207,18 @@ public sealed class GenerationCloser
         }
 
         int closing = registered.Max(v => v.Generation);
+
+        // A named baseline describes one generation, so it is refused onto any other. Without this,
+        // closing generation 0 with generation 2's definition would register a generation 1 whose
+        // written rule says it is generation 2.
+        if (opens is int named && closing + 1 != named)
+        {
+            string why = string.Create(
+                CultureInfo.InvariantCulture,
+                $"the named baseline is generation {named}'s and closing generation {closing} opens generation {closing + 1}");
+            run.Complete(RunOutcome.Failed);
+            return GenerationClosure.Refused(why);
+        }
         IReadOnlyList<StoredVariant> generation = [.. registered.Where(v => v.Generation == closing)];
 
         StoredVariant? baseline = generation.SingleOrDefault(v => v.IsBaseline);
