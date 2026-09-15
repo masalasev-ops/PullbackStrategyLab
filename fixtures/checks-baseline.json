@@ -322,7 +322,7 @@
     "shell-executable": {
       "scopes": {
         "shell entry points checked against their recorded mode": 4,
-        "entry points asserted to announce their shell and host": 10,
+        "entry points asserted to announce their shell and host": 11,
         "files under tools that carry a shebang": 6
       },
       "context": [
@@ -347,7 +347,10 @@
         "distinct worker verbs the slots run": 27,
         "stages the worker advertises": 34,
         "slots whose verbs RUNBOOK's schedule names": 23,
-        "slots the Core declaration the morning report reads holds": 30
+        "slots the Core declaration the morning report reads holds": 30,
+        "windows tools/nightly-window.ps1 declares": 5,
+        "window names its parameter set accepts": 5,
+        "slots the window script runs across its windows": 38
       }
     },
     "stated-counts": {

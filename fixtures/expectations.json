@@ -14784,6 +14784,38 @@
       "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
     },
     {
+      "id": "schedule.windows",
+      "tier": "DERIVED",
+      "value": "5",
+      "checkpoint": "7.17",
+      "producedBy": "counted by hand from RUNBOOK's schedule table before the replay was run, taking the five load-bearing start times and the distinct time-and-stage entries between one and the next, the two stages at 17:20 being one slot and the two at 18:28 two, then read from the shipped NightlySchedule.Windows",
+      "note": "The scheduled tasks from 7.17: the two spread passes, the evening, the night and the weekly. Thirty-seven until then, one per slot."
+    },
+    {
+      "id": "schedule.window.evening.slots",
+      "tier": "DERIVED",
+      "value": "16",
+      "checkpoint": "7.17",
+      "producedBy": "counted by hand from RUNBOOK's schedule table before the replay was run, taking the five load-bearing start times and the distinct time-and-stage entries between one and the next, the two stages at 17:20 being one slot and the two at 18:28 two, then read from the shipped NightlySchedule.Windows",
+      "note": "17:15 universe to 18:40 watchlist. Three minutes of work on 2026-09-04 across eighty-five."
+    },
+    {
+      "id": "schedule.window.night.slots",
+      "tier": "DERIVED",
+      "value": "14",
+      "checkpoint": "7.17",
+      "producedBy": "counted by hand from RUNBOOK's schedule table before the replay was run, taking the five load-bearing start times and the distinct time-and-stage entries between one and the next, the two stages at 17:20 being one slot and the two at 18:28 two, then read from the shipped NightlySchedule.Windows",
+      "note": "20:30 intraday to 22:00 snapshot, the fetch first because it spends first in the quota day that opens at midnight UTC."
+    },
+    {
+      "id": "schedule.window.weekly.slots",
+      "tier": "DERIVED",
+      "value": "6",
+      "checkpoint": "7.17",
+      "producedBy": "counted by hand from RUNBOOK's schedule table before the replay was run, taking the five load-bearing start times and the distinct time-and-stage entries between one and the next, the two stages at 17:20 being one slot and the two at 18:28 two, then read from the shipped NightlySchedule.Windows",
+      "note": "Saturday 08:00 ceiling to 08:40 registry, signals among them, which had no task of its own under the thirty-seven."
+    },
+    {
       "id": "market.asOf",
       "tier": "DERIVED",
       "value": "Held",

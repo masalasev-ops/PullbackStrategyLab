@@ -20721,3 +20721,78 @@ Carried:    **None raised and none discharged.**
             that runs first tonight. No migration.
 
             **This session committed code and may not sign it off.**
+
+## 7.17 — 2026-09-14 — phase-7-17-five-windows — five scheduled tasks rather than thirty-seven, each running its slots back to back through the dispatcher that already runs them
+
+Built:      **`tools/nightly-window.ps1`, and `NightlySchedule.Windows` declaring what it runs.** The
+            operator asked for fewer scheduled jobs. **Five start times are load-bearing and the other
+            thirty-three were spacing**: the two spread passes read a live book at their own minute of
+            the session; the evening needs the day's bulk prices, published by 17:15; the night needs the
+            minute bars, published two to three hours after the close, and 20:30 is past midnight UTC so
+            the fetch spends first in its quota day; and the weekly slots read the week on Saturday
+            morning. Read from the night log of 2026-09-04, **the sixteen evening slots did three minutes
+            of work across eighty-five, and the ten night slots that ran clean did two and a half across
+            ninety.**
+
+            **Nothing about how one slot runs changes.** A window passes each slot to
+            `tools/nightly.ps1 -Slot <slot>` in a process of its own, so the operator's pause, the tree
+            guard, the commit line, a slot's verbs stopping at their first failure and the did-not-run
+            line the next night reads are that script's, byte for byte. `nightly.ps1` is not edited, and
+            the three patterns `slot-roster` reads it with are untouched.
+
+            **A slot that fails does not stop its window**, because thirty-seven separate tasks never
+            did. The same log shows why that is the behaviour to keep: `vwap`, `resolve` and `orders`
+            refused on the tree guard, the checkout being on `phase-5-7-holiday`, and every slot after
+            them ran. A window stopping at its first refusal would have lost the rest of that night. It
+            exits with the first code that was not nought, so the scheduler still shows a night that
+            needs reading.
+
+            **And a window runs one build in practice.** That night's thirty-one slots ran from five commits,
+            seventeen at `a47517b`, two at `72f4a17`, two at `1ea33bb`, nine at `22a6dde` and one at `5bb9654`,
+            because the checkout moved between tasks. A window's slots
+            finish within minutes of each other.
+
+            **A slot's time in RUNBOOK's table is now its place in its window**, so on an ordinary
+            evening `detect` runs a few minutes after 17:15 rather than at 18:20. Nothing computes
+            anything from those times, which `NightlySchedule` already said of itself.
+
+Measured:   `tools/ci.ps1` green on Windows, **34 steps, 1,331 tests**.
+
+            **The window is run rather than read.** Through the real interpreter against a probe that
+            stands in for the dispatcher, the evening window calls its sixteen slots in declaration order
+            through a slot exiting 4, a slot exiting 1 and every slot writing to stderr, exits 4, logs each
+            slot's code and that two of sixteen exited other than nought, announces its shell and host,
+            and writes no line matching either reader's pattern for a slot's own start or finish. **With a
+            stop at the first failure added, the same test fails with the calls ending at `bars`.** A
+            window whose slots all ran clean exits nought.
+
+            **The Core declaration is held by four rules**: every slot in exactly one window; each window
+            an unbroken run of its own days in declaration order, taken over the slots that fire on the
+            same days because the weekly slots sit before `snapshot` in the list; each firing at its first
+            slot's time and on its slots' days; and each spread pass alone in its window.
+
+            **`slot-roster` holds the script to the Core declaration in every direction and in order**,
+            counting five windows, five accepted names and thirty-eight slots with a floor under each. With
+            `detect` moved before `regime` in the script alone it fails naming the evening and both orders.
+            `shell-executable` holds the new entry point, and its floor rises from ten to eleven.
+
+            **Four `DERIVED` expectations counted by hand from RUNBOOK's schedule table**: five windows, and
+            sixteen, fourteen and six slots in the evening, night and weekly, the two stages at 17:20 being
+            one slot and the two at 18:28 two.
+
+Found:      **Nothing new in the code.** One thing about the act: two of the five window names,
+            `spread-open` and `spread-close`, are the names of slot tasks already in the folder, so those
+            two are replaced in place, keeping their names and times, and the other three are added beside
+            the slot tasks, verified, and only then are the remaining thirty-five removed. If the
+            verification fails the three new windows are removed again, so no slot runs twice beside its own
+            task.
+
+Carried:    **None raised and none discharged.**
+
+            **The operator's half is the act replacing the thirty-seven with the five**, on the operator's
+            instruction of 2026-09-14 to build it now and switch on the morning of Wednesday 2026-09-16,
+            after the first generation 1 night and the first fills have been read, so a surprise on either
+            can be told from the rewiring. Merged with it, not before. Recorded in a dated entry when it is
+            taken.
+
+            **This session committed code and may not sign it off.**
