@@ -1200,6 +1200,17 @@ The demand's key is the action's key rather than a copy of the action's value. T
 
 Supersedes **A split records a rebuild demand that is stamped rather than cleared**, together with the decision above.
 
+**A stock's history is made whole before its averages are computed, and an average across a missing session is refused**
+On 2026-09-14 the averages were computed for 1,985 members over a history missing 2026-09-08 and 2026-09-11 for all but 68 of them, because the bulk request for those two days never ran, and twenty-four members that had joined since 2026-08-27 had six to twelve bars and no history at all, because nothing fetches the history of a name that joins. PROGRESS carried the second at 1.1 as due at 1.6 and no checkpoint built it. Neither said anything. The first is the worse, because it produces numbers: a window of a hundred and fifty bars spanning a hundred and fifty-two sessions steps over two days as though the stock had not traded, and every average, every range and every count of bars in a dip comes out plausible and wrong.
+
+So the evening completes the history before the averages and refuses what it could not complete. Once the index history is in, `backfill --incomplete` fetches every member no refetch has covered and every member missing a session since its last, and a session more members miss than a bulk request costs in per-ticker calls is read whole for the market first. The comparison is the vendor's two prices and no threshold of the lab's. At the averages a stock still missing a session gets no row and is counted, on the grounds the warm-up refusal already gives: a gap is visible and a wrong number is not.
+
+A session is a day the index history holds, because this lab authors no calendar and the trackers' histories are refetched whole every night (see: A session is a date the store holds minutes for, and no calendar is authored here). A session is missing only between two of a stock's own bars, since a day before its first is a stock that had not listed or had not been fetched. **And a session on or before a stock's last refetch is not missing, because the vendor was asked for it.** A halted or thinly traded stock would otherwise cost a call a night and be refused its averages for as long as the day stayed in the window, asking a question the vendor has already answered. That is the one place a window may step over a day, and only where the vendor's own series does.
+
+The index ingest moves ahead of the refetch for the same reason. On the evening after a night that never ran, the lost day is in the trackers only once they have been refetched, so with the refetch first the day would be unknown to the stage that buys it back and found by the averages instead, which would refuse the universe for that night.
+
+The alternative was a warning that computed the averages anyway. It would have been read the morning after a night had flagged on them, which is what happened without one.
+
 **Minute bars are fetched for every flagged setup, not only the planned ones**
 Otherwise a version selecting a name the baseline passed on cannot be resolved, and the missing cases are exactly the disagreements.
 

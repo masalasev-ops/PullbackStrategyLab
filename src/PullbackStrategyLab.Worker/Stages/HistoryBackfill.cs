@@ -32,6 +32,26 @@ public sealed partial class DailyBarIngestor
     public const string RebuildFlag = "--rebuild";
 
     /// <summary>
+    /// Every universe member whose stored history is incomplete, and the whole-market days that
+    /// complete it more cheaply. From 7.18, run in the rebuild slot after <see cref="RebuildFlag"/>.
+    ///
+    /// <b>Two populations and neither was anybody's.</b> A name joining the universe arrives with the
+    /// bars the nightly bulk has stored for it since, which is none of its history, and nothing asked
+    /// for the rest: PROGRESS carried it at 1.1 as due at 1.6 and no checkpoint built it, so on
+    /// 2026-09-15 twenty-four established names had been members for up to twelve sessions with six
+    /// to twelve bars each and no averages. And a member missing a session the market held, because
+    /// the bulk for that day never ran or the name was off the list that day, keeps its averages and
+    /// computes them across the hole, which is how 2026-09-14 was flagged.
+    ///
+    /// <b>A day more members miss than a bulk request costs in per-ticker calls is read whole</b>, and
+    /// every other gap is a per-ticker refetch. The comparison is the vendor's own prices and no
+    /// threshold of the lab's: on 2026-09-14 the bulk would have been 100 calls a day where the
+    /// refetch would have been about nineteen hundred.
+    /// see: A stock's history is made whole before its averages are computed, and an average across a missing session is refused
+    /// </summary>
+    public const string IncompleteFlag = "--incomplete";
+
+    /// <summary>
     /// Every name the exchange has delisted, minus the ones a previous night already fetched.
     ///
     /// <b>It is charged against the daily ceiling on purpose, and that is what spreads it.</b>
@@ -69,20 +89,47 @@ public sealed partial class DailyBarIngestor
             ? BackfillSelection.EveryUniverseMember
             : args.Contains(RebuildFlag, StringComparer.Ordinal)
                 ? BackfillSelection.TickersWithAnOpenDemand
-                : args.Contains(DelistedFlag, StringComparer.Ordinal)
-                    ? BackfillSelection.DelistedNames
-                    : BackfillSelection.Named;
+                : args.Contains(IncompleteFlag, StringComparer.Ordinal)
+                    ? BackfillSelection.IncompleteHistories
+                    : args.Contains(DelistedFlag, StringComparer.Ordinal)
+                        ? BackfillSelection.DelistedNames
+                        : BackfillSelection.Named;
 
         if (selection == BackfillSelection.Named && named.Length == 0)
         {
             Console.Error.WriteLine(
                 $"{BackfillName}: name the tickers, or pass {AllFlag} for every universe member, {RebuildFlag} "
-                + $"for the ones carrying an open rebuild demand, or {DelistedFlag} for the names the exchange has "
+                + $"for the ones carrying an open rebuild demand, {IncompleteFlag} for the members whose stored "
+                + $"history is incomplete, or {DelistedFlag} for the names the exchange has "
                 + "removed. There is no default, because the default would be one call per name in the universe.");
             return 2;
         }
 
+        if (selection == BackfillSelection.IncompleteHistories)
+        {
+            // The whole-market days first, because a day most of the universe misses is one request
+            // rather than a request a name, and every name it completes then drops out of the
+            // per-ticker selection below without being asked for.
+            WholeDayRead whole = await ReadMissingSessionsWholeAsync(asOf, cancellationToken).ConfigureAwait(false);
+
+            Console.WriteLine(whole.Read.Count == 0
+                ? $"{BackfillName}: no session is missing from more members than a bulk request costs"
+                : $"{BackfillName}: {whole.Read.Count} session(s) read whole for the market, "
+                    + string.Join(" ", whole.Read.Select(d => d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))));
+
+            if (whole.StoppedShort)
+            {
+                Console.WriteLine($"{BackfillName}: the whole-day read stopped on the daily ceiling, {whole.Wanted} wanted");
+            }
+        }
+
         BackfillResult result = await BackfillAsync(selection, named, asOf, cancellationToken).ConfigureAwait(false);
+
+        if (selection == BackfillSelection.IncompleteHistories)
+        {
+            Console.WriteLine($"{BackfillName}: {result.NeverFetched} member(s) never fetched, "
+                + $"{result.MissingASession} missing a session since their last fetch");
+        }
 
         if (selection == BackfillSelection.DelistedNames)
         {
@@ -128,6 +175,8 @@ public sealed partial class DailyBarIngestor
 
         int candidates = 0;
         int alreadyFetched = 0;
+        int neverFetched = 0;
+        int missingASession = 0;
         IReadOnlyList<string> tickers;
 
         if (selection == BackfillSelection.DelistedNames)
@@ -154,6 +203,16 @@ public sealed partial class DailyBarIngestor
             HashSet<string> done = ReadRefetchedTickers(connection);
             alreadyFetched = wanted.Count(done.Contains);
             tickers = [.. wanted.Where(t => !done.Contains(t))];
+        }
+        else if (selection == BackfillSelection.IncompleteHistories)
+        {
+            IncompleteHistorySelection incomplete =
+                SelectIncomplete(connection, asOf, observedAt, _options.IndexSymbols);
+
+            neverFetched = incomplete.NeverFetched.Count;
+            missingASession = incomplete.MissingASession.Count;
+            tickers = [.. incomplete.NeverFetched.Concat(incomplete.MissingASession.Keys)
+                .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
         }
         else
         {
@@ -228,7 +287,72 @@ public sealed partial class DailyBarIngestor
             from, asOf, tickers.Count, fetched, published, inserted, unchanged,
             summary.RowsWritten, summary.CallsUsed, outcome,
             counting == CallCounting.AgainstTheDailyCeiling,
-            candidates, alreadyFetched);
+            candidates, alreadyFetched, neverFetched, missingASession);
+    }
+
+    /// <summary>
+    /// Which members <see cref="IncompleteFlag"/> fetches: the ones no refetch has ever covered, and
+    /// the ones missing a session since their last, over the sessions the averages read.
+    ///
+    /// Public and separate from the fetch so the golden fixture can state the selection without
+    /// buying it, on the grounds its seed is already narrowed to thirty names: the rest of that
+    /// universe is never fetched by design, and buying it would be a miss a name.
+    /// </summary>
+    public static IncompleteHistorySelection SelectIncomplete(
+        SqliteConnection connection, DateOnly asOf, DateTimeOffset observedBefore, IReadOnlyList<string> indexSymbols)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        IReadOnlyList<string> members = ReadUniverseList(connection);
+        IReadOnlyDictionary<string, DateTimeOffset> refetched = HistoryRefetchReader.LatestByTicker(connection, observedBefore);
+        IReadOnlyDictionary<string, IReadOnlyList<DateOnly>> missing = HistoryGapReader.Missing(
+            connection, indexSymbols, asOf, IndicatorEngine.WarmupSessions, observedBefore);
+
+        string[] neverFetched = [.. members.Where(m => !refetched.ContainsKey(m))];
+        Dictionary<string, IReadOnlyList<DateOnly>> missingASession = members
+            .Where(missing.ContainsKey)
+            .ToDictionary(m => m, m => missing[m], StringComparer.Ordinal);
+
+        return new IncompleteHistorySelection(neverFetched, missingASession);
+    }
+
+    /// <summary>
+    /// The whole-market days the incomplete members need, read through the nightly bulk path one day
+    /// at a time: a session missing from more members than a bulk request costs in per-ticker calls.
+    /// Each day is its own <c>daily-bars</c> run, so the run log says which days were read again and
+    /// what each cost. Stops at the first day the ceiling refuses, and the next evening asks again.
+    /// </summary>
+    public async Task<WholeDayRead> ReadMissingSessionsWholeAsync(DateOnly asOf, CancellationToken cancellationToken = default)
+    {
+        DateOnly[] wanted;
+
+        using (SqliteConnection connection = _connections.OpenReadOnly())
+        {
+            IncompleteHistorySelection incomplete = SelectIncomplete(connection, asOf, _clock.UtcNow, _options.IndexSymbols);
+
+            wanted = [.. incomplete.MissingASession.Values
+                .SelectMany(days => days)
+                .GroupBy(day => day)
+                .Where(g => g.Count() * EodhdClient.DailyHistoryCost > EodhdClient.BulkEndOfDayCost)
+                .Select(g => g.Key)
+                .Order()];
+        }
+
+        var read = new List<DateOnly>();
+
+        foreach (DateOnly session in wanted)
+        {
+            DailyBarIngestResult result = await IngestAsync(session, cancellationToken).ConfigureAwait(false);
+
+            if (result.Outcome != RunOutcome.Clean)
+            {
+                return new WholeDayRead(wanted.Length, read, StoppedShort: true);
+            }
+
+            read.Add(session);
+        }
+
+        return new WholeDayRead(wanted.Length, read, StoppedShort: false);
     }
 
     private static void RecordRefetch(
@@ -335,6 +459,12 @@ public enum BackfillSelection
     TickersWithAnOpenDemand,
 
     /// <summary>
+    /// Every member no refetch has covered, and every member missing a session since its last. One
+    /// call each, charged against the ceiling. From 7.18.
+    /// </summary>
+    IncompleteHistories,
+
+    /// <summary>
     /// Every name the exchange has delisted, minus the ones already fetched. One call each,
     /// charged against the ceiling, resumed across nights from `history_refetch`.
     /// </summary>
@@ -358,4 +488,18 @@ public sealed record BackfillResult(
     int Candidates = 0,
 
     /// <summary>Of those, the ones an earlier night already fetched. Nought in every other mode.</summary>
-    int AlreadyFetched = 0);
+    int AlreadyFetched = 0,
+
+    /// <summary>Members no refetch has ever covered. Nought outside the incomplete mode.</summary>
+    int NeverFetched = 0,
+
+    /// <summary>Members missing a session since their last refetch. Nought outside the incomplete mode.</summary>
+    int MissingASession = 0);
+
+/// <summary>What the incomplete mode selects, before it asks for any of it.</summary>
+public sealed record IncompleteHistorySelection(
+    IReadOnlyList<string> NeverFetched,
+    IReadOnlyDictionary<string, IReadOnlyList<DateOnly>> MissingASession);
+
+/// <summary>The whole-market days wanted, the ones read, and whether the ceiling stopped the rest.</summary>
+public sealed record WholeDayRead(int Wanted, IReadOnlyList<DateOnly> Read, bool StoppedShort);

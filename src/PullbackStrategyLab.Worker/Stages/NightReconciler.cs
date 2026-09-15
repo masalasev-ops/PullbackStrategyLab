@@ -122,7 +122,7 @@ public sealed partial class NightReconciler
         foreach (DateOnly session in sessions.Distinct().Order())
         {
             // A night that has not finished has nothing to reconcile yet, and this stage runs at
-            // 17:50 on a night whose later slots are still ahead of it.
+            // 17:45 on a night whose later slots are still ahead of it.
             if (session >= today)
             {
                 throw new ArgumentException(

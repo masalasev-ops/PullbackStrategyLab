@@ -3918,15 +3918,8 @@ public sealed class PhaseReplay : IDisposable
         Record("bars.unchanged", bulk.Unchanged);
         Record("bars.corrections", bulk.Corrections);
 
-        // 5. The refetch that answers tonight's demands.
-        BackfillResult rebuild = bars.BackfillAsync(BackfillSelection.TickersWithAnOpenDemand, [], AsOf)
-            .GetAwaiter().GetResult();
-
-        stages.Add(new StageRun("backfill --rebuild", rebuild.CallsUsed, rebuild.RowsWritten, rebuild.Outcome.ToStorageText()));
-        Record("backfill.rebuild.selected", rebuild.Selected);
-        Record("backfill.rebuild.inserted", rebuild.Inserted);
-
-        // 6. The three trackers.
+        // 5. The three trackers. Before the refetch from 7.18, because the index history is what the
+        //    incomplete mode reads to say a day was a session.
         IndexIngestResult index = new IndexIngestor(Vendor, _connections, Logger(), _clock, _options)
             .IngestAsync(AsOf).GetAwaiter().GetResult();
 
@@ -3934,6 +3927,28 @@ public sealed class PhaseReplay : IDisposable
         Record("index.symbols", index.Symbols);
         Record("index.barsPublished", index.BarsPublished);
         Record("index.inserted", index.Inserted);
+
+        // 6. The refetch that answers tonight's demands.
+        BackfillResult rebuild = bars.BackfillAsync(BackfillSelection.TickersWithAnOpenDemand, [], AsOf)
+            .GetAwaiter().GetResult();
+
+        stages.Add(new StageRun("backfill --rebuild", rebuild.CallsUsed, rebuild.RowsWritten, rebuild.Outcome.ToStorageText()));
+        Record("backfill.rebuild.selected", rebuild.Selected);
+        Record("backfill.rebuild.inserted", rebuild.Inserted);
+
+        //    And the members whose history is incomplete, from 7.18, selected and not bought. The seed
+        //    at step 2 is narrowed to the thirty fixture names on purpose, so every other member of
+        //    this universe is one no refetch has covered, and buying them would be seven thousand
+        //    requests the capture holds nothing for, on a night the ceiling would stop long before the
+        //    end. What the selection says is the figure, and it is checkable by hand.
+        using (SqliteConnection read = _connections.OpenReadOnly())
+        {
+            IncompleteHistorySelection incomplete =
+                DailyBarIngestor.SelectIncomplete(read, AsOf, _clock.UtcNow, _options.Value.IndexSymbols);
+
+            Record("backfill.incomplete.neverFetched", incomplete.NeverFetched.Count);
+            Record("backfill.incomplete.missingASession", incomplete.MissingASession.Count);
+        }
 
         // 7. The averages, which refuse for anything short of the warm-up or carrying a demand
         //    the window does not account for.
@@ -3944,6 +3959,7 @@ public sealed class PhaseReplay : IDisposable
         Record("indicators.computed", indicators.Computed);
         Record("indicators.recomputed", indicators.Recomputed);
         Record("indicators.shortOfWarmup", indicators.ShortOfWarmup);
+        Record("indicators.missingASession", indicators.MissingASession);
         Record("indicators.blocked", indicators.Blocked);
         Record("indicators.demandsSatisfied", indicators.DemandsSatisfied);
 

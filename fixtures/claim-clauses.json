@@ -161,6 +161,31 @@
     },
     {
       "table": "Failure behaviour",
+      "subject": "A stock's history is missing a session",
+      "clauses": [
+        {
+          "clause": "The evening completes it before the averages run, reading a session more stocks miss than a bulk request costs whole for the market and refetching every other stock's history",
+          "disposition": "unreached",
+          "why": "the refetch's selection and the whole-day read are exercised by IncompleteHistoryTests, which the verdict does not read"
+        },
+        {
+          "clause": "and the averages refuse a stock still missing one and count it.",
+          "disposition": "reaches"
+        },
+        {
+          "clause": "An average across a missing day is a number that looks right and is not.",
+          "disposition": "rationale",
+          "why": "why the averages refuse rather than compute"
+        },
+        {
+          "clause": "A session the vendor was asked for and did not return is not missing, or a halted stock would be refused its averages for months",
+          "disposition": "unreached",
+          "why": "the rule that an asked-for day is not missing is exercised by IncompleteHistoryTests, which the verdict does not read"
+        }
+      ]
+    },
+    {
+      "table": "Failure behaviour",
       "subject": "Detector errors on one stock",
       "clauses": [
         {
@@ -647,7 +672,7 @@
           "why": "the scheduled time is a property of the operator's scheduler, which no check in this corpus reaches"
         },
         {
-          "clause": "and 17:45 for the refetch Pulls the whole market’s closing prices in one bulk request.",
+          "clause": "and 17:50 for the refetch Pulls the whole market’s closing prices in one bulk request.",
           "disposition": "unreached",
           "why": "the shape of the bulk request is not asserted by a catalogue verdict"
         },
@@ -662,9 +687,14 @@
           "why": "what the refetch is for"
         },
         {
-          "clause": "because a second component issuing the same insert would be a second writer of the same table",
+          "clause": "because a second component issuing the same insert would be a second writer of the same table.",
           "disposition": "elsewhere",
           "by": "writer-ownership"
+        },
+        {
+          "clause": "From 7.18 the refetch also completes every member whose stored history is incomplete, reading a session most of the universe misses whole for the market",
+          "disposition": "unreached",
+          "why": "completing an incomplete history is exercised by IncompleteHistoryTests, which no catalogue verdict reads"
         }
       ]
     },
@@ -750,9 +780,14 @@
           "by": "architecture-conformance"
         },
         {
-          "clause": "and satisfies the demand once the history has been refetched",
+          "clause": "and satisfies the demand once the history has been refetched.",
           "disposition": "unreached",
           "why": "satisfying the demand is not asserted by a catalogue verdict"
+        },
+        {
+          "clause": "From 7.18 it refuses as well for a stock whose stored history is missing a session the market held",
+          "disposition": "elsewhere",
+          "by": "architecture-conformance"
         }
       ]
     },
