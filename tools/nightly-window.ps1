@@ -52,7 +52,7 @@ if (-not $LogDirectory) { $LogDirectory = Join-Path $repository 'data\live\logs'
 $windows = [ordered]@{
     'spread-open'  = @('spread-open')
     'spread-close' = @('spread-close')
-    'evening'      = @('universe', 'actions', 'bars', 'rebuild', 'index', 'indicators', 'scans', 'sectors',
+    'evening'      = @('universe', 'actions', 'bars', 'index', 'rebuild', 'indicators', 'scans', 'sectors',
                        'regime', 'detect', 'seal', 'controls', 'cap', 'versions', 'plans', 'watchlist')
     'night'        = @('intraday', 'vwap', 'resolve', 'orders', 'fills', 'manage', 'trades', 'audit',
                        'forward', 'losses', 'scores', 'acceptance', 'scoreboard', 'snapshot')

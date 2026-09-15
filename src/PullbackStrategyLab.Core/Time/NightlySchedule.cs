@@ -43,13 +43,20 @@ public static class NightlySchedule
         new("universe", "17:15", ["universe-build"]),
         new("actions", "17:20", ["actions"]),
         new("bars", "17:30", ["daily-bars"]),
-        new("rebuild", "17:45", ["backfill"]),
         // The reconciliation is the second verb of this slot rather than a slot of its own, because
         // it reads what the first writes. `index-bars` refetches each tracker's whole history every
         // night, so once it has run the store knows whether the session before was one the market
         // held, whether or not that session's own night ran. The daily bulk cannot say so: it asks
         // for its own date and nothing else.
-        new("index", "17:50", ["index-bars", "reconcile-night"]),
+        //
+        // Before `rebuild` from 7.18, which is the other reader of that answer. The incomplete mode
+        // finds a stock's missing sessions against the index history, so on the evening after a
+        // night that never ran, an index ingest after it would leave the lost day unknown to the one
+        // stage that buys it back, and the averages at 18:00 would find the hole instead.
+        new("index", "17:45", ["index-bars", "reconcile-night"]),
+        // Twice, as two invocations of one verb: the refetch a corporate action demands, then every
+        // member whose history is incomplete. From 7.18.
+        new("rebuild", "17:50", ["backfill"]),
         new("indicators", "18:00", ["indicators"]),
         new("scans", "18:10", ["scans", "tiers"]),
         new("sectors", "18:12", ["sectors"]),
@@ -209,7 +216,7 @@ public static class NightlySchedule
         new("spread-open", "10:15", ["spread-open"]),
         new("spread-close", "15:45", ["spread-close"]),
         new("evening", "17:15",
-            ["universe", "actions", "bars", "rebuild", "index", "indicators", "scans", "sectors", "regime",
+            ["universe", "actions", "bars", "index", "rebuild", "indicators", "scans", "sectors", "regime",
              "detect", "seal", "controls", "cap", "versions", "plans", "watchlist"]),
         new("night", "20:30",
             ["intraday", "vwap", "resolve", "orders", "fills", "manage", "trades", "audit", "forward", "losses",

@@ -3270,3 +3270,27 @@ Why:  7.17 is added, holding the five windows.
 Was:  then 7.12, then 7.13, 7.14, 7.15 and 7.16. **Nothing registers before 7.11.**
 Now:  then 7.12, then 7.13, 7.14, 7.15, 7.16 and 7.17. **Nothing registers before 7.11.**
 Why:  The build order names every row.
+
+### 2026-09-15 — RUNBOOK.md — cites A stock's history is made whole before its averages are computed, and an average across a missing session is refused
+Was:  | 17:45 | `backfill --rebuild`, one call per name carrying an open rebuild demand | ~25 |
+      | 17:50 | `index-bars`, one call a tracker, then `reconcile-night`, which records every slot of the week before that did not run with which of four reasons it was. It spends no vendor call. **Second in this slot because it reads what the first writes**: each tracker's history is refetched whole every night, so it is what can tell a session the market never held from a night whose ingest never ran, which the daily bars cannot, since they ask for their own date alone | 3 |
+      | 18:00 | `indicators` | 0 |
+Now:  The index slot's row at 17:45 with a closing sentence saying it runs ahead of `rebuild` and why, then the rebuild slot's row at 17:50 naming `backfill --incomplete` after `backfill --rebuild` and what it costs, then `indicators` naming the refusal of a stock still missing a session. A Recovery row is added above "A corporate action was missed" for a stock missing a session or a name that joined with no history.
+Why:  7.18. The history a stock's averages read is completed by the evening before they run, which needs the index history first.
+
+### 2026-09-15 — ARCHITECTURE.html — cites A stock's history is made whole before its averages are computed, and an average across a missing session is refused
+Was:  <tr><td><b>DailyBarIngestor</b></td><td>Nightly 17:30, and 17:45 for the refetch</td><td>... because a second component issuing the same insert would be a second writer of the same table</td></tr>
+      <tr><td><b>NightReconciler</b></td><td>Nightly 17:50</td>
+      Refuses to run for a stock with a rebuild demand outstanding, and satisfies the demand once the history has been refetched</td></tr>
+Now:  DailyBarIngestor runs its refetch at 17:50 and its cell closes on the refetch completing every member whose stored history is incomplete. NightReconciler runs at 17:45. IndicatorEngine's cell adds that from 7.18 it refuses a stock whose stored history is missing a session the market held. The failure-behaviour table gains "A stock's history is missing a session" above "Detector errors on one stock".
+Why:  7.18. The slot order and the refusal changed, and a failure the lab now answers has a row.
+
+### 2026-09-15 — BUILD_PLAN.md — cites A stock's history is made whole before its averages are computed, and an average across a missing session is refused
+Was:  **The phase is eighteen rows and it exists because the gate set was never the strategy's.**
+Now:  **The phase is nineteen rows and it exists because the gate set was never the strategy's.**
+Why:  7.18 is added.
+
+### 2026-09-15 — BUILD_PLAN.md — cites A stock's history is made whole before its averages are computed, and an average across a missing session is refused
+Was:  then 7.12, then 7.13, 7.14, 7.15, 7.16 and 7.17. **Nothing registers before 7.11.**
+Now:  then 7.12, then 7.13, 7.14, 7.15, 7.16, 7.17 and 7.18. **Nothing registers before 7.11.**
+Why:  The build order names every row.

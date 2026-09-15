@@ -18,14 +18,18 @@ namespace PullbackStrategyLab.Worker.Stages;
 /// replacing the first, so a replay of the night the lab acted still returns the figures it
 /// acted on, including the wrong ones.
 ///
-/// It refuses rather than approximates, in two cases, and both leave no row rather than a
+/// It refuses rather than approximates, in three cases, and all three leave no row rather than a
 /// number. A ticker whose window is shorter than the warm-up has not converged: a 50-day
 /// exponential average seeded fifty sessions ago is still carrying its seed. A ticker with a
 /// corporate action outstanding is worse, because its stored adjusted closes are on two
 /// different scales and the average across the boundary is arithmetic on two different units.
-/// Both produce a number that looks entirely reasonable and is wrong, which is the one thing
-/// this design will not write down.
+/// And from 7.18 a ticker whose window is missing a session the market held and nobody has asked
+/// the vendor for since, because its hundred and fifty bars then span more than a hundred and fifty
+/// sessions and every average steps over the day as though it had not traded. All three produce a
+/// number that looks entirely reasonable and is wrong, which is the one thing this design will not
+/// write down.
 /// see: An unprocessed corporate action of any kind blocks calculation, not only a split
+/// see: A stock's history is made whole before its averages are computed, and an average across a missing session is refused
 ///
 /// A demand is satisfied by a recorded refetch of that ticker made after the action was
 /// observed. Not by inferring one from what the refetch changed, which fails in both directions
@@ -109,7 +113,7 @@ public sealed class IndicatorEngine
         IndicatorResult result = Compute(asOf);
 
         Console.WriteLine($"{Name}: as of {asOf:yyyy-MM-dd}, {result.Members} universe member(s)");
-        Console.WriteLine($"{Name}: {result.Computed} computed, {result.Recomputed} recomputed, {result.Unchanged} unchanged, {result.ShortOfWarmup} short of the {WarmupSessions}-session warm-up, {result.Blocked} blocked by an open demand");
+        Console.WriteLine($"{Name}: {result.Computed} computed, {result.Recomputed} recomputed, {result.Unchanged} unchanged, {result.ShortOfWarmup} short of the {WarmupSessions}-session warm-up, {result.MissingASession} missing a session, {result.Blocked} blocked by an open demand");
         Console.WriteLine($"{Name}: {result.DemandsSatisfied} demand(s) satisfied");
         Console.WriteLine($"{Name}: {result.Outcome.ToStorageText()}, {result.CallsUsed} calls, {result.RowsWritten} rows");
 
@@ -132,10 +136,19 @@ public sealed class IndicatorEngine
         IReadOnlyDictionary<string, DateTimeOffset> refetchedAt =
             HistoryRefetchReader.LatestByTicker(connection, EndOf(asOf));
 
+        // The sessions each window is missing, from 7.18. Bounded by the instant the bars are read
+        // at rather than the end of the as-of date, because the question is whether the window about
+        // to be averaged steps over a day, and that is the window as it is read, not as it stood.
+        // By this slot the evening has already asked for everything it can; a name still here is one
+        // the ceiling stopped, and it is refused and counted rather than averaged across the hole.
+        IReadOnlyDictionary<string, IReadOnlyList<DateOnly>> missing =
+            HistoryGapReader.Missing(connection, _options.IndexSymbols, asOf, WarmupSessions, computedAt);
+
         int computed = 0;
         int recomputed = 0;
         int unchanged = 0;
         int shortOfWarmup = 0;
+        int missingASession = 0;
         int blocked = 0;
         int satisfied = 0;
 
@@ -149,6 +162,12 @@ public sealed class IndicatorEngine
                 if (window.Count < WarmupSessions)
                 {
                     shortOfWarmup++;
+                    continue;
+                }
+
+                if (missing.ContainsKey(ticker))
+                {
+                    missingASession++;
                     continue;
                 }
 
@@ -218,7 +237,7 @@ public sealed class IndicatorEngine
 
         return new IndicatorResult(
             asOf, members.Count, computed, recomputed, unchanged, shortOfWarmup, blocked, satisfied,
-            summary.RowsWritten, summary.CallsUsed, RunOutcome.Clean);
+            summary.RowsWritten, summary.CallsUsed, RunOutcome.Clean, missingASession);
     }
 
     /// <summary>
@@ -450,4 +469,7 @@ public sealed record IndicatorResult(
     int DemandsSatisfied,
     int RowsWritten,
     int CallsUsed,
-    RunOutcome Outcome);
+    RunOutcome Outcome,
+
+    /// <summary>Members refused because their window is missing a session nobody has asked for since. From 7.18.</summary>
+    int MissingASession = 0);

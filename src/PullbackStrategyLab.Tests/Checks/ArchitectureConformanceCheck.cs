@@ -425,6 +425,7 @@ public sealed partial class ArchitectureConformanceCheck
         ["Price gaps past the give-up point"] = "4.7",
         ["A short could not have been borrowed"] = "4.7",
         ["Unprocessed corporate action"] = "1.6",
+        ["A stock's history is missing a session"] = "7.18",
         ["Detector errors on one stock"] = "2.7",
         ["Nightly setup cap reached"] = "2.8",
         ["Daily API ceiling reached"] = "1.3",
@@ -750,6 +751,11 @@ public sealed partial class ArchitectureConformanceCheck
                     "the arithmetic the cap applies is swept over every arrangement of the two counts, so the "
                     + "scan is left holding only that the stage still reads the night whole and reports what it "
                     + "truncated"))
+            .Scan("Failure behaviour: A stock's history is missing a session",
+                CheckCoverage.Backing.Test(
+                    "IncompleteHistoryTests.A_member_missing_a_session_gets_no_averages_and_is_counted_and_the_rest_of_the_night_does",
+                    "a stock missing a session nobody has asked for since gets no row and is counted while the rest of "
+                    + "the night computes, which is the behaviour the counter in the scan stands for"))
             .Scan("Failure behaviour: Unprocessed corporate action",
                 CheckCoverage.Backing.Test(
                     "IndicatorEngineTests.A_ticker_with_an_open_demand_is_refused_and_the_others_are_not",
@@ -2378,6 +2384,12 @@ public sealed partial class ArchitectureConformanceCheck
                     "a pass writes a spread_pass row whatever it did, so a session nobody sampled is absence rather than a quiet result; the reader refuses an unsampled session, reports one pass as degraded and two as complete, and a pass stopped short is partial with the count")
                 : Claim.Failed("Failure behaviour", condition,
                     "one of the three shortfalls no longer has its own answer, so a session sampled nought times is indistinguishable from one whose names had no book, and a fill can be charged no slippage on a session nobody measured"),
+
+            "A stock's history is missing a session" => engine.Contains("missingASession++", StringComparison.Ordinal)
+                ? Claim.Passed("Failure behaviour", condition,
+                    "IndicatorEngine reads the sessions each window is missing and leaves no row for a stock still missing one, counting it")
+                : Claim.Failed("Failure behaviour", condition,
+                    "IndicatorEngine no longer refuses a window missing a session, so an average steps over the day as though the stock had not traded"),
 
             "Unprocessed corporate action" => engine.Contains("blocked++", StringComparison.Ordinal)
                 ? Claim.Passed("Failure behaviour", condition, "IndicatorEngine leaves no row and counts the ticker as blocked")

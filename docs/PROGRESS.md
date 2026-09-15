@@ -20796,3 +20796,114 @@ Carried:    **None raised and none discharged.**
             taken.
 
             **This session committed code and may not sign it off.**
+
+## 7.18 — 2026-09-15 — phase-7-18-whole-history — a stock's history made whole before its averages are computed, and the averages refused where it is not
+
+Built:      **`backfill --incomplete`, run as the second pass of the rebuild slot, and `IndicatorEngine`
+            refusing a window that is missing a session.** The first night of generation 1 computed its
+            averages over a history missing 2026-09-08 and 2026-09-11 for 1,918 of 1,985 members, and
+            twenty-four established members had never had their history fetched at all. Nothing said
+            either.
+
+            **Which sessions are missing is one reader, `HistoryGapReader`**, used by all three callers. A
+            session is a day the index history holds, because this lab authors no calendar. It is missing
+            from a stock only between two of the stock's own bars. And it is not missing when it falls on
+            or before the stock's latest refetch, because the vendor was asked for it and had nothing: a
+            halt, or a thin listing that did not trade. The window is the last hundred and fifty sessions
+            the index history holds, which for the averages is exact, since a stock missing none of them has
+            its last hundred and fifty bars on exactly those days.
+
+            **The incomplete mode fetches two populations.** Every member no refetch has covered, which is a
+            name that joined the universe. And every member missing a session since its last refetch. Before
+            either, a session more members miss than a bulk request costs in per-ticker calls is read whole
+            through `daily-bars` for that date, one run a day, so a night that never ran costs a hundred
+            calls rather than a call a member. The comparison is `EodhdClient`'s two constants.
+
+            **The averages refuse a stock still missing a session and count it** as `missing a session` on
+            the stage's line, beside the warm-up and the open demand, the two refusals the engine already
+            made on the same grounds.
+
+            **The index slot moves to 17:45 and the rebuild slot to 17:50.** The index history is what says
+            a lost day was a session, and on the evening after a night that never ran the trackers hold the
+            day only once they have been refetched. With the rebuild first the day would be unknown to the
+            stage that buys it back and found by the averages instead, which would refuse the universe.
+            `reconcile-night` stays second in the index slot and still runs after `bars`.
+
+            **The golden fixture selects the incomplete members and does not buy them.** Its seed is
+            narrowed to the thirty fixture names by design, so seven thousand of its members are ones no
+            refetch has covered, and buying them would be a request a name the capture holds nothing for,
+            stopped by the ceiling long before the end.
+
+            One decision records the rule and its alternative: a warning that computed the averages anyway
+            is read the morning after a night has flagged on them.
+
+Measured:   `tools/ci.ps1` green on Windows, **34 steps, 1,341 tests**.
+
+            **Each rule is run rather than read, and each was removed to watch its test fail.** With the
+            averages no longer refusing, the two refusal tests fail. With a day on or before the last refetch
+            counted as missing, three fail, including the mode fetching a halted name. With the whole-day read
+            removed, the test where one member more than a bulk request costs misses a day fails. With the
+            never-fetched members dropped, the mode's selection test fails. With `rebuild` put back ahead of
+            `index` in the evening window, the order test fails. All five were restored and the suite rerun.
+
+            **Three `DERIVED` expectations over the golden fixture**, counted by hand before the replay ran.
+            `backfill.incomplete.neverFetched` is 7,116: the 7,202 members of the floor-lifted universe, less
+            the 30 fixture names the seed fetches, less the 56 of the 57 rebuilt names that are not IESC, the
+            one fixture name among them. `backfill.incomplete.missingASession` and
+            `indicators.missingASession` are both 0, because every fetched name was fetched through the as-of
+            and every other member holds one bar. The replay's index and rebuild steps swap to the evening's
+            order, and no other figure moves.
+
+Found:      **The live store, read from 23:43 Eastern on 2026-09-14 into the early hours of 2026-09-15.**
+
+            `daily_bar` held 68 names on 2026-09-08 and 68 on 2026-09-11 against 1,985 members, and no bulk
+            request had stored either day. The 68 on 2026-09-08 came from the `backfill --rebuild` refetches of
+            the evenings of 2026-09-08, 09, 10 and 14, and the 68 on 2026-09-11 from the one on 2026-09-14.
+            The indicators, the detectors and the 24
+            plans for 2026-09-15 were computed over both holes. **The plans stand as written**, because a plan
+            is immutable after publication, and they are the first night of generation 1 as it actually ran.
+
+            After the two days were read, **26 members still had an incomplete history.** Fourteen had three
+            or four bars and no refetch, BTE CAE DUKU E GIII GRBK HAWK NMRK PD SIEGY SLDE SOBO TRMD VYX. Twelve
+            were refetched once, on 2026-08-25, and lacked 2026-09-04, 09 and 10 among the sessions since,
+            ORCL-PD ALKT FELE GEF HNI OSW WDFC AGM CNS CWK FTRE IBOC. After those, nine more lacked sessions
+            after their last refetch, DGX FFBC FRMI HTO NTDOY SMPL UNFI WLY, and NUAI with no refetch at all.
+
+            **Then twenty-four members with no refetch and six to twelve bars each,** USDE CLYM CXM FRHC GOLD
+            GPGI INVX ITIC JOYY LSEGY MLYS MRVI PLSE SBS TH UGP WEAV ALH BLFS GPRE JMKE KURA PHVS QMCO, whose
+            first stored bars are from 2026-08-27 to 2026-09-04. They were found only after the operator had been told
+            that the 58 members short of a hundred and fifty sessions were new listings, which was wrong for
+            these 24. The check that missed them counted holes after a stock's first stored bar, and a stock
+            with no history before its first bar has none. The other 34 were refetched and the vendor holds
+            nothing older. That is the shape the never-fetched half of the mode exists for.
+
+            TRAX lacks 2026-03-16 and 2026-04-02, both before its refetch of 2026-08-25, which is the case the
+            asked-for rule exists for, and is the only member left with a hole in the last 160 sessions.
+
+            The 30 corrections `daily-bars 2026-09-11` wrote are the per-ticker endpoint's figures replaced by
+            the bulk's: volume differs on all 30, rounded to hundreds, the low on 10, the high on 3, the open on
+            2 and the close on none.
+
+            **The operator's acts on the live store, from the production checkout at `719ce6e`:**
+
+            `daily-bars 2026-09-08`: 50,328 published for the market, 1,985 in the universe, 1,918 written,
+            67 already stored unchanged, 0 corrections, 100 calls, clean.
+            `daily-bars 2026-09-11`: 50,245 published, 1,985 in the universe, 1,948 written, 37 unchanged, 30
+            corrections, 100 calls, clean.
+            `backfill` naming the 26: 26 selected, 26 fetched, 16,855 bars published, 10,017 written, 6,838
+            unchanged, 26 calls, clean.
+            `backfill` naming the 9: 9 selected, 9 fetched, 6,255 published, 1,891 written, 4,364 unchanged,
+            9 calls, clean.
+            `backfill` naming the 24 was handed to the operator and had not been run when this entry was
+            written: no `history_refetch` row existed for any of them. **If it is not run, the first evening
+            of 7.18 selects all 24**, as never fetched.
+
+Carried:    **None raised.** The 1.1 entry carried that a name joining the universe after go-live has no
+            history until the per-ticker backfill runs, against 1.6. No later entry records it built, and this
+            checkpoint builds it.
+
+            **The operator's half is the merge**, with 7.17, on the morning of 2026-09-16, after the first
+            fills are read. No migration and no store change: the mode reads tables that exist and writes
+            only what the refetch already writes.
+
+            **This session committed code and may not sign it off.**

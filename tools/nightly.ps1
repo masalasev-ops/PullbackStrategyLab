@@ -65,7 +65,11 @@ $slots = @{
     'universe'   = @(, @('universe-build'))
     'actions'    = @(, @('actions'))
     'bars'       = @(, @('daily-bars'))
-    'rebuild'    = @(, @('backfill', '--rebuild'))
+    # Two passes of one verb, from 7.18. The refetch a corporate action demands, then every member
+    # whose stored history is incomplete: never fetched, or missing a session the index history
+    # holds, with a day most of the universe misses read whole in one bulk request. After `index`,
+    # because the index history is what says a day was a session.
+    'rebuild'    = @(@('backfill', '--rebuild'), @('backfill', '--incomplete'))
     # The index history, then the reconciliation that reads it. `index-bars` refetches each
     # tracker's whole history every night, so once it has run the store knows whether the session
     # before was one the market held, whatever happened on the nights between, which is the one

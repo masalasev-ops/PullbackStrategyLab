@@ -14784,6 +14784,30 @@
       "note": "The switch night and the forecast over the fixture, from 7.11, long and short never pooled."
     },
     {
+      "id": "backfill.incomplete.neverFetched",
+      "tier": "DERIVED",
+      "value": "7116",
+      "checkpoint": "7.18",
+      "producedBy": "counted by hand before the replay was run: the 7,202 members the floor-lifted universe holds (universe.admittedWithoutTheLiquidityFloor), less the 30 fixture names the seed fetches (fixture.tickersInUniverse), less the 57 names the rebuild fetches for their demands (backfill.rebuild.selected) other than IESC, the one fixture name among them (fixture.actionsObserved): 7202 - 30 - 56",
+      "note": "The members the incomplete mode would fetch because no refetch has covered them. Selected and not bought, because the seed is narrowed to the fixture names by design."
+    },
+    {
+      "id": "backfill.incomplete.missingASession",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.18",
+      "producedBy": "reasoned by hand before the replay was run: every seeded and every rebuilt name was refetched through the as-of, so no day it lacks is after its last refetch, and every other member holds the as-of's bar alone, so it has no two bars for a day to fall between",
+      "note": "No member lacks a session the index history holds between two of its own bars and after its last refetch."
+    },
+    {
+      "id": "indicators.missingASession",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.18",
+      "producedBy": "reasoned by hand before the replay was run: every seeded and every rebuilt name was refetched through the as-of, so no day it lacks is after its last refetch, and every other member holds the as-of's bar alone, so it has no two bars for a day to fall between",
+      "note": "The same population at the averages, so none is refused for a missing session and the thirty computed are unchanged."
+    },
+    {
       "id": "schedule.windows",
       "tier": "DERIVED",
       "value": "5",
