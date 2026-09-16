@@ -21120,3 +21120,71 @@ Carried:    **One row raised, and it is the operator's.** The twenty-four unreso
             fourteen stages back to back, each waiting for the one before, so the fetch cannot
             overrun into the stage that reads what it bought, and the snapshot cannot begin while
             anything is writing. That was in force from 2026-09-16 00:03, before the next night ran.
+
+## Not a checkpoint entry — 2026-09-16 — phase-7-clear-the-pile — belongs to 7.20: the sixteen questions that were the operator's, closed
+
+Not a checkpoint entry. It belongs to 7.20, the furthest checkpoint the record holds, and records a
+ruling the operator took on 2026-09-16 with the changes to two checks that ruling needed.
+
+Ruled:      **All sixteen questions due at the operator are closed, and a question that blocks nothing
+            is not carried as the operator's again** (see: A question that blocks nothing is not carried as the operator's). The operator asked what on earth
+            was due for them. The plan listed sixteen questions under a heading naming them as the
+            operator's, and **every one of the sixteen said in its own blocks column that it blocked
+            nothing built**. Fifteen are closed as not pursued and one by an act:
+
+            **By an act.** 3.6, the nightly job running only while somebody is logged on, closed by
+            the S4U principal given to the five scheduled tasks at 00:10 on 2026-09-16.
+
+            **Not pursued.** 1.1, whether the vendor's quota resets on the UTC date; 1.6, the
+            `CONFIRMED` indicator values read off a charting platform; 2.9, the `CONFIRMED` gallery
+            expectations; 3.3, a shares-outstanding history for the market-cap clause; 3.14, the two
+            live rows carrying a superseded `cluster` value; 4.5, the nights the four rejected slots
+            did not run; 6.0, questions 3 and 4 of the phase 6 sitting, being the earnings calendar and
+            the first pack version; 6.7, the minimum sample re-derived over a version's population;
+            6.12, whether the calibration store is rebuilt to record an absent give-up distance, and
+            whether the calibration figures are read as evidence about the live funnel; 7.0, the
+            anchored average price's anchor rule and the re-entry rule; 7.11, whether the scoreboard
+            reads across the switch; and 7.17, whether the twenty-four unresolvable plans of
+            2026-09-15 are repaired, which now stand as the record of a blind night.
+
+            **Nothing was lost.** Each row is kept in the plan as it stood, under a heading recording
+            what the list was, with what leaving it unanswered costs, and a finding that shows any of
+            them blocks something brings it back as a new row.
+
+Built:      **Two checks could not express an empty list, so they were taught to, in both directions.**
+
+            **`stated-counts` required the operator's heading outright**, which made nought a state the
+            register could not be in: a list emptied by closing every question read as a missing
+            section. It now requires the heading only where a row is due at the operator.
+            `OperatorQuestionsListedNowhere` states the property the requirement stood for, being that
+            a question put to the operator is listed where they read it, and the reading beside the
+            table and the three figures of the phase 6 reading that count open questions are asserted
+            only while there is a live list to count. The phase 6 reading has a short form, "none of
+            the four remain open", accepted only where the open count is nought.
+
+            **`carried-obligations` read every mention of "the operator" in the record as open**,
+            because "the operator" is an event rather than a checkpoint and nothing could say it had
+            passed. Eighteen dated entries name it as a due point, so emptying the list turned all
+            eighteen into unscheduled work. It now lands "the operator" while the plan records the
+            list closed, holds no live list and has no row due at the operator, which is the terms a
+            landed checkpoint's mentions are already read on. All three conditions, because any one
+            alone could be written over a live question.
+
+Measured:   **The thirty-three steps of `tools/ci.ps1` before the suite green, in each of two runs.**
+            The suite step lost one web test in each, to a stall in the suite rather than in anything
+            this entry changed, and the entry after this one finds the stall, stops it, and records the
+            full run.
+
+            **Both halves of each rule are proved over the real plan.** The plan as it stands lists no
+            question nowhere and lands the operator; the same plan with one row due at the operator put
+            back lists one nowhere, is not closed, lands nothing, and leaves a mention of the operator
+            open to be reconciled. A proof of the permitted half alone would pass against a check that
+            had stopped looking.
+
+            **Floors moved and the reason is recorded in the baseline.** `carried-obligations` reads
+            five due points where it read seven, and its parse floor under obligation rows is four
+            where it was twelve, the table holding six. Six `stated-counts` floors are retired rather
+            than lowered, each the floor under a claim that exists only while a live list exists, and
+            what they guarded moved into an assertion rather than going.
+
+Carried:    **None raised. Sixteen discharged**, being every row that fell due at the operator.

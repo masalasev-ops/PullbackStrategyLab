@@ -88,7 +88,14 @@ public sealed partial class CarriedObligationsCheck
         // the check's own docstring says has happened four times.
         ArchitectureConformanceCheck.Schedule schedule = ArchitectureConformanceCheck.Schedule.Read();
 
-        IReadOnlyList<Mention> open = Live(mentions, schedule.HasLanded);
+        // <b>"the operator" can land, from 2026-09-16.</b> It was open by construction, because it
+        // is an event rather than a checkpoint and nothing could say it had passed. The operator then
+        // closed every question due at them, so a mention of "the operator" in a dated entry names a
+        // list that is recorded as closed, which is history on exactly the terms a mention of a
+        // landed checkpoint is. It lands only while the plan records the list closed and no row is
+        // due at the operator, so a question put to the operator afterwards reopens every mention.
+        // see: A question that blocks nothing is not carried as the operator's
+        IReadOnlyList<Mention> open = Live(mentions, Landed(schedule.HasLanded, OperatorListClosed(buildPlan)));
         IReadOnlyList<Mention> unscheduled = Unscheduled(open, scheduled);
 
         // The table read as a set of rows rather than as a set of due points, which is the other
@@ -170,7 +177,14 @@ public sealed partial class CarriedObligationsCheck
         // floor under a parse and started being a floor under how much work is outstanding, which is
         // not a property of this check. Twelve is still far above the failure this guards against: a
         // parser that stopped matching hands back nought or one, never twelve.
-        Assert.True(rows.Count >= 12,
+        //
+        // **Four rather than twelve from 2026-09-16**, for the same reason twenty became twelve and
+        // with the same distance kept below the table. The operator closed sixteen rows that day, every
+        // one of them blocking nothing built, and the table holds six, so twelve had become a floor
+        // under how many questions somebody has not got round to rather than under a parse. Four
+        // still fails the thing this guards: a parser that stopped matching returns nought or one.
+        // see: A question that blocks nothing is not carried as the operator's
+        Assert.True(rows.Count >= 4,
             $"Only {rows.Count} obligation row(s) parsed out of the table. A count this low means the "
             + "parser stopped matching rather than that the corpus discharged them.");
 
@@ -246,6 +260,43 @@ public sealed partial class CarriedObligationsCheck
 
     /// <summary>Whether a due point names a checkpoint rather than an event.</summary>
     private static bool IsACheckpoint(string duePoint) => CheckpointShape().IsMatch(duePoint);
+
+    /// <summary>
+    /// Whether a due point has been walked past: a checkpoint PROGRESS records, or, where the plan
+    /// records the operator's list as closed, the operator.
+    ///
+    /// A named function rather than a lambda inside the check, so the proof runs the rule the check
+    /// runs rather than a copy of it, which is how an earlier proof of this file passed while the live
+    /// filter reconciled nothing.
+    /// </summary>
+    public static Func<string, bool> Landed(Func<string, bool> checkpointHasLanded, bool operatorListClosed)
+    {
+        ArgumentNullException.ThrowIfNull(checkpointHasLanded);
+
+        return duePoint => checkpointHasLanded(duePoint)
+            || (operatorListClosed && duePoint.Equals("the operator", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Whether the plan records the operator's list as closed: a record of what it held, no live list
+    /// beside it, and no obligation row still due at the operator. All three, because any one alone
+    /// could be written over a live question.
+    /// </summary>
+    public static bool OperatorListClosed(string buildPlan)
+    {
+        ArgumentNullException.ThrowIfNull(buildPlan);
+
+        return ClosedOperatorList().IsMatch(buildPlan)
+            && !LiveOperatorList().IsMatch(buildPlan)
+            && !MarkdownTable.BodyRowsAfter(buildPlan, "## Carried obligations")
+                .Any(r => r.Count > 2 && r[2].Trim().Equals("the operator", StringComparison.Ordinal));
+    }
+
+    [GeneratedRegex(@"^### What the [a-z-]+ that were the operator's were", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    private static partial Regex ClosedOperatorList();
+
+    [GeneratedRegex(@"^### The [a-z-]+ that are the operator's", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
+    private static partial Regex LiveOperatorList();
 
     /// <summary>The opening of an obligation, so a failure names the row without printing it whole.</summary>
     private static string Opening(string what)
@@ -438,6 +489,47 @@ Carried:    **One new, due before 5.1**: a minimum sample restated. Due **4.1**,
         // And the negative half, which is what stops the pattern being widened into a token scan:
         // a checkpoint mentioned in passing is not an obligation carried to it.
         Assert.DoesNotContain(mentions, m => m.DuePoint is "5.7" or "1.1");
+    }
+
+    /// <summary>
+    /// "the operator" lands only while the list is recorded closed, and a question put to the
+    /// operator afterwards reopens every mention of it.
+    ///
+    /// <b>Both halves, over the real plan.</b> The permitted half alone passes against a rule that
+    /// lands "the operator" unconditionally, which would read every question ever put to the
+    /// operator as history, the open ones included. So the plan as it stands records the list
+    /// closed and lands the operator; the same plan with one row due at the operator put back is
+    /// not closed, lands nothing, and leaves a mention of the operator open to be reconciled.
+    /// see: A question that blocks nothing is not carried as the operator's
+    /// </summary>
+    [Fact]
+    public void The_operator_lands_only_while_the_list_is_recorded_closed()
+    {
+        string plan = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "BUILD_PLAN.md"));
+        Func<string, bool> noCheckpointHasLanded = _ => false;
+
+        Assert.True(OperatorListClosed(plan));
+        Assert.True(Landed(noCheckpointHasLanded, OperatorListClosed(plan))("the operator"));
+
+        // A mention of the operator is history while the list is closed, so it is not reconciled.
+        Mention mention = new("2.9", "the operator", 0);
+        Assert.Empty(Live([mention], Landed(noCheckpointHasLanded, OperatorListClosed(plan))));
+
+        // One row due at the operator, as the obligations table's first body row.
+        string newline = plan.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
+        int table = plan.IndexOf("## Carried obligations", StringComparison.Ordinal);
+        int separator = plan.IndexOf("|---|---|---|", table, StringComparison.Ordinal);
+        Assert.True(table >= 0 && separator > table, "the obligations table was not found where the proof expects it");
+
+        int afterSeparator = plan.IndexOf(newline, separator, StringComparison.Ordinal) + newline.Length;
+        string reopened = plan.Insert(afterSeparator, "| 7.99 | A question put to the operator | the operator |" + newline);
+
+        Assert.False(OperatorListClosed(reopened));
+        Assert.False(Landed(noCheckpointHasLanded, OperatorListClosed(reopened))("the operator"));
+        Assert.Single(Live([mention], Landed(noCheckpointHasLanded, OperatorListClosed(reopened))));
+
+        // And an event that was never a list does not land by this rule.
+        Assert.False(Landed(noCheckpointHasLanded, OperatorListClosed(plan))("the move"));
     }
 
 

@@ -1419,6 +1419,15 @@ Merge is gated on CI green and on nothing else. Sign-off is a separate activity 
 
 ---
 
+**A question that blocks nothing is not carried as the operator's**
+Decided by the operator on 2026-09-16, asking what on earth was due for them. The carried obligations table held sixteen rows falling due at the operator, and the plan listed all sixteen again under a heading naming them as the operator's. **Every one of the sixteen said, in its own blocks column, that it blocked nothing built.** The list had grown from nine to sixteen over seven phases by a rule that put a question there whenever a build session could not answer it, which is a rule about who can answer a question and says nothing about whether anything is waiting for the answer.
+
+**A list headed with a person's name reads to that person as work they owe.** That is what a heading is for, and the rows underneath contradicted it one by one. So the list was not a register of open questions to the person it named, whatever it was to a build session reading it: it was sixteen items of apparent debt, none of which anything was waiting on, and the cost of that reading was paid by the one reader the list existed for.
+
+**So a question is carried as the operator's only where it blocks something built.** One that blocks nothing is recorded where it was found, in the entry or section that found it, with what leaving it unanswered costs, and it is not put on a list of things the operator owes. **A finding that shows it blocks something brings it back as a new row**, on the terms every obligation in this file is raised on, so nothing closed this way is closed for good. All sixteen were closed on 2026-09-16 on this rule, fifteen as not pursued and one by an act, and the section that listed them is a record of what they were.
+
+**The cost is stated rather than hidden**: a question nobody is prompted to answer may stay unanswered for good, including one whose answer would have been worth having. That is accepted, because a question whose answer nothing waits on is one whose absence costs what its row already says it costs, and each row says it. **What does not change** is that a question blocking a checkpoint is carried, raised against the operator by name, and counted, which is the case the list was always meant for.
+
 ## Previously decided
 
 **The pack comparison surface is the sixth screen and the navigation says six**
