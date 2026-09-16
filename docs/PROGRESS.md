@@ -21120,3 +21120,128 @@ Carried:    **One row raised, and it is the operator's.** The twenty-four unreso
             fourteen stages back to back, each waiting for the one before, so the fetch cannot
             overrun into the stage that reads what it bought, and the snapshot cannot begin while
             anything is writing. That was in force from 2026-09-16 00:03, before the next night ran.
+
+## Not a checkpoint entry — 2026-09-16 — phase-7-clear-the-pile — belongs to 7.20: the sixteen questions that were the operator's, closed
+
+Not a checkpoint entry. It belongs to 7.20, the furthest checkpoint the record holds, and records a
+ruling the operator took on 2026-09-16 with the changes to two checks that ruling needed.
+
+Ruled:      **All sixteen questions due at the operator are closed, and a question that blocks nothing
+            is not carried as the operator's again** (see: A question that blocks nothing is not carried as the operator's). The operator asked what on earth
+            was due for them. The plan listed sixteen questions under a heading naming them as the
+            operator's, and **every one of the sixteen said in its own blocks column that it blocked
+            nothing built**. Fifteen are closed as not pursued and one by an act:
+
+            **By an act.** 3.6, the nightly job running only while somebody is logged on, closed by
+            the S4U principal given to the five scheduled tasks at 00:10 on 2026-09-16.
+
+            **Not pursued.** 1.1, whether the vendor's quota resets on the UTC date; 1.6, the
+            `CONFIRMED` indicator values read off a charting platform; 2.9, the `CONFIRMED` gallery
+            expectations; 3.3, a shares-outstanding history for the market-cap clause; 3.14, the two
+            live rows carrying a superseded `cluster` value; 4.5, the nights the four rejected slots
+            did not run; 6.0, questions 3 and 4 of the phase 6 sitting, being the earnings calendar and
+            the first pack version; 6.7, the minimum sample re-derived over a version's population;
+            6.12, whether the calibration store is rebuilt to record an absent give-up distance, and
+            whether the calibration figures are read as evidence about the live funnel; 7.0, the
+            anchored average price's anchor rule and the re-entry rule; 7.11, whether the scoreboard
+            reads across the switch; and 7.17, whether the twenty-four unresolvable plans of
+            2026-09-15 are repaired, which now stand as the record of a blind night.
+
+            **Nothing was lost.** Each row is kept in the plan as it stood, under a heading recording
+            what the list was, with what leaving it unanswered costs, and a finding that shows any of
+            them blocks something brings it back as a new row.
+
+Built:      **Two checks could not express an empty list, so they were taught to, in both directions.**
+
+            **`stated-counts` required the operator's heading outright**, which made nought a state the
+            register could not be in: a list emptied by closing every question read as a missing
+            section. It now requires the heading only where a row is due at the operator.
+            `OperatorQuestionsListedNowhere` states the property the requirement stood for, being that
+            a question put to the operator is listed where they read it, and the reading beside the
+            table and the three figures of the phase 6 reading that count open questions are asserted
+            only while there is a live list to count. The phase 6 reading has a short form, "none of
+            the four remain open", accepted only where the open count is nought.
+
+            **`carried-obligations` read every mention of "the operator" in the record as open**,
+            because "the operator" is an event rather than a checkpoint and nothing could say it had
+            passed. Eighteen dated entries name it as a due point, so emptying the list turned all
+            eighteen into unscheduled work. It now lands "the operator" while the plan records the
+            list closed, holds no live list and has no row due at the operator, which is the terms a
+            landed checkpoint's mentions are already read on. All three conditions, because any one
+            alone could be written over a live question.
+
+Measured:   **The thirty-three steps of `tools/ci.ps1` before the suite green, in each of two runs.**
+            The suite step lost one web test in each, to a stall in the suite rather than in anything
+            this entry changed, and the entry after this one finds the stall, stops it, and records the
+            full run.
+
+            **Both halves of each rule are proved over the real plan.** The plan as it stands lists no
+            question nowhere and lands the operator; the same plan with one row due at the operator put
+            back lists one nowhere, is not closed, lands nothing, and leaves a mention of the operator
+            open to be reconciled. A proof of the permitted half alone would pass against a check that
+            had stopped looking.
+
+            **Floors moved and the reason is recorded in the baseline.** `carried-obligations` reads
+            five due points where it read seven, and its parse floor under obligation rows is four
+            where it was twelve, the table holding six. Six `stated-counts` floors are retired rather
+            than lowered, each the floor under a claim that exists only while a live list exists, and
+            what they guarded moved into an assertion rather than going.
+
+Carried:    **None raised. Sixteen discharged**, being every row that fell due at the operator.
+
+## Not a checkpoint entry — 2026-09-16 — phase-7-clear-the-pile — belongs to 7.20: the web tests starved of pool threads, and the floor that stops it
+
+Not a checkpoint entry. It belongs to 7.20, the furthest checkpoint the record holds, and records a
+fault in the suite found while measuring the entry above.
+
+Found:      **Two full runs of `tools/ci.ps1` each lost one web test to the client's hundred-second
+            timeout**, `JournalPageTests.A_trimmed_short_says_what_the_trim_took` in the first and
+            `SetupsPageTests.An_agreement_the_read_surface_refuses_is_said_out_loud_and_the_night_still_renders`
+            in the second. Each passes alone in under a second, and no run on the workflow's runners has
+            ever failed this way.
+
+            **The cause is thread-pool starvation, read off a running suite rather than argued.** A third
+            run was watched with xUnit's long-running notice at twenty seconds, and thread stacks were
+            taken while `WebShellTests.A_built_screen_names_what_it_lacks_and_stops_naming_what_it_has`
+            hung, which it did for eighty-four seconds before passing. Three snapshots across forty seconds
+            show seventeen or eighteen pool threads, all but the runner's own three in synchronous test
+            work, being migrations in test constructors and the golden fixture's replay blocking on its
+            async stages, and **no thread in any web host's pipeline in any of the three**. xUnit runs one
+            test per logical processor on pool threads, a test server hands a request to the pool, and a
+            pool thread finishing a test takes its next work from its own queue before the shared one. The
+            pool adds a thread for a stall only when nothing has been taken off any queue for a while,
+            which a suite this busy seldom allows, so the request waited with no thread on it.
+
+            **The stall is wider than the two failures.** The watched run's slowest page-rendering test was
+            not the one it watched: `rendered-classes` took 155 seconds, where its own step in `tools/ci.ps1`
+            takes under one, and it passed because no single request of its reached a hundred seconds. A
+            stall that stays under the timeout in every request is invisible to a green run.
+
+            **What made three runs in a row stall where six earlier the same day did not is not
+            established.** Another project's suite was running on the machine during the watched run. The
+            fix does not rest on it: the rule the request waited under is the same on a quiet machine, and
+            only the odds of meeting it differ.
+
+Built:      **`ThreadPoolFloor`, a module initializer in the suite**, raises the pool's minimum worker
+            threads before any test runs, to twice the most the suite can hold at once: two threads for each
+            test xUnit runs in parallel, one blocked on an async stage and one running that stage, and three
+            for the runner. That is seventy on a machine with sixteen logical processors. Below its minimum
+            the pool starts a thread for queued work when the work is queued.
+
+            **`ThreadPoolFloorTests` asserts the floor is in force**, and was run with the initializer's
+            attribute removed, where it failed reading a floor of sixteen against seventy. The starvation
+            itself is not asserted, because whether it happens depends on what else a run is doing.
+
+Measured:   **The watched run again, with the floor in place and the other project's suite running
+            again.** Over the seventy-five tests in the seven classes that host the web project, the
+            slowest took one second where it had taken 155, and none took ten where four had.
+
+            **Nothing shows the floor costing time, and one run each cannot show much.** The suite took
+            9.4 minutes against 8.7, and the six green full runs before this entry's took between 8.5 and
+            10.9. The slowest tests in both runs replay the golden fixture and render nothing, took 200 to
+            375 seconds each under the full suite, and were not the same tests from one run to the next.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,358 tests**, over this entry's tree, which
+            carries the entry above.
+
+Carried:    None.

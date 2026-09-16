@@ -3364,3 +3364,38 @@ Why:  The same obligation, which falls due at the operator.
 Was:  none of the fifteen rows is a phase 5 question
 Now:  none of the sixteen rows is a phase 5 question
 Why:  The same obligation. It is a phase 7 row, so the sentence stays true and its count moves.
+
+### 2026-09-16 — BUILD_PLAN.md — cites A question that blocks nothing is not carried as the operator's
+Was:  Sixteen rows of the carried obligations table falling due at the operator, raised at 1.1, 1.6, 2.9, 3.3, 3.6, 3.14, 4.5, 6.0 twice, 6.7, 6.12 twice, 7.0 twice, 7.11 and 7.17, each saying in its own last column that it blocked nothing built.
+Now:  The sixteen are discharged and removed. The table holds six rows, none due at the operator.
+Why:  The operator closed all sixteen on 2026-09-16, fifteen as not pursued and 3.6 by the S4U act of that morning. Each row is kept, as it stood, under the record section below.
+
+### 2026-09-16 — BUILD_PLAN.md — cites A question that blocks nothing is not carried as the operator's
+Was:  None of the twenty-two rows above fall due at 4.17
+Now:  None of the six rows above fall due at 4.17
+Why:  The same sixteen, removed.
+
+### 2026-09-16 — BUILD_PLAN.md — cites A question that blocks nothing is not carried as the operator's
+Was:  ### The sixteen that are the operator's, and what each one blocks
+Now:  ### What the sixteen that were the operator's were, and why none is carried, with a paragraph saying all sixteen were closed on 2026-09-16, how, and that any comes back as a new row when a finding shows it blocks something. The table below it is kept as the list stood.
+Why:  A list headed with the operator's name read to the operator as sixteen things owed, and every row said it blocked nothing. The section is a record of what the list held, on the terms every discharged pile in the file is.
+
+### 2026-09-16 — BUILD_PLAN.md — cites A question that blocks nothing is not carried as the operator's
+Was:  **none of the sixteen rows is a phase 5 question**
+Now:  **none of the sixteen rows was a phase 5 question**
+Why:  The sentence describes the list as it stood, beside a table that is now a record rather than a live list.
+
+### 2026-09-16 — BUILD_PLAN.md — cites A question that blocks nothing is not carried as the operator's
+Was:  **Two of the four remain open and none of the two blocks a checkpoint**, question 2 having been ruled on 2026-09-06 and question 1 on 2026-09-07, both recorded below with the rows they discharged
+Now:  **None of the four remain open**, question 2 having been ruled on 2026-09-06, question 1 on 2026-09-07, and questions 3 and 4 closed as not pursued on 2026-09-16, all four recorded below with the rows they discharged
+Why:  Questions 3 and 4 of the phase 6 sitting were two of the sixteen.
+
+### 2026-09-16 — BUILD_PLAN.md — cites A question that blocks nothing is not carried as the operator's
+Was:  what remains is the earnings calendar, which blocks nothing built, and the first pack version, which blocks only a row that is parked.
+Now:  the two it did not ask, the earnings calendar and the first pack version, were closed as not pursued on 2026-09-16.
+Why:  Nothing remains.
+
+### 2026-09-16 — BUILD_PLAN.md — cites A question that blocks nothing is not carried as the operator's
+Was:  **Two of the four, ruled on 2026-09-06 and 2026-09-07.** Two rows, questions 1 and 2.
+Now:  **All four. Two ruled on 2026-09-06 and 2026-09-07, and two closed as not pursued on 2026-09-16.** Rows 3 and 4 added, each marked as having blocked nothing built.
+Why:  The sitting's figures derive from the open rows plus the answered ones, so a question closed has to arrive here for the four and the two to stay where they are.

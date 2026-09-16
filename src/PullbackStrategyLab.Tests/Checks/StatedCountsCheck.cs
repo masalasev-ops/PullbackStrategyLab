@@ -81,6 +81,32 @@ public sealed partial class StatedCountsCheck
     private static partial Regex OperatorHeading();
 
     /// <summary>
+    /// How many obligation rows fall due at the operator with no live section listing them, which is
+    /// nought wherever the plan is consistent.
+    ///
+    /// <b>From 2026-09-16, when the list became allowed to be empty.</b> The heading was required
+    /// outright until then, so an empty list was a state the register could not be in. What the
+    /// requirement guarded was that a question put to the operator is listed where they read it, and
+    /// this is that property stated directly: nought when a section is present, and otherwise the
+    /// count of rows naming the operator, which a consistent plan with no section holds at nought.
+    /// A named function rather than an expression inside the check, so the proof runs this rule
+    /// rather than a copy of it.
+    /// see: A question that blocks nothing is not carried as the operator's
+    /// </summary>
+    public static int OperatorQuestionsListedNowhere(string buildPlan)
+    {
+        ArgumentNullException.ThrowIfNull(buildPlan);
+
+        if (OperatorHeading().IsMatch(buildPlan))
+        {
+            return 0;
+        }
+
+        return MarkdownTable.BodyRowsAfter(buildPlan, "## Carried obligations")
+            .Count(r => r.Count > 2 && r[2].Trim().Equals("the operator", StringComparison.Ordinal));
+    }
+
+    /// <summary>
     /// The same two sentences for the 4.17 pile, which is the third classification of the same table
     /// and was written when 4.6 emptied the second.
     ///
@@ -239,6 +265,13 @@ public sealed partial class StatedCountsCheck
     /// </remarks>
     [GeneratedRegex(@"\*\*(?<n>[A-Za-z-]+)\s+of\s+the\s+four\s+remain\s+open\s+and\s+(?<blocking>[a-z-]+)\s+of\s+the\s+(?<denominator>[a-z-]+)\s+blocks?\s+a\s+checkpoint\*\*", RegexOptions.CultureInvariant)]
     private static partial Regex QuestionsRemaining();
+
+    /// <summary>
+    /// The phase 6 reading once every question is answered, from 2026-09-16. Accepted only where the
+    /// open count is nought, so it can never stand in for the long form over a live row.
+    /// </summary>
+    [GeneratedRegex(@"\*\*None\s+of\s+the\s+four\s+remain\s+open\*\*", RegexOptions.CultureInvariant)]
+    private static partial Regex NoneOfTheFourRemainOpen();
 
     /// <summary>A row of the section recording a phase 6 question that has been answered.</summary>
     [GeneratedRegex(@"^\|\s*(?<n>\d)\s*\|", RegexOptions.CultureInvariant)]
@@ -599,23 +632,43 @@ public sealed partial class StatedCountsCheck
         //
         // The second claim is the reconciliation the first cannot make: the section is a reading of
         // the obligations table, so a question that leaves the table has to leave the section too.
+        //
+        // <b>The list can be empty, and from 2026-09-16 it is.</b> The operator closed all sixteen
+        // questions that day as not pursued, every one of them blocking nothing built, so the
+        // section became a record of what they were and no heading counts a live pile. This
+        // required the heading until then, which made nought a state the register could not be in:
+        // a pile emptied by answering every question read as a missing section. The guard that
+        // replaces it holds both directions. With no live section, no obligation row may fall due
+        // at the operator, so a question put to the operator and listed nowhere still fails here;
+        // with one, every figure below is asserted exactly as before.
+        // see: A question that blocks nothing is not carried as the operator's
+        int dueAtTheOperator = obligations.Count(
+            r => r.Count > 2 && r[2].Trim().Equals("the operator", StringComparison.Ordinal));
+
         Match operatorHeading = OperatorHeading().Match(buildPlan);
-        Assert.True(operatorHeading.Success,
-            "BUILD_PLAN.md has no \"### The <count> that are the operator's\" heading, which is both a stated "
-            + "count and the anchor the operator's table is read from.");
+        int listedNowhere = OperatorQuestionsListedNowhere(buildPlan);
+        Assert.True(listedNowhere == 0,
+            $"{listedNowhere} obligation row(s) fall due at the operator and BUILD_PLAN.md has no "
+            + "\"### The <count> that are the operator's\" section listing them, so questions put to the "
+            + "operator are listed nowhere they would read them.");
 
-        IReadOnlyList<IReadOnlyList<string>> operatorQuestions =
-            MarkdownTable.BodyRowsAfter(buildPlan, operatorHeading.Value);
+        IReadOnlyList<IReadOnlyList<string>> operatorQuestions = operatorHeading.Success
+            ? MarkdownTable.BodyRowsAfter(buildPlan, operatorHeading.Value)
+            : [];
 
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the questions that are the operator's",
-            FromWordsOrFail(operatorHeading.Groups["count"].Value),
-            operatorQuestions.Count,
-            "rows of the operator's table"));
+        if (operatorHeading.Success)
+        {
+            claims.Add(new Claim(
+                "BUILD_PLAN.md, the questions that are the operator's",
+                FromWordsOrFail(operatorHeading.Groups["count"].Value),
+                operatorQuestions.Count,
+                "rows of the operator's table"));
+        }
+
         claims.Add(new Claim(
             "BUILD_PLAN.md, the operator's table against the obligations table",
             operatorQuestions.Count,
-            obligations.Count(r => r.Count > 2 && r[2].Trim().Equals("the operator", StringComparison.Ordinal)),
+            dueAtTheOperator,
             "rows of the carried obligations table falling due at the operator"));
 
         // BUILD_PLAN.md, phase 5's own figures, registered by the planning pass that wrote them.
@@ -657,20 +710,27 @@ public sealed partial class StatedCountsCheck
         // Both numbers in the reading are derived. It anchored on the literal "of the nine rows" until
         // question 6 was answered and the nine became eight, which is the third literal anchor 5.0(a)
         // found in this file: a number the sentence states is a number an anchor cannot see go stale.
+        // The reading sits beside a live table, so it is owed only while there is one. A reading of an
+        // empty list would state "none of the none rows", which is a sentence written to satisfy a
+        // pattern rather than to tell anybody anything.
         Match reading = OperatorReading().Match(buildPlan);
-        Assert.True(reading.Success,
+        Assert.True(reading.Success || !operatorHeading.Success,
             "BUILD_PLAN.md has no \"**<count> of the <count> rows is a phase 5 question**\" sentence beside "
             + "the operator's table.");
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the operator's reading's total",
-            FromWordsOrFail(reading.Groups["total"].Value),
-            operatorQuestions.Count,
-            "rows of the operator's table"));
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the phase 5 questions the operator's reading states",
-            FromWordsOrFail(reading.Groups["n"].Value),
-            questionsAtTheOperator,
-            "rows of the carried obligations table marked as a phase 5 question and due at the operator"));
+
+        if (reading.Success)
+        {
+            claims.Add(new Claim(
+                "BUILD_PLAN.md, the operator's reading's total",
+                FromWordsOrFail(reading.Groups["total"].Value),
+                operatorQuestions.Count,
+                "rows of the operator's table"));
+            claims.Add(new Claim(
+                "BUILD_PLAN.md, the phase 5 questions the operator's reading states",
+                FromWordsOrFail(reading.Groups["n"].Value),
+                questionsAtTheOperator,
+                "rows of the carried obligations table marked as a phase 5 question and due at the operator"));
+        }
 
         claims.Add(new Claim(
             "BUILD_PLAN.md, the obligations 5.8 holds",
@@ -826,32 +886,42 @@ public sealed partial class StatedCountsCheck
 
         // The second reading, and it is the one that moves. Stated apart from the pair above
         // because they are two populations and a figure states the one it was computed over.
+        // <b>With every question answered the sentence has a shorter form</b>, from 2026-09-16, when
+        // the last two were closed as not pursued. "None of the four remain open and none of the none
+        // blocks a checkpoint" is the only way the long form can state nought, and a sentence bent to
+        // fit a pattern is the kind this registry is meant to stop anybody writing. The short form is
+        // accepted only where the open count really is nought, so it cannot stand in for a live row.
         Match remaining = QuestionsRemaining().Match(phaseSix);
-        Assert.True(remaining.Success,
+        bool noneRemain = phaseSixOperatorRows.Count == 0 && NoneOfTheFourRemainOpen().IsMatch(phaseSix);
+
+        Assert.True(remaining.Success || noneRemain,
             "BUILD_PLAN.md's phase 6 section no longer states how many of its questions remain open "
             + "and how many of those block a checkpoint, which is the reading 6.9 is asked for and "
             + "the one that is not the sitting's.");
 
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the phase 6 questions still open",
-            FromWordsOrFail(remaining.Groups["n"].Value),
-            phaseSixOperatorRows.Count,
-            "rows of the operator's table still marked as a phase 6 question"));
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the open phase 6 questions that block a checkpoint",
-            FromWordsOrFail(remaining.Groups["blocking"].Value),
-            phaseSixOperatorRows.Count(r => r.Count > 2 && BlocksACheckpoint().IsMatch(r[2])),
-            "open rows of the operator's table that stop a checkpoint"));
+        if (remaining.Success)
+        {
+            claims.Add(new Claim(
+                "BUILD_PLAN.md, the phase 6 questions still open",
+                FromWordsOrFail(remaining.Groups["n"].Value),
+                phaseSixOperatorRows.Count,
+                "rows of the operator's table still marked as a phase 6 question"));
+            claims.Add(new Claim(
+                "BUILD_PLAN.md, the open phase 6 questions that block a checkpoint",
+                FromWordsOrFail(remaining.Groups["blocking"].Value),
+                phaseSixOperatorRows.Count(r => r.Count > 2 && BlocksACheckpoint().IsMatch(r[2])),
+                "open rows of the operator's table that stop a checkpoint"));
 
-        // The sentence's own second denominator, against its first. It reads "N of the four remain
-        // open and M of the <denominator> blocks a checkpoint", so the denominator is the same
-        // population N states and a sentence disagreeing with itself fails here rather than being
-        // read past.
-        claims.Add(new Claim(
-            "BUILD_PLAN.md, the phase 6 questions the blocking figure is taken over",
-            FromWordsOrFail(remaining.Groups["denominator"].Value),
-            phaseSixOperatorRows.Count,
-            "rows of the operator's table still marked as a phase 6 question"));
+            // The sentence's own second denominator, against its first. It reads "N of the four remain
+            // open and M of the <denominator> blocks a checkpoint", so the denominator is the same
+            // population N states and a sentence disagreeing with itself fails here rather than being
+            // read past.
+            claims.Add(new Claim(
+                "BUILD_PLAN.md, the phase 6 questions the blocking figure is taken over",
+                FromWordsOrFail(remaining.Groups["denominator"].Value),
+                phaseSixOperatorRows.Count,
+                "rows of the operator's table still marked as a phase 6 question"));
+        }
 
         // The obligations each phase 6 row says fall due at it. Four sentences, four patterns, each
         // anchored on what follows its count, so one row's statement cannot answer for another's.

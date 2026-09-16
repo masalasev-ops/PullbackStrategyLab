@@ -1609,6 +1609,40 @@ public sealed class CheckProofTests
         Assert.All(notNumbers, w => Assert.Null(StatedCountsCheck.FromWords(w)));
     }
 
+    /// <summary>
+    /// A question put to the operator and listed nowhere is caught, and an empty list is not.
+    ///
+    /// <b>The pair is the property, and either half alone is not.</b> From 2026-09-16 the section
+    /// listing the operator's questions may be absent, because the operator closed every one of them.
+    /// A proof of the permitted half alone passes against a check that stopped looking, which is
+    /// the fault this corpus keeps finding in its own guards. So the real plan, read as it stands
+    /// with no section and no row due at the operator, lists nothing nowhere; and the same plan with
+    /// one row due at the operator put back into its obligations table lists one nowhere.
+    /// see: A question that blocks nothing is not carried as the operator's
+    /// </summary>
+    [Fact]
+    public void A_question_due_at_the_operator_and_listed_nowhere_is_caught_and_an_empty_list_is_not()
+    {
+        string plan = RepositoryLayout.Read(Path.Combine(RepositoryLayout.Docs, "BUILD_PLAN.md"));
+
+        Assert.Equal(0, StatedCountsCheck.OperatorQuestionsListedNowhere(plan));
+
+        // One row due at the operator, inserted as the table's first body row. The newline the table
+        // uses is taken from the plan so the insertion is a row rather than text beside one.
+        string newline = plan.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
+        const string Separator = "|---|---|---|";
+        int table = plan.IndexOf("## Carried obligations", StringComparison.Ordinal);
+        int separator = plan.IndexOf(Separator, table, StringComparison.Ordinal);
+        Assert.True(table >= 0 && separator > table, "the obligations table was not found where the proof expects it");
+
+        int afterSeparator = plan.IndexOf(newline, separator, StringComparison.Ordinal) + newline.Length;
+        string withAQuestion = plan.Insert(
+            afterSeparator,
+            "| 7.99 | A question nobody listed | the operator |" + newline);
+
+        Assert.Equal(1, StatedCountsCheck.OperatorQuestionsListedNowhere(withAQuestion));
+    }
+
     // ---- pinned-constants places every authored parameter ------------------------------------
 
     /// <summary>
