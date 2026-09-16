@@ -3349,3 +3349,18 @@ Why:  7.20 is added.
 Was:  then 7.12, then 7.13, 7.14, 7.15, 7.16, 7.17, 7.18 and 7.19. **Nothing registers before 7.11.**
 Now:  then 7.12, then 7.13, 7.14, 7.15, 7.16, 7.17, 7.18, 7.19 and 7.20. **Nothing registers before 7.11.**
 Why:  The build order names every row.
+
+### 2026-09-16 — BUILD_PLAN.md — cites Failed checks are recorded, not discarded
+Was:  None of the twenty-one rows above fall due at 4.17
+Now:  None of the twenty-two rows above fall due at 4.17
+Why:  One obligation raised on 2026-09-16: whether the twenty-four unresolvable plans of 2026-09-15 are repaired or stand as the record of a blind night.
+
+### 2026-09-16 — BUILD_PLAN.md — cites Failed checks are recorded, not discarded
+Was:  ### The fifteen that are the operator's, and what each one blocks
+Now:  ### The sixteen that are the operator's, and what each one blocks
+Why:  The same obligation, which falls due at the operator.
+
+### 2026-09-16 — BUILD_PLAN.md — cites Failed checks are recorded, not discarded
+Was:  none of the fifteen rows is a phase 5 question
+Now:  none of the sixteen rows is a phase 5 question
+Why:  The same obligation. It is a phase 7 row, so the sentence stays true and its count moves.

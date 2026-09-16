@@ -21034,3 +21034,89 @@ Carried:    **None raised and none discharged.**
             **No operator's half.** Both surfaces are felt by whoever opens the lab next.
 
             **This session committed code and may not sign it off.**
+
+## Not a checkpoint entry — 2026-09-16 — phase-7-operator-acts — belongs to 7.17, 7.18 and 7.19: the operator's halves, taken, and what the night of 2026-09-15 cost
+
+Not a checkpoint entry. It belongs to 7.17, 7.18 and 7.19, all of which have landed. It records the
+four acts on the running lab that those checkpoints left to the operator, and the night of
+2026-09-15, which is the first night this lab was blind while running correctly.
+
+Corrects:   **7.18's entry says the twenty-four members that had never been fetched were still to be
+            read. They were read on 2026-09-14**, before that checkpoint merged: twenty-four tickers
+            selected and fetched from 2023-09-15, 16,092 bars published, 16,037 written, 55 already
+            stored unchanged, twenty-four calls. So the obligation that entry records as open was
+            already discharged when it was written, and what remained was the automation, which
+            7.18 built and which ran on its own on 2026-09-15: four members never fetched and seven
+            missing a session since their last fetch, eleven tickers repaired with no operator act.
+
+Recorded:   **The four operator acts, all taken between 2026-09-15 17:00 and 2026-09-16 00:15.**
+
+            **(a) The twenty-four histories**, above, on 2026-09-14.
+
+            **(b) The thirty-seven scheduled tasks became five windows**, at 2026-09-16 00:03, which
+            is 7.17's operator half. The five are `spread-open` at 10:15, `spread-close` at 15:45,
+            `evening` at 17:15, `night` at 20:30 on weekdays, and `weekly` at 08:00 on Saturday, each
+            running `tools/nightly-window.ps1` from the production checkout with WakeToRun kept. The
+            thirty-seven definitions were exported to `task-backup-20260915` first, because nothing
+            in the repository re-creates them and the script that once did reads a folder that is now
+            empty.
+
+            **(c) The five tasks run whether or not anybody is logged on**, at 2026-09-16 00:10,
+            which closes the obligation RUNBOOK has carried since the tasks were created. An S4U
+            principal was applied to all five, verified by a probe task that ran in session 0 and
+            reported a readable secrets file, a working git, a working dotnet and a reachable
+            vendor, which are the four things that break when a task's logon context changes.
+
+            **(d) Generation 2 is in force**, at 2026-09-16 00:13, which is 7.19's operator half. The
+            register now holds V0 retired at generation 0, V1 retired at generation 1 and V2 open at
+            generation 2. **Nothing was lost to the close**: no version other than the baseline was
+            live, so the freeze rule's cost, which is that closing a generation discards every open
+            comparison, was nought on this one. The act was taken after the production checkout moved
+            to the tip, so no store was switched by an older build.
+
+Measured:   **The night of 2026-09-15 produced no trading evidence, and every stage reported
+            correctly while it happened.** Generation 1's first fourteen plans rested in the session
+            of 2026-09-16 and its first twenty-four rested in 2026-09-15. Of those twenty-four,
+            **nought were resolved**: `resolve-triggers` ran at 21:05 and found no regular-session
+            minute in the store, so it recorded twenty-four rows as unresolvable, reported partial,
+            and named the reason. `orders` then placed nothing and `fills` filled nothing, both
+            correctly, both reporting why.
+
+            **The cause is that the minute fetch outgrew the gap in front of it.** It ran from 20:30
+            to 22:05, ninety-six minutes against three and a half the night before, because
+            generation 1 flags about five times as many names: **373 asked, 373 answered, 3,984,094
+            bars written, 1,865 calls**, against 75 names and 89,227 bars on 2026-09-14. The size is
+            a first fill rather than a trend: 373 names over the twenty-seven session anchor window
+            at about 390 regular minutes a session is 3.93 million, so nearly every name bought its
+            whole window for the first time, and a name bought once costs one session a night after.
+
+            **Two more stages ran into it.** `vwap` started at 21:00 on its own timer and priced 51
+            of 145 anchors, recording 94 as out of the store's reach where every previous night
+            recorded nought. `snapshot-db` started at 22:00, copied the store while the fetch was
+            still writing, and failed its own verification: `intraday_bar` held 4,949,969 rows when
+            the source was counted and 4,995,712 in the copy. **The file itself is sound**, integrity
+            ok at 1,897,435,136 bytes, and the count runs in the direction a consistent copy taken
+            later would: the check is entitled to say it could not prove the copy complete, and that
+            is what it says.
+
+            **The store more than doubled in one night**, 814 MB to 1.81 GB, on those four million
+            minute rows. 1.27 TB free, 7.1 GB across the eight snapshots kept.
+
+Found:      **The lab has never taken a trade.** Across both sides: 1,025 patterns recorded over
+            seven evenings, 38 plans written, **nought orders placed and nought trades closed**. A
+            plan becomes an order only where the price returns to a level and recovers, and no plan
+            has been asked that question on a session whose minutes the store held.
+
+Carried:    **One row raised, and it is the operator's.** The twenty-four unresolvable rows of
+            2026-09-15 are recoverable in principle and not by anything shipped: the minutes the
+            resolver wanted are in the store now, the fetch having finished at 22:05, but
+            `trigger_resolution` is written `ON CONFLICT (plan_id) DO NOTHING` and `TriggerResolver`
+            is its sole writer, so no verb can replace a resolution once written. Whether that night
+            is repaired or stands as the record of a blind night is a ruling nobody has taken.
+
+            **None discharged.**
+
+            **What is no longer owed**: the collision itself. The five windows run the night's
+            fourteen stages back to back, each waiting for the one before, so the fetch cannot
+            overrun into the stage that reads what it bought, and the snapshot cannot begin while
+            anything is writing. That was in force from 2026-09-16 00:03, before the next night ran.
