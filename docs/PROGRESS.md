@@ -21188,3 +21188,60 @@ Measured:   **The thirty-three steps of `tools/ci.ps1` before the suite green, i
             what they guarded moved into an assertion rather than going.
 
 Carried:    **None raised. Sixteen discharged**, being every row that fell due at the operator.
+
+## Not a checkpoint entry — 2026-09-16 — phase-7-clear-the-pile — belongs to 7.20: the web tests starved of pool threads, and the floor that stops it
+
+Not a checkpoint entry. It belongs to 7.20, the furthest checkpoint the record holds, and records a
+fault in the suite found while measuring the entry above.
+
+Found:      **Two full runs of `tools/ci.ps1` each lost one web test to the client's hundred-second
+            timeout**, `JournalPageTests.A_trimmed_short_says_what_the_trim_took` in the first and
+            `SetupsPageTests.An_agreement_the_read_surface_refuses_is_said_out_loud_and_the_night_still_renders`
+            in the second. Each passes alone in under a second, and no run on the workflow's runners has
+            ever failed this way.
+
+            **The cause is thread-pool starvation, read off a running suite rather than argued.** A third
+            run was watched with xUnit's long-running notice at twenty seconds, and thread stacks were
+            taken while `WebShellTests.A_built_screen_names_what_it_lacks_and_stops_naming_what_it_has`
+            hung, which it did for eighty-four seconds before passing. Three snapshots across forty seconds
+            show seventeen or eighteen pool threads, all but the runner's own three in synchronous test
+            work, being migrations in test constructors and the golden fixture's replay blocking on its
+            async stages, and **no thread in any web host's pipeline in any of the three**. xUnit runs one
+            test per logical processor on pool threads, a test server hands a request to the pool, and a
+            pool thread finishing a test takes its next work from its own queue before the shared one. The
+            pool adds a thread for a stall only when nothing has been taken off any queue for a while,
+            which a suite this busy seldom allows, so the request waited with no thread on it.
+
+            **The stall is wider than the two failures.** The watched run's slowest page-rendering test was
+            not the one it watched: `rendered-classes` took 155 seconds, where its own step in `tools/ci.ps1`
+            takes under one, and it passed because no single request of its reached a hundred seconds. A
+            stall that stays under the timeout in every request is invisible to a green run.
+
+            **What made three runs in a row stall where six earlier the same day did not is not
+            established.** Another project's suite was running on the machine during the watched run. The
+            fix does not rest on it: the rule the request waited under is the same on a quiet machine, and
+            only the odds of meeting it differ.
+
+Built:      **`ThreadPoolFloor`, a module initializer in the suite**, raises the pool's minimum worker
+            threads before any test runs, to twice the most the suite can hold at once: two threads for each
+            test xUnit runs in parallel, one blocked on an async stage and one running that stage, and three
+            for the runner. That is seventy on a machine with sixteen logical processors. Below its minimum
+            the pool starts a thread for queued work when the work is queued.
+
+            **`ThreadPoolFloorTests` asserts the floor is in force**, and was run with the initializer's
+            attribute removed, where it failed reading a floor of sixteen against seventy. The starvation
+            itself is not asserted, because whether it happens depends on what else a run is doing.
+
+Measured:   **The watched run again, with the floor in place and the other project's suite running
+            again.** Over the seventy-five tests in the seven classes that host the web project, the
+            slowest took one second where it had taken 155, and none took ten where four had.
+
+            **Nothing shows the floor costing time, and one run each cannot show much.** The suite took
+            9.4 minutes against 8.7, and the six green full runs before this entry's took between 8.5 and
+            10.9. The slowest tests in both runs replay the golden fixture and render nothing, took 200 to
+            375 seconds each under the full suite, and were not the same tests from one run to the next.
+
+            `tools/ci.ps1` green on Windows, **34 steps, 1,358 tests**, over this entry's tree, which
+            carries the entry above.
+
+Carried:    None.
