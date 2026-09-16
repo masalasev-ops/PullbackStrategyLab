@@ -411,6 +411,42 @@
       "mustCarry": "0 proposal(s)",
       "producedBy": "the page",
       "why": "Stated at 6.0(b) and never declared, because the reverse read could not see it: a less-than sign in a code span near the top of DECISIONS.md paired with a script tag far below and the strip took everything between as one tag. Found at 7.19 when a quotation with a greater-than sign in it moved the pairing. The claim is that a version's proposals are drawn as a count with its unit, so nought reads as nought proposals rather than as a bare nought."
+    },
+    {
+      "name": "the-front-page-counts-the-two-sides-apart",
+      "sentence": "so every figure is per direction and the page states no total",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/",
+      "mustCarry": "Patterns to buy",
+      "producedBy": "the page",
+      "why": "The pooling rule's hardest case, because this is the surface where one big number reads better than two. The claim is that the side is named on the figure rather than left to a colour, so a page that added the two together would have nothing to call the result and would stop carrying this. Its pair below holds the other side."
+    },
+    {
+      "name": "the-front-page-names-the-short-side-too",
+      "sentence": "Written for a reader who has not seen the lab before",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/",
+      "mustCarry": "Patterns to sell short",
+      "producedBy": "the page",
+      "why": "The second half of the pair. One claim per side rather than one claim about both, because a single claim naming one side passes on a page that drew that side twice, which is the shape the pooled-figure review found on the scoreboard."
+    },
+    {
+      "name": "the-front-page-says-where-the-record-has-a-gap",
+      "sentence": "The front page's gap sentence renders only where the record has a gap",
+      "statedIn": "docs/BUILD_PLAN.md",
+      "surface": "/",
+      "mustCarry": "There is a gap in it, and the gap cannot be filled",
+      "producedBy": "the page",
+      "why": "A front page saying it has been recording since a date implies a continuity the record does not have: seven evenings sit across twenty weekdays, because the lab was not running for nine of them. The sentence renders only where the record has a gap, so the body the check reads holds five evenings across ten weekdays; a body with no gap would leave this asserted against a page state nothing produces."
+    },
+    {
+      "name": "the-today-page-names-the-evening-that-chose-the-list",
+      "sentence": "It names the evening that chose them rather than the session they trade in",
+      "statedIn": "docs/ARCHITECTURE.html",
+      "surface": "/today",
+      "mustCarry": "Chosen on the evening of",
+      "producedBy": "the page",
+      "why": "The lab keeps no holiday calendar and deriving one would be authoring a market calendar rather than recording one, so the page cannot name the date the list trades on. It names the evening it read instead, and this is what would fail if a later change started guessing a trading date."
     }
   ],
   "aSurfaceCanBePartOfAPageThatExists": "Two of the deferred claims name a panel rather than a page. `/scoreboard` is built and both panels are on it declaring the checkpoint that fills them, so the surface a reader looks at exists and the thing it must carry does not. Naming the page alone would have made the out-of-scope line read \"/scoreboard does not exist yet\", which is false and is the kind of wrong reason that survives because nobody reads a passing check's detail."

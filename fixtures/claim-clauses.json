@@ -1503,7 +1503,7 @@
       "subject": "P7",
       "clauses": [
         {
-          "clause": "NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser, MinuteBackfiller, EntrySizer, EntryRuleMeasurement, GenerationOneForecast The morning screen saying why a slot that never ran did not.",
+          "clause": "NightReconciler, CheckRegister, GenerationOneDetector, GenerationCloser, MinuteBackfiller, EntrySizer, EntryRuleMeasurement, GenerationOneForecast, front page, today page The morning screen saying why a slot that never ran did not.",
           "disposition": "reaches"
         },
         {
@@ -1516,6 +1516,11 @@
           "disposition": "elsewhere",
           "why": "the switch night over the fixture writes a row in `setup` and one in `setup_generation_zero` for a name both rules flag, and the join reproduces it",
           "by": "fixture-replay"
+        },
+        {
+          "clause": "Last, a way in for somebody who has not seen the lab before: what the experiment is and what it is watching today, in plain words, with the six research screens kept behind them.",
+          "disposition": "reaches",
+          "why": "the two surfaces are routed pages the navigation names, and the shell test reconciles the navigation against the pages that exist in both directions, so a way in that is described here and not built fails rather than reading as present"
         },
         {
           "clause": "A weekday the guard refused reconciled to thirty-two rows and none missing.",
@@ -1534,6 +1539,12 @@
           "disposition": "elsewhere",
           "why": "it holds the switch night's rows to generation 1's list, the companion rows to generation 0's, and the night before to the list the register says ran",
           "by": "check-completeness"
+        },
+        {
+          "clause": "And no figure on either plain surface pooling the two sides, asserted against the rendered page rather than the view model.",
+          "disposition": "elsewhere",
+          "by": "surface-claims",
+          "why": "each side's count on the front page is declared as its own claim with the text the page must carry, and the claims are asserted against the rendered HTML, which is where the sixth failure shape lived: a correct answer upstream that the screen dropped"
         }
       ]
     },
@@ -1812,6 +1823,60 @@
           "clause": "and a library that keeps only its acceptances cannot say how many times it refused nor what it refused against .",
           "disposition": "rationale",
           "why": "the second half of the same reason, being what a library loses by keeping only its acceptances"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "Front page",
+      "clauses": [
+        {
+          "clause": "On request What the experiment is, how much of the record exists, how the last evening went on each side",
+          "disposition": "reaches",
+          "why": "the page is rendered by the shell test and read by `rendered-classes`, and the figures behind each part are the reader's own, asserted where they are drawn"
+        },
+        {
+          "clause": "and what would prove the pattern is not there.",
+          "disposition": "rationale",
+          "why": "why the page closes on the control comparison rather than on a figure of its own. The comparison itself is the scoreboard's and is asserted there"
+        },
+        {
+          "clause": "Written for a reader who has not seen the lab before",
+          "disposition": "rationale",
+          "why": "the audience the page is written for, which decides its wording and nothing a verdict could reach"
+        },
+        {
+          "clause": "so every figure is per direction and the page states no total",
+          "disposition": "elsewhere",
+          "by": "surface-claims",
+          "why": "one claim per side names the text the rendered page must carry, so a page that added the two together would stop carrying the side's own count"
+        }
+      ]
+    },
+    {
+      "table": "Component catalogue",
+      "subject": "Today page",
+      "clauses": [
+        {
+          "clause": "On request The names the last evening chose, in plain words, with what each is waiting for and what the lab would risk on it.",
+          "disposition": "reaches",
+          "why": "the page reads the evening's passed-all rows through the read surface and is rendered by the shell test over a stubbed night"
+        },
+        {
+          "clause": "It names the evening that chose them rather than the session they trade in",
+          "disposition": "elsewhere",
+          "by": "surface-claims",
+          "why": "the claim names the text the page must carry, being the evening it read, so a page that started naming a trading date would stop carrying it"
+        },
+        {
+          "clause": "because the lab keeps no holiday calendar",
+          "disposition": "rationale",
+          "why": "why the evening is named rather than the session. That the lab derives a holiday rather than authoring a calendar is asserted where the derivation is"
+        },
+        {
+          "clause": "and it shows any check that evening's rule recorded without requiring",
+          "disposition": "reaches",
+          "why": "the page reads the recorded-not-required set of the evening's own generation from the detector's own definition rather than listing check names itself, so a generation that stops recording a check stops the page showing it"
         }
       ]
     }

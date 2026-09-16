@@ -601,6 +601,7 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
                 _ when path.StartsWith("/night", StringComparison.Ordinal) => Slots,
                 _ when path.StartsWith("/packs", StringComparison.Ordinal) => Packs,
                 _ when path.StartsWith("/chart/trade", StringComparison.Ordinal) => Held,
+                _ when path.StartsWith("/experiment", StringComparison.Ordinal) => Record,
                 _ => Status,
             };
 
@@ -609,6 +610,30 @@ public sealed partial class SurfaceClaimsCheck : IClassFixture<WebApplicationFac
                 Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json"),
             };
         });
+
+    /// <summary>
+    /// The experiment's record as the front page reads it, from 7.20.
+    ///
+    /// <b>The two sides carry different figures on purpose.</b> A body with the same number on both
+    /// sides would pass a page that read one side twice, which is the shape the pooling claims on
+    /// this surface exist to catch.
+    ///
+    /// <b>And the evenings deliberately do not fill their span.</b> Five evenings between a Monday
+    /// and the Friday of the week after is ten weekdays, so the gap the record has is real in this
+    /// body and the sentence about it renders. A body with no gap would leave that claim asserted
+    /// against a page state nothing produced.
+    /// </summary>
+    private const string Record = """
+        { "asOf": "2026-08-28", "absent": null, "evenings": 5,
+          "firstEvening": "2026-08-17", "latestEvening": "2026-08-28", "latestEveningGeneration": 1,
+          "long":  { "direction": "long",  "patternsRecorded": 645, "plansWritten": 24,
+                     "ordersPlaced": 0, "tradesClosed": 0,
+                     "funnel": { "evening": "2026-08-28", "examined": 1983, "recorded": 172, "passed": 14 } },
+          "short": { "direction": "short", "patternsRecorded": 380, "plansWritten": 0,
+                     "ordersPlaced": 0, "tradesClosed": 0,
+                     "funnel": { "evening": "2026-08-28", "examined": 1983, "recorded": 113, "passed": 0 } },
+          "risk": { "equity": 100000, "fraction": 0.0075, "budget": 750 } }
+        """;
 
     /// <summary>
     /// One pack version with nought proposals, from 7.19, which is the state the decision on the pack

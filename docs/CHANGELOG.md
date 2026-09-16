@@ -3319,3 +3319,33 @@ Why:  7.19 is added.
 Was:  then 7.12, then 7.13, 7.14, 7.15, 7.16, 7.17 and 7.18. **Nothing registers before 7.11.**
 Now:  then 7.12, then 7.13, 7.14, 7.15, 7.16, 7.17, 7.18 and 7.19. **Nothing registers before 7.11.**
 Why:  The build order names every row.
+
+### 2026-09-16 — ARCHITECTURE.html — cites A surface a person opens is a screen, and the navigation names the way in apart from the research screens
+Was:  <p>The 62 components are listed by layer
+Now:  <p>The 64 components are listed by layer
+Why:  7.20 adds the front page and the today page to the component catalogue.
+
+### 2026-09-16 — ARCHITECTURE.html — cites A surface a person opens is a screen, and the navigation names the way in apart from the research screens
+Was:  The P7 Builds cell ending GenerationOneForecast.
+Now:  The same cell ending GenerationOneForecast, front page, today page.
+Why:  7.20. A row names a component only where that row is the checkpoint that builds it, and the two surfaces are built here.
+
+### 2026-09-16 — ARCHITECTURE.html — cites A surface a person opens is a screen, and the navigation names the way in apart from the research screens
+Was:  The P7 "What you can open" cell closing on the switch night with generation 0's record kept beside it.
+Now:  The same cell, with a sentence after it: last, a way in for somebody who has not seen the lab before, being what the experiment is and what it is watching today, in plain words, with the six research screens kept behind them.
+Why:  7.20. The phase opens a surface it did not open before, and the column is what a phase lets a person open.
+
+### 2026-09-16 — ARCHITECTURE.html — cites A surface a person opens is a screen, and the navigation names the way in apart from the research screens
+Was:  The P7 report cell closing on every row read against the gate list of its own night across the switch.
+Now:  The same cell, with a sentence after it: and no figure on either plain surface pooling the two sides, asserted against the rendered page rather than the view model.
+Why:  7.20. A front page is where the pooling rule is easiest to break, because one number reads better than two, so what the report adds is the assertion that it was not (see: Long and short are never pooled into one figure).
+
+### 2026-09-16 — BUILD_PLAN.md — cites A surface a person opens is a screen, and the navigation names the way in apart from the research screens
+Was:  **The phase is twenty rows and it exists because the gate set was never the strategy's.**
+Now:  **The phase is twenty-one rows and it exists because the gate set was never the strategy's.**
+Why:  7.20 is added.
+
+### 2026-09-16 — BUILD_PLAN.md — cites A surface a person opens is a screen, and the navigation names the way in apart from the research screens
+Was:  then 7.12, then 7.13, 7.14, 7.15, 7.16, 7.17, 7.18 and 7.19. **Nothing registers before 7.11.**
+Now:  then 7.12, then 7.13, 7.14, 7.15, 7.16, 7.17, 7.18, 7.19 and 7.20. **Nothing registers before 7.11.**
+Why:  The build order names every row.

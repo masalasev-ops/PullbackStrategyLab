@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +24,7 @@ namespace PullbackStrategyLab.Tests;
 /// machine and both are worth a test; leaving the requests to reach a port nobody is listening
 /// on would test the timeout instead of the page.
 /// </summary>
-public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiClient>>
+public sealed partial class WebShellTests : IClassFixture<WebApplicationFactory<LabApiClient>>
 {
     /// <summary>A store with rows in it, as the read surface would answer.</summary>
     private const string StatusBody = """
@@ -47,9 +48,13 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
 
     public WebShellTests(WebApplicationFactory<LabApiClient> host) => _host = host;
 
+    /// <summary>
+    /// Every path the navigation names, which from 7.20 includes the front page rather than adding
+    /// it separately: the way in is a nav group of its own and "/" is its first entry.
+    /// </summary>
     public static TheoryData<string> EveryScreen()
     {
-        var paths = new TheoryData<string> { "/" };
+        var paths = new TheoryData<string>();
         foreach (NavigationItem item in Navigation.Items)
         {
             paths.Add(item.Path);
@@ -144,7 +149,7 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
     /// honest placeholder outliving the thing it was standing in for.
     /// </summary>
     private static IReadOnlyList<string> Landed { get; } =
-        ["/setups", "/scoreboard", "/watchlist", "/journal", "/research", "/packs"];
+        ["/", "/today", "/setups", "/scoreboard", "/watchlist", "/journal", "/research", "/packs"];
 
     [Theory]
     [MemberData(nameof(EveryScreen))]
@@ -273,11 +278,21 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
         Assert.Contains("answered 500", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The shared chart draws its empty state rather than an empty box, which would read as a stock
+    /// that did not move.
+    ///
+    /// <b>It was asserted against the front page until 7.20</b>, because that page rendered the
+    /// component with nothing in it as a demonstration of the shell. The front page is now written
+    /// for somebody finding out what the lab is, and a chart of nothing is not part of that answer.
+    /// The assertion moves to the chart screen, which is where the component is actually reached
+    /// with no ticker: the property is unchanged and the surface carrying it is the real one.
+    /// </summary>
     [Fact]
     public async Task The_shared_chart_renders_its_empty_state_rather_than_an_empty_box()
     {
         using HttpClient client = Reading();
-        string html = await client.GetStringAsync("/");
+        string html = await client.GetStringAsync("/chart");
 
         Assert.Contains("class=\"candles\"", html, StringComparison.Ordinal);
         Assert.Contains("no bars for this window", html, StringComparison.Ordinal);
@@ -360,12 +375,63 @@ public sealed class WebShellTests : IClassFixture<WebApplicationFactory<LabApiCl
         new(true, null, "ready", 38, 38, "2026-08-31", "spreads", "clean", "2026-08-31", 100, 1000, 10, 5000,
             "neutral", positionsOpen, shortPositionsOpen, riskAtStake);
 
+    /// <summary>
+    /// The one page reached for a stock rather than browsed to, and therefore the one routed page
+    /// the navigation is expected not to name. Named here so the reconciliation below can be an
+    /// equality rather than a one-way check with an unstated remainder.
+    /// </summary>
+    private const string TheChartReachedForAStock = "/chart/{ticker?}";
+
+    /// <summary>
+    /// The navigation and the pages that exist name each other, in both directions, and no count
+    /// appears in this test.
+    ///
+    /// <b>It asserted the number six until 7.20</b>, twice, from a decision that had written the
+    /// count into its own name. A number in a test is a number that goes stale the moment a surface
+    /// is added, and what it was standing in for is this: every path the navigation offers leads to
+    /// a page, and every page a person can browse to is offered. The two groups are asserted to
+    /// partition the whole, so a surface added to neither is a surface the layout never draws.
+    /// see: A surface a person opens is a screen, and the navigation names the way in apart from the research screens
+    /// </summary>
     [Fact]
-    public void The_navigation_holds_six_screens_and_no_two_share_a_path()
+    public void The_navigation_and_the_pages_that_exist_name_each_other()
     {
-        // Five, matching the screens the architecture describes and the mockup's own tab strip.
-        Assert.Equal(6, Navigation.Items.Count);
-        Assert.Equal(6, Navigation.Items.Select(i => i.Path).Distinct(StringComparer.Ordinal).Count());
+        string[] navigated = [.. Navigation.Items.Select(i => i.Path)];
+
+        Assert.Equal(navigated.Length, navigated.Distinct(StringComparer.Ordinal).Count());
         Assert.All(Navigation.Items, i => Assert.StartsWith("/", i.Path, StringComparison.Ordinal));
+
+        // The two groups are the whole of it, and neither is empty. A page in neither group is a
+        // page the layout has no way to draw a tab for.
+        Assert.Equal(
+            navigated,
+            Navigation.WaysIn.Concat(Navigation.Screens).Select(i => i.Path).ToArray(),
+            StringComparer.Ordinal);
+        Assert.NotEmpty(Navigation.WaysIn);
+        Assert.NotEmpty(Navigation.Screens);
+
+        // Every route the Web project declares, read from the pages rather than from a list kept
+        // beside them, so a page added without a nav entry fails here rather than going unreachable.
+        string[] routed =
+            [.. Directory
+                .EnumerateFiles(
+                    Path.Combine(RepositoryLayout.Root, "src", "PullbackStrategyLab.Web", "Pages"),
+                    "*.cshtml",
+                    SearchOption.AllDirectories)
+                .Select(File.ReadAllText)
+                .Select(text => PageRoute().Match(text))
+                .Where(m => m.Success)
+                .Select(m => m.Groups["route"].Value)];
+
+        Assert.Contains(TheChartReachedForAStock, routed, StringComparer.Ordinal);
+
+        string[] browsable = [.. routed
+            .Where(r => !string.Equals(r, TheChartReachedForAStock, StringComparison.Ordinal))
+            .Order(StringComparer.Ordinal)];
+
+        Assert.Equal(browsable, [.. navigated.Order(StringComparer.Ordinal)], StringComparer.Ordinal);
     }
+
+    [GeneratedRegex(@"@page\s+""(?<route>[^""]+)""", RegexOptions.CultureInvariant)]
+    private static partial Regex PageRoute();
 }

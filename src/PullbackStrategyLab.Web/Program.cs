@@ -470,6 +470,72 @@ public sealed class LabApiClient
     }
 
     /// <summary>
+    /// What the experiment has done since it started, per direction. It never throws, on the same
+    /// terms as every other read here.
+    /// </summary>
+    public async Task<ExperimentView> ReadExperimentAsync(
+        DateOnly asOf,
+        CancellationToken cancellationToken = default)
+    {
+        string session = asOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        try
+        {
+            using HttpResponseMessage response = await _http
+                .GetAsync($"/experiment/{session}", cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return ExperimentView.Empty(session, $"the read surface answered {(int)response.StatusCode}");
+            }
+
+            await using Stream body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            ExperimentPayload? payload = await JsonSerializer
+                .DeserializeAsync<ExperimentPayload>(body, Json, cancellationToken).ConfigureAwait(false);
+
+            if (payload is null)
+            {
+                return ExperimentView.Empty(session, "the read surface answered with nothing");
+            }
+
+            if (payload.Absent is not null)
+            {
+                return ExperimentView.Empty(payload.AsOf ?? session, payload.Absent);
+            }
+
+            return new ExperimentView(
+                payload.AsOf ?? session,
+                null,
+                payload.Evenings,
+                payload.FirstEvening ?? string.Empty,
+                payload.LatestEvening ?? string.Empty,
+                payload.LatestEveningGeneration,
+                Side(payload.Long, "long"),
+                Side(payload.Short, "short"),
+                payload.Risk is ExperimentRiskPayload r
+                    ? new ExperimentRiskView(r.Equity, r.Fraction, r.Budget)
+                    : null);
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            return ExperimentView.Empty(session, "the read surface did not answer");
+        }
+
+        static ExperimentSideView Side(ExperimentSidePayload? side, string direction) =>
+            side is null
+                ? ExperimentSideView.Empty(direction)
+                : new ExperimentSideView(
+                    side.Direction ?? direction,
+                    side.PatternsRecorded,
+                    side.PlansWritten,
+                    side.OrdersPlaced,
+                    side.TradesClosed,
+                    side.Funnel is ExperimentFunnelPayload f
+                        ? new ExperimentFunnelView(f.Evening ?? string.Empty, f.Examined, f.Recorded, f.Passed)
+                        : ExperimentFunnelView.Empty);
+    }
+
+    /// <summary>
     /// Which of a session's slots ran. It never throws, on the same terms as every other read here,
     /// and a morning screen that would not render without it would be a screen nobody could use to
     /// find out the read surface was down.
@@ -795,6 +861,19 @@ public sealed class LabApiClient
     private sealed record NightPayload(
         string? AsOf, string? Absent, IReadOnlyList<SlotPayload>? Slots,
         int Ran, int NeverRan, int NotClean, int Unobservable, IReadOnlyList<string>? Unscheduled);
+
+    private sealed record ExperimentPayload(
+        string? AsOf, string? Absent, int Evenings, string? FirstEvening, string? LatestEvening,
+        int LatestEveningGeneration, ExperimentSidePayload? Long, ExperimentSidePayload? Short,
+        ExperimentRiskPayload? Risk);
+
+    private sealed record ExperimentSidePayload(
+        string? Direction, int PatternsRecorded, int PlansWritten, int OrdersPlaced,
+        int TradesClosed, ExperimentFunnelPayload? Funnel);
+
+    private sealed record ExperimentFunnelPayload(string? Evening, int Examined, int Recorded, int Passed);
+
+    private sealed record ExperimentRiskPayload(decimal Equity, decimal Fraction, decimal Budget);
 
     private sealed record SlotPayload(
         string Slot, string At, bool InsideTheSession, string? Unobservable,

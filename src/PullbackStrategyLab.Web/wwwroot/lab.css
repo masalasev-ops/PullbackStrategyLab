@@ -538,3 +538,44 @@ table.ledger.packs .over { display: block; font-size: 11px; color: var(--ink3); 
 .journal-side { border-left: 3px solid var(--rule); padding: 0 0 0 12px; margin: 0 0 18px; }
 .journal-side.long { border-left-color: var(--long); }
 .journal-side.short { border-left-color: var(--short); }
+
+/* The way in, from 7.20. Two plain surfaces read by somebody who does not yet know what the lab
+   does, drawn in the same palette as the research screens so they read as the same product.
+   see: A surface a person opens is a screen, and the navigation names the way in apart from the research screens */
+
+/* The nav's two groups, held apart by a rule rather than by a gap, because a gap at one width
+   reads as a wrap at another. */
+.navsplit {
+    align-self: stretch;
+    width: 1px;
+    background: var(--rule);
+    margin: 0 4px;
+}
+
+/* The funnel: how many names a side looked at, recorded and chose. A bar per rung against the
+   widest, so the drop from thousands to a handful is seen rather than worked out. */
+.rungs { list-style: none; padding: 0; margin: 0 0 18px; display: grid; gap: 10px; }
+
+.rung {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    gap: 4px 12px;
+    align-items: baseline;
+}
+
+.rung .count { font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 600; text-align: right; }
+.rung .what { margin: 0; color: var(--ink); }
+.rung .what em { display: block; font-style: normal; font-size: 12px; color: var(--ink3); }
+
+.rung .bar { grid-column: 1 / -1; height: 3px; background: var(--rule); border-radius: 2px; }
+.rung .bar i { display: block; height: 100%; background: var(--long); border-radius: 2px; }
+.side.short .rung .bar i { background: var(--short); }
+
+/* Today's chosen names. A table rather than the gallery's cards: this page answers "which ones",
+   where the gallery answers "why this one". */
+.chosen { border-collapse: collapse; width: 100%; margin: 0 0 18px; }
+.chosen caption { text-align: left; font-size: 12px; color: var(--ink3); padding: 0 0 6px; }
+.chosen th, .chosen td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--rule); vertical-align: baseline; }
+.chosen th { font-size: 12px; color: var(--ink3); font-weight: 600; }
+.chosen .tk.long { color: var(--long); }
+.chosen .tk.short { color: var(--short); }

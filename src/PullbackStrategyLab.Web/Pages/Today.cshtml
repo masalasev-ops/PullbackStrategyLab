@@ -1,0 +1,107 @@
+@page "/today"
+@using PullbackStrategyLab.Web.Shell
+@model TodayModel
+@{
+    ViewData["Title"] = "Today";
+    SetupsView chosen = Model.Chosen;
+    ExperimentView e = Model.Experiment;
+}
+@*
+    What the lab is watching, from 7.20, for a reader who wants the answer rather than the workings.
+
+    The two sides are two blocks with their own headings and no combined count, on the same terms
+    the gallery draws them.
+    see: Long and short are never pooled into one figure
+*@
+<h1>What the lab is watching</h1>
+
+@if (chosen.Nothing is not null)
+{
+    <div class="empty-state">
+        <p>Nothing to show: @chosen.Nothing.</p>
+    </div>
+}
+else
+{
+    <p class="lede">Chosen on the evening of <b>@chosen.AsOf</b> out of @Model.Recorded.ToString("N0")
+       names the lab recorded that evening, and live from the next session the market opens. The lab
+       keeps no holiday calendar, so it names the evening that chose the list rather than guessing
+       the date it trades on.</p>
+
+    @if (e.Risk is ExperimentRiskView risk)
+    {
+        <p class="lede">Each one risks at most <b>@risk.Budget.ToString("C0")</b> of imaginary money,
+           which is @risk.FractionInWords of the lab's @risk.Equity.ToString("C0").</p>
+    }
+
+    <div class="caveat">
+        <b>No prices here, and that is deliberate.</b> The lab does not decide what to pay the
+        evening before. Each plan carries a rule, and the price, the stop and the number of shares
+        are all worked out at the minute the stock actually triggers. Writing a price tonight would
+        be pretending to know something it cannot know until tomorrow.
+    </div>
+
+    @foreach (var side in new[]
+    {
+        (Name: "Stocks it would buy", Cards: chosen.Long, Css: "long"),
+        (Name: "Stocks it would sell short", Cards: chosen.Short, Css: "short"),
+    })
+    {
+        <section class="side">
+            <h2>@side.Name</h2>
+
+            @if (side.Cards.Count == 0)
+            {
+                <p class="muted">None this evening. A side that chooses nobody is an ordinary
+                   outcome of the checks rather than a fault.</p>
+            }
+            else
+            {
+                <table class="chosen">
+                    <caption>@side.Cards.Count name@(side.Cards.Count == 1 ? "" : "s"), ranked as the lab ranked them. This
+                             count is for this side only and is never added to the other.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Stock</th>
+                            <th scope="col">Waiting for</th>
+                            <th scope="col">Checks it passed</th>
+                            <th scope="col">Noted against it</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (SetupCardView card in side.Cards)
+                        {
+                            <tr>
+                                <td class="tk @side.Css">@card.Ticker</td>
+                                <td>a dip to its level, then a recovery</td>
+                                <td class="num">@card.Checks.Count(c => c.Passed) of @card.Checks.Count</td>
+                                <td>
+                                    @{
+                                        var noted = Model.PassedOnATechnicality(card);
+                                    }
+                                    @if (noted.Count == 0)
+                                    {
+                                        <span class="muted">nothing</span>
+                                    }
+                                    else
+                                    {
+                                        foreach (SetupCheckRowView row in noted)
+                                        {
+                                            <span class="pill warn">@row.Name failed, recorded but not required</span>
+                                        }
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    }
+
+    <p class="muted">A name with something noted against it was chosen anyway, because the rule in
+       force that evening, generation @e.LatestEveningGeneration, recorded that check without
+       requiring it. It is shown because a later rule may require it, and then the same name would
+       not be chosen. The full verdict on every name, chosen or not, is on the
+       <a href="/setups">Setups</a> screen.</p>
+}

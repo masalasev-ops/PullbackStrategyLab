@@ -216,6 +216,7 @@ public sealed partial class RenderedClassesCheck : IClassFixture<WebApplicationF
     /// </summary>
     private static readonly string[] Surfaces =
     [
+        "/", "/today",
         "/watchlist", "/setups", "/journal", "/scoreboard", "/research", "/packs",
         "/chart?trade=t-held",
     ];

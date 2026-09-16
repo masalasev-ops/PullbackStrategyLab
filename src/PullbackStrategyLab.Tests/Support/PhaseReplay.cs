@@ -412,6 +412,23 @@ public sealed class PhaseReplay : IDisposable
         Record("triggers.minutesWalked", triggers.MinutesWalked);
         Record("triggers.pairedWithPriorSession", triggers.SetupAsOf is null ? 0 : 1);
 
+        // What the front page reads, from 7.20. Not a stage: a read of what the night above
+        // produced, recorded here because a surface that states figures is a surface whose figures
+        // should be diffed like any other.
+        //
+        // <b>The two sides are two figures and their sum is recorded nowhere</b>, which is the
+        // property the page is built around, and the funnel's widest rung is the rows recorded plus
+        // the rows that missed the floor rather than a count the detector printed into a log.
+        ExperimentResponse record = LabExperiment.Read(_connections, AsOf, _options.Value.SessionZone);
+
+        Record("experiment.evenings", record.Evenings);
+        Record("experiment.long.patternsRecorded", record.Long?.PatternsRecorded ?? 0);
+        Record("experiment.short.patternsRecorded", record.Short?.PatternsRecorded ?? 0);
+        Record("experiment.long.funnel.examined", record.Long?.Funnel.Examined ?? 0);
+        Record("experiment.short.funnel.examined", record.Short?.Funnel.Examined ?? 0);
+        Record("experiment.long.funnel.passed", record.Long?.Funnel.Passed ?? 0);
+        Record("experiment.short.funnel.passed", record.Short?.Funnel.Passed ?? 0);
+
         // 15e. The caps, at 21:10, over the triggers the replay recorded.
         //
         //      <b>Nothing rested and nothing triggered, so the gate decides nothing, and the run row

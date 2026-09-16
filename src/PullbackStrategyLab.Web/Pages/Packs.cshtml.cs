@@ -13,7 +13,7 @@ namespace PullbackStrategyLab.Web.Pages;
 /// subject of this page is the set of pack versions, and every other screen is keyed on one night,
 /// one setup or one trade, so hanging the comparison off any of them would key a comparison across
 /// versions to a single night.
-/// see: The pack comparison surface is the sixth screen and the navigation says six
+/// see: A surface a person opens is a screen, and the navigation names the way in apart from the research screens
 ///
 /// <b>It reads the session the status band names rather than today's date</b>, on the terms every
 /// other screen's read already stands on.
