@@ -12,7 +12,7 @@ namespace PullbackStrategyLab.Api;
 /// other screen this lab has is keyed on one night, one setup or one trade. The subject of this one
 /// is the set of pack versions, so hanging it off any of the five would key a comparison across
 /// versions to one of those three, and a reader would be comparing versions through a window onto a
-/// single night (see: The pack comparison surface is the sixth screen and the navigation says six).
+/// single night (see: A surface a person opens is a screen, and the navigation names the way in apart from the research screens).
 ///
 /// <b>The version tuple is the whole of what it compares.</b> A version pins what the model was
 /// shown, so two versions differing in one component are two different questions asked of the model,

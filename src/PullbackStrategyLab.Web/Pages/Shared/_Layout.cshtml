@@ -1,9 +1,12 @@
 @using PullbackStrategyLab.Web.Shell
 @*
-    The shell every page renders inside: the mark, the five-item nav and the status band.
+    The shell every page renders inside: the mark, the two-group nav and the status band.
 
-    The nav is rendered from Navigation.Items rather than written out here, so the list of
-    screens lives in one place and a page without a nav entry is a page nobody can reach.
+    The nav is rendered from Navigation's two lists rather than written out here, so the set of
+    screens lives in one place and a page without a nav entry is a page nobody can reach. The two
+    groups are drawn apart because the way in and the research screens answer different kinds of
+    question, and one row of tabs would say they do not.
+    see: A surface a person opens is a screen, and the navigation names the way in apart from the research screens
 
     No script and no external stylesheet. The one sheet is local, because a page that fetches
     from anywhere is a page that does not render on a machine with no network, and the whole
@@ -25,7 +28,15 @@
 </header>
 
 <nav class="nav" aria-label="Screens">
-    @foreach (NavigationItem item in Navigation.Items)
+    @foreach (NavigationItem item in Navigation.WaysIn)
+    {
+        string current = string.Equals(Context.Request.Path.Value, item.Path, StringComparison.OrdinalIgnoreCase)
+            ? "on"
+            : string.Empty;
+        <a class="@current" href="@item.Path" title="@item.What">@item.Title</a>
+    }
+    <span class="navsplit" aria-hidden="true"></span>
+    @foreach (NavigationItem item in Navigation.Screens)
     {
         string current = string.Equals(Context.Request.Path.Value, item.Path, StringComparison.OrdinalIgnoreCase)
             ? "on"

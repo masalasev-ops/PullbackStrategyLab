@@ -135,6 +135,15 @@ public static class Program
                 connections,
                 DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture), configured.Value.SessionZone)));
 
+        // What the experiment has done since it started, as at the date asked for, per direction and
+        // never pooled. The front page's figures. A read of the record rather than of one night,
+        // which is why it is its own endpoint rather than a widening of /status: the band is fetched
+        // on every page load and these counts are wanted on one.
+        app.MapGet("/experiment/{asOf}", (string asOf, StoreConnectionFactory connections, IOptions<PullbackStrategyLabOptions> configured) =>
+            Results.Ok(LabExperiment.Read(
+                connections,
+                DateOnly.ParseExact(asOf, "yyyy-MM-dd", CultureInfo.InvariantCulture), configured.Value.SessionZone)));
+
         // `outcome` narrows by how far a name got, where `failed` narrows by which gate stopped it.
         // Two parameters rather than one set of values, because they compose: the question a person
         // has at the gallery is usually both at once.

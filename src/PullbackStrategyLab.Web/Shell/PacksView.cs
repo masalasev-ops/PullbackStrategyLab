@@ -8,7 +8,7 @@ namespace PullbackStrategyLab.Web.Shell;
 /// <b>The sixth screen, and the navigation said five while the component catalogue held six.</b>
 /// Every other screen is keyed on one night, one setup or one trade; the subject of this one is the
 /// set of pack versions, so hanging it off any of the five would key a comparison across versions to
-/// a single night (see: The pack comparison surface is the sixth screen and the navigation says six).
+/// a single night (see: A surface a person opens is a screen, and the navigation names the way in apart from the research screens).
 ///
 /// <b>Nothing here computes a rate.</b> Proposal hit rate by pack version is band 3's, computed by
 /// the builder and read from the store. This page shows the counts the rate is over, so a reader can

@@ -475,8 +475,14 @@ public sealed partial class ArchitectureConformanceCheck
         ["Setup inspector"] = "/setups",
         ["Trade journal page"] = "/journal",
         ["Research ledger page"] = "/research",
-        ["Pack comparison page"] = "/scoreboard",
+        // Corrected at 7.20. It read "/scoreboard" from 6.8, so the check asserted the pack page's
+        // route by looking at the scoreboard's: /scoreboard is a real route, the assertion passed,
+        // and the pack page's own route was never examined. The first failure shape, in the check
+        // rather than in the thing checked.
+        ["Pack comparison page"] = "/packs",
         ["Lab scoreboard page"] = "/scoreboard",
+        ["Front page"] = "/",
+        ["Today page"] = "/today",
     };
 
     /// <summary>

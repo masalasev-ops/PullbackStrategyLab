@@ -10457,9 +10457,9 @@
     {
       "id": "catalogue.components",
       "tier": "DERIVED",
-      "value": "62",
+      "value": "64",
       "checkpoint": "4.14",
-      "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
+      "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.; raised from 62 to 64 at 7.20, which adds the front page and the today page to the catalogue",
       "note": "rows in the component catalogue Was 54 until 7.1, which adds NightReconciler to the catalogue after RunLogger, whose table it writes through, and names it in a P7 Builds row. Re-derived by counting the catalogue rows, the way it always is. Was 55 until 7.2, which adds CheckRegister, the writer of check_definition, after NightReconciler, and names it in the P7 Builds row. Was 56 until 7.5, which adds GenerationOneDetector beside the two detectors it replaces on the switch night. Was 57 until 7.6, which adds GenerationCloser, the act that closes a generation. Was 58 until 7.7, which adds MinuteBackfiller. Was 59 until 7.8, which adds EntrySizer. Was 60 until 7.9, which adds EntryRuleMeasurement. Was 61 until 7.11, which adds GenerationOneForecast."
     },
     {
@@ -10473,9 +10473,9 @@
     {
       "id": "catalogue.screens",
       "tier": "DERIVED",
-      "value": "7",
+      "value": "9",
       "checkpoint": "4.14",
-      "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.",
+      "producedBy": "derived by hand from ARCHITECTURE.html before the replay was run, then run. A Python restatement reads the two tables with a different language's HTML handling, takes a Builds-row name as a comma-separated token beginning with a capital and holding no space, and counts the catalogued types that no such token matches. It shares no code with the check under test. It is a figure about the document rather than about the fixture's data, on the precedent store.schemaVersion sets by counting migration files.; raised from 7 to 9 at 7.20, which adds the front page and the today page",
       "note": "of those, the ones a Builds cell names in prose, which the token extractor cannot see"
     },
     {
@@ -15054,6 +15054,62 @@
       "checkpoint": "7.13",
       "producedBy": "produced by running the shipped ScoreboardBuilder over the golden fixture, and read back off the panels it wrote",
       "note": "The short side's, on the same terms."
+    },
+    {
+      "id": "experiment.evenings",
+      "tier": "DERIVED",
+      "value": "1",
+      "checkpoint": "7.20",
+      "producedBy": "derived by hand before the replay was read: the captured fixture holds one market day, so `setup` holds rows under exactly one as_of and the record is one evening deep",
+      "note": "The figure the front page's gap sentence turns on. One evening cannot have a gap, so the sentence does not render over the fixture and the claim that it does is asserted against the surface check's own body instead."
+    },
+    {
+      "id": "experiment.long.patternsRecorded",
+      "tier": "FROZEN",
+      "value": "2",
+      "checkpoint": "7.20",
+      "producedBy": "read from the replay on 2026-09-16: the rows `setup` holds on the long side after the night the replay runs",
+      "note": "Frozen rather than derived because the replay writes into `setup` from more than one detection over the fixture's single day, and which rows survive the (as_of, ticker, direction) key is stated by no figure the fixture carries. detect.long.recorded is the first detection's count alone and is 1."
+    },
+    {
+      "id": "experiment.short.patternsRecorded",
+      "tier": "FROZEN",
+      "value": "1",
+      "checkpoint": "7.20",
+      "producedBy": "read from the replay on 2026-09-16: the rows `setup` holds on the short side after the night the replay runs",
+      "note": "Frozen on the same grounds as the long side's, and never added to it."
+    },
+    {
+      "id": "experiment.long.funnel.examined",
+      "tier": "DERIVED",
+      "value": "7203",
+      "checkpoint": "7.20",
+      "producedBy": "derived by hand from two expectations the fixture already carries: examined is the rows recorded plus the rows that missed the floor, and belowFloor.long is 7201 beside experiment.long.patternsRecorded at 2",
+      "note": "The widest rung of the long funnel. Derived rather than frozen because the reader defines it as a sum of two stored counts, so a reader that started copying the detector's printed figure instead would disagree with the arithmetic here."
+    },
+    {
+      "id": "experiment.short.funnel.examined",
+      "tier": "DERIVED",
+      "value": "7202",
+      "checkpoint": "7.20",
+      "producedBy": "derived by hand from two expectations the fixture already carries: belowFloor.short is 7201 beside experiment.short.patternsRecorded at 1",
+      "note": "The short side's widest rung, never added to the long side's."
+    },
+    {
+      "id": "experiment.long.funnel.passed",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.20",
+      "producedBy": "derived by hand before the replay was read: the funnel counts rows whose passed_all column is set, and detect.long.passedAll is 0 over this fixture",
+      "note": "Nought on this night, and the long side says so on its own."
+    },
+    {
+      "id": "experiment.short.funnel.passed",
+      "tier": "DERIVED",
+      "value": "0",
+      "checkpoint": "7.20",
+      "producedBy": "derived by hand before the replay was read: detect.short.passedAll is 0 over this fixture",
+      "note": "The short side's own nought, recorded separately so a page that drew one side twice would still have to carry both figures."
     }
   ],
   "frozenOnly": [

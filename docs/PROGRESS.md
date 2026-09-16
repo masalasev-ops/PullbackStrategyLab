@@ -20974,3 +20974,63 @@ Carried:    **None raised and none discharged.**
             older build would score its rows with generation 1's gate set.
 
             **This session committed code and may not sign it off.**
+
+## 7.20 — 2026-09-16 — phase-7-20-two-ways-in — two plain surfaces, and the navigation in two groups
+
+Built:      **A way in, for a reader who has not seen the lab before.** The six research screens answer
+            questions somebody already inside the experiment has. Nothing answered the two a newcomer
+            has first, and the front page was a developer's door: it listed the screens with the build
+            checkpoint that fills each beside them and rendered the shared chart component's empty
+            state. The operator's words for what the screens read like were that not a single investor
+            would understand the experiment as a newbie, and the specific confusion that opened it was
+            the gallery listing 172 names on a night the lab chose 14.
+
+            **The front page** states what the experiment is, each side's patterns, plans, orders and
+            trades, how many evenings the record actually holds and where its gap is, the last
+            evening's funnel on each side, what one plan is allowed to lose, and what would prove the
+            pattern is not there. **The today page** names what the last evening chose, what each name
+            is waiting for, and any check that evening's rule recorded without requiring, which is the
+            only place a reader can see that a name passed on a technicality. Neither page states a
+            price, because a plan carries a rule and the price, the stop and the share count resolve at
+            the minute the stock triggers, and the page says so rather than leaving a reader to wonder
+            where the numbers are.
+
+            **`LabExperiment` is the read behind the front page**, per direction and with no total in
+            the type. **The navigation is two named groups** and the six research screens keep their
+            content. One decision supersedes the entry that fixed the screen count at six; its
+            principle, that a surface a person opens is a screen whatever the count beside it says, is
+            what the new entry applies rather than overturns.
+
+Measured:   `tools/ci.ps1` green on Windows, **34 steps, 1,355 tests**.
+
+            **The navigation is reconciled rather than counted.** The shell test asserted the number
+            six, twice, and now holds the navigation against the routed pages in both directions,
+            naming the chart as the one page reached for a stock rather than browsed to. No number
+            appears in it. **The front page's gap sentence renders only where the record has a gap**,
+            so the body the surface check reads holds five evenings across ten weekdays; a body with no
+            gap would leave that claim asserted against a page state nothing produced. **The two sides
+            carry different figures in that body** on the same grounds: a body with the same number on
+            both sides would pass a page that read one side twice.
+
+            **Expectations.** Three claims are declared against `/` and one against `/today`, each
+            naming the text the rendered page must carry, and the two side counts are separate claims
+            so a page that added them would stop carrying either.
+
+Found:      **`architecture-conformance` asserted the pack comparison page's route by looking at the
+            scoreboard's.** `Screens` mapped "Pack comparison page" to `/scoreboard` from 6.8, and
+            `/scoreboard` is a real route, so the assertion passed while the pack page's own route was
+            never examined and the scoreboard's was examined twice. The first failure shape, in the
+            check rather than in the thing checked, and green since the page was built.
+
+            **And a point-in-time fault in this checkpoint's own first draft**, caught before it
+            shipped. `LabExperiment` read the generation in force from the variant register, which
+            records only a baseline's current status. Asked for 2026-09-15 on the morning after
+            generation 2 opened, it found no open baseline at that date and answered generation 0, on a
+            night whose rows all carry generation 1. The generation is read from the setup rows, which
+            record it per night.
+
+Carried:    **None raised and none discharged.**
+
+            **No operator's half.** Both surfaces are felt by whoever opens the lab next.
+
+            **This session committed code and may not sign it off.**

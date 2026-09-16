@@ -2,33 +2,140 @@
 @using PullbackStrategyLab.Web.Shell
 @model IndexModel
 @{
-    ViewData["Title"] = "The lab";
+    ViewData["Title"] = "What this is";
+    ExperimentView e = Model.Experiment;
 }
 @*
-    The front door. It is the shell itself rather than a redirect to the watchlist, because the
-    watchlist is empty until 4.1 and a front door that lands on an empty screen tells a reader
-    nothing about what they are looking at.
+    The front page, from 7.20. Written for somebody who has never seen the lab before: what the
+    experiment is, how far it has got, and what would settle it.
+
+    Every figure here is per direction. There is no total on this page, and no arithmetic in this
+    file produces one.
+    see: Long and short are never pooled into one figure
+    see: A surface a person opens is a screen, and the navigation names the way in apart from the research screens
 *@
-<h1>PullbackStrategyLab</h1>
-<p class="lede">A paper-trading laboratory that tests two mirror-image price patterns on US
-   equities every night, records every setup it flags whether or not it trades it, and improves
-   the selection rules from that record. No real money, ever.</p>
+<h1>An experiment in whether one price pattern makes money</h1>
 
-<h2>The screens</h2>
-<ul class="screens">
-    @foreach (NavigationItem item in Navigation.Items)
+<p class="lede">Every evening this lab looks at about two thousand US stocks, writes down the ones it
+   would buy or sell short tomorrow and why, then checks the next day whether it was right.
+   <b>The money is imaginary and always will be.</b></p>
+
+@if (e.IsAbsent)
+{
+    <div class="empty-state">
+        <p>The record cannot be read: @e.Absent.</p>
+    </div>
+}
+else
+{
+    <h2>Where it has got to</h2>
+
+    <dl class="panels">
+        <div class="panel">
+            <dt>Patterns to buy</dt>
+            <dd class="num long">@e.Long.PatternsRecorded.ToString("N0")</dd>
+        </div>
+        <div class="panel">
+            <dt>Patterns to sell short</dt>
+            <dd class="num short">@e.Short.PatternsRecorded.ToString("N0")</dd>
+        </div>
+        <div class="panel">
+            <dt>Plans to buy</dt>
+            <dd class="num long">@e.Long.PlansWritten.ToString("N0")</dd>
+        </div>
+        <div class="panel">
+            <dt>Plans to sell short</dt>
+            <dd class="num short">@e.Short.PlansWritten.ToString("N0")</dd>
+        </div>
+        <div class="panel">
+            <dt>Trades taken, buying</dt>
+            <dd class="num long">@e.Long.TradesClosed.ToString("N0")</dd>
+        </div>
+        <div class="panel">
+            <dt>Trades taken, short</dt>
+            <dd class="num short">@e.Short.TradesClosed.ToString("N0")</dd>
+        </div>
+    </dl>
+
+    <p class="muted">Buying and short selling are counted apart here and everywhere else in this
+       lab. They are never added into one number, because a short carries a borrowing cost and a
+       different risk that a long does not.</p>
+
+    @if (e.Long.TradesClosed == 0 && e.Short.TradesClosed == 0)
     {
-        <li>
-            <a href="@item.Path">@item.Title</a>
-            <span class="what">@item.What</span>
-            <span class="when">checkpoint @item.ArrivesAt</span>
-        </li>
+        <div class="caveat">
+            <b>No trades yet, and that is a result rather than a fault.</b> A plan only becomes a
+            trade if the price does a particular thing the next day: dip to a level and recover.
+            So far none has, on either side.
+        </div>
     }
-</ul>
 
-<h2>The shared chart</h2>
-<p class="lede">Every chart in the lab is one component, built here so no later checkpoint
-   invents a second one. It has no bars until checkpoint 1.10 puts the store behind it, and it
-   says so rather than drawing an empty box.</p>
+    <h2>How much of the record exists</h2>
 
-@await Html.PartialAsync("_Candlestick", Model.Chart)
+    <p class="lede">The lab holds <b>@e.Evenings evening@(e.Evenings == 1 ? "" : "s")</b> of
+       detections, between @e.FirstEvening and @e.LatestEvening.</p>
+
+    @if (e.RecordHasAGap)
+    {
+        <div class="caveat">
+            <b>There is a gap in it, and the gap cannot be filled.</b> Those dates span
+            @e.WeekdaysInSpan weekdays and the lab holds @e.Evenings of them, so it was not running
+            for the rest. A night nobody recorded is gone for good: the prices can be bought back
+            afterwards, but what the lab would have flagged on the evening cannot.
+        </div>
+    }
+
+    <h2>How the last evening went</h2>
+
+    <p class="lede">The evening of @e.Long.Funnel.Evening. The two sides are drawn separately and
+       never added together.</p>
+
+    @foreach (ExperimentSideView side in new[] { e.Long, e.Short })
+    {
+        <section class="side">
+            <h3>Stocks @side.InWords</h3>
+            <ol class="rungs">
+                <li class="rung">
+                    <span class="count">@side.Funnel.Examined.ToString("N0")</span>
+                    <span class="what">looked at<em>everything liquid enough to trade</em></span>
+                    <span class="bar"><i style="width:@side.Funnel.WidthOf(side.Funnel.Examined)"></i></span>
+                </li>
+                <li class="rung">
+                    <span class="count">@side.Funnel.Recorded.ToString("N0")</span>
+                    <span class="what">had moved, then paused<em>the shape the lab is hunting for</em></span>
+                    <span class="bar"><i style="width:@side.Funnel.WidthOf(side.Funnel.Recorded)"></i></span>
+                </li>
+                <li class="rung">
+                    <span class="count">@side.Funnel.Passed.ToString("N0")</span>
+                    <span class="what">passed every check<em>the rest are kept, each with the reason it failed</em></span>
+                    <span class="bar"><i style="width:@side.Funnel.WidthOf(side.Funnel.Passed)"></i></span>
+                </li>
+            </ol>
+        </section>
+    }
+
+    <p class="muted">The names that failed are kept rather than thrown away. That is what makes it
+       possible to ask later whether a rule was refusing the right stocks, and it is why the
+       <a href="/setups">Setups</a> screen lists far more names than the lab would ever buy.</p>
+
+    @if (e.Risk is ExperimentRiskView risk)
+    {
+        <h2>What it is allowed to lose</h2>
+
+        <p class="lede">One plan risks at most <b>@risk.Budget.ToString("C0")</b> of the lab's
+           @risk.Equity.ToString("C0") of imaginary money, which is @risk.FractionInWords of it.
+           That cap is applied to every plan before it is allowed to become an order.</p>
+    }
+
+    <h2>What would prove this wrong</h2>
+
+    <p class="lede">If the stocks the lab picks do no better than stocks picked at random with a
+       similar shape, the pattern is not real and the experiment has answered its question. That
+       comparison runs from the first trade onwards and is the only thing that settles it. It is on
+       the <a href="/scoreboard">Scoreboard</a>, and it is the number this lab exists to produce.</p>
+
+    <p class="muted">The rules change as evidence arrives. The evening of @e.LatestEvening was
+       scored under generation @e.LatestEveningGeneration, and every stored row records the
+       generation that scored it, so an old evening can always be read under the rule that actually
+       produced it.</p>
+}
